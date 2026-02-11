@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, memo } from 'react'
 import * as pc from 'playcanvas'
+import { BUILDING_CONFIG, BuildingType } from '@/app/config/buildings'
+import { cn } from '@/lib/utils'
 
 // Se estiver usando Next.js com React 18+, isso evita erros de SSR com window
 if (typeof window !== 'undefined') {
@@ -30,6 +32,7 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile }: CityScene
 
   useEffect(() => {
     onSelectTileRef.current = onSelectTile
+    
   }, [onSelectTile])
 
   const MAP_SIZE = 48 
@@ -37,14 +40,7 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile }: CityScene
   const MIN_ZOOM = 5
   const MAX_ZOOM = 50
 
-  // CAMINHOS DOS SEUS MODELOS (Verifique se os nomes estão iguais na pasta public/models)
-  const MODEL_PATHS = {
-    house: '/models/house.glb',
-    park: '/models/park.glb',
-    school: '/models/school.glb',
-    power: '/models/power.glb'
-  }
-
+ 
   // --- EFEITO 1: INICIALIZAÇÃO ---
   useEffect(() => {
     if (!canvasRef.current) return
@@ -58,6 +54,14 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile }: CityScene
       touch: new pc.TouchDevice(canvas),
       elementInput: new pc.ElementInput(canvas)
     })
+
+    Object.entries(BUILDING_CONFIG).forEach(([key, config]) => {
+        app.assets.loadFromUrl(config.url, 'container', (err, asset) => {
+            if (asset) loadedAssets.current[key] = asset
+        })
+    })
+
+
     appRef.current = app
 
     app.setCanvasFillMode(pc.FILLMODE_NONE)
@@ -92,7 +96,7 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile }: CityScene
     }
 
     // Carrega todos os modelos da lista
-    Object.entries(MODEL_PATHS).forEach(([key, url]) => loadModel(key, url))
+    Object.entries(BUILDING_CONFIG).forEach(([key, config]) => loadModel(key, config.url))
 
     // --- CENA BÁSICA ---
     const pivot = new pc.Entity('CameraPivot')
@@ -247,37 +251,35 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile }: CityScene
                 
                 // Se o asset GLB carregou, instancia ele
                 if (asset && asset.resource) {
-                    
-                    // AQUI ESTAVA O ERRO: Adicionei (asset.resource as any) para o TypeScript não reclamar
-                    const buildingEntity = (asset.resource as any).instantiateRenderEntity({
-                        app: app
-                    })
-                    
-                    buildingEntity.name = `Building-${b.id}`
-                    
-                    const worldX = (b.x * 2) - OFFSET
-                    const worldZ = (b.y * 2) - OFFSET
-                    buildingEntity.setPosition(worldX, 0, worldZ)
 
-                    // AJUSTE DE ESCALA (Mude aqui se o prédio ficar muito grande/pequeno)
-                    // Se estiver gigante, tente 0.5 ou 0.1
-                    buildingEntity.setLocalScale(1, 1, 1) 
+                    const config = BUILDING_CONFIG[b.type as BuildingType]
+                    if (asset && asset.resource && config) {
+                        const buildingEntity = (asset.resource as any).instantiateRenderEntity({ app })
+                        
+                        // Aplica a escala vinda do JSON
+                        const s = config.scale
+                        buildingEntity.setLocalScale(s, s, s)
+                        
+                        // Aplica a posição
+                        buildingEntity.setPosition((b.x * 2) - OFFSET, 0, (b.y * 2) - OFFSET)
+                        app.root.addChild(buildingEntity)
                     
-                    app.root.addChild(buildingEntity)
 
-                    // Animação Pop
-                    const finalScale = 1 
-                    let scale = 0
-                    buildingEntity.setLocalScale(0, 0, 0)
-                    
-                    const popAnim = setInterval(() => {
-                        scale += 0.1
-                        if (scale >= finalScale) {
-                            scale = finalScale
-                            clearInterval(popAnim)
-                        }
-                        buildingEntity.setLocalScale(scale, scale, scale)
-                    }, 16)
+
+                        // Animação Pop
+                        const finalScale = 1 
+                        let scale = 0
+                        buildingEntity.setLocalScale(0, 0, 0)
+                        
+                        const popAnim = setInterval(() => {
+                            scale += 0.1
+                            if (scale >= finalScale) {
+                                scale = finalScale
+                                clearInterval(popAnim)
+                            }
+                            buildingEntity.setLocalScale(scale, scale, scale)
+                        }, 16)
+                    }
                 } 
                 // Se não carregou o GLB, podemos colocar um cubo temporário ou apenas esperar o próximo ciclo
             }

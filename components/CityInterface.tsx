@@ -6,7 +6,9 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Coins, Hammer, Home, Zap, GraduationCap, TreeDeciduous, X, MousePointer2 } from "lucide-react"
 import { buyBuilding } from "@/app/actions"
-import { cn } from "@/lib/utils" // Utilitário padrão do Shadcn (ou use template literals se não tiver)
+import { BUILDING_CONFIG } from '@/app/config/buildings'
+import { cn } from '@/lib/utils'
+//import { BUILDING_CONFIG, BuildingType } from "@/config/buildings"
 
 // Configuração dos Prédios para gerar os botões
 const BUILDING_TYPES = [
@@ -90,36 +92,22 @@ export default function CityInterface({ student, buildings }: { student: any, bu
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto z-20 w-full max-w-3xl px-4">
         <div className="bg-slate-900/90 backdrop-blur border border-slate-700 p-2 rounded-2xl shadow-2xl flex items-center justify-center gap-2 md:gap-4 overflow-x-auto">
             
-            {BUILDING_TYPES.map((b) => {
-                const isSelected = activeBuild === b.id
-                return (
-                    <button
-                        key={b.id}
-                        onClick={() => setActiveBuild(isSelected ? null : b.id)}
-                        disabled={isBuilding}
-                        className={`
-                            relative group flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-200 min-w-[80px]
-                            ${isSelected 
-                                ? 'bg-indigo-600 scale-110 shadow-lg -translate-y-2 ring-2 ring-white' 
-                                : 'hover:bg-slate-800 hover:-translate-y-1'
-                            }
-                        `}
-                    >
-                        <div className={`
-                            p-3 rounded-full mb-1 transition-colors
-                            ${isSelected ? 'bg-white text-indigo-600' : 'bg-slate-800 text-slate-300 group-hover:bg-slate-700'}
-                        `}>
-                            <b.icon size={24} />
-                        </div>
-                        <span className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-slate-400'}`}>
-                            {b.name}
-                        </span>
-                        <span className="text-[10px] text-yellow-500 font-mono">
-                            {b.cost} G
-                        </span>
-                    </button>
-                )
-            })}
+            <div className="flex gap-4 overflow-x-auto">
+    {Object.entries(BUILDING_CONFIG).map(([key, config]) => {
+        const isSelected = activeBuild === key
+        return (
+            <button
+                key={key}
+                onClick={() => setActiveBuild(isSelected ? null : key)}
+                className={cn("p-4 rounded-xl...", isSelected && "bg-indigo-600")}
+            >
+                <config.icon size={24} />
+                <span className="text-xs font-bold">{config.name}</span>
+                <span className="text-[10px] text-yellow-500">{config.cost} G</span>
+            </button>
+        )
+    })}
+</div>
 
         </div>
       </div>

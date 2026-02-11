@@ -6,6 +6,7 @@ import { PrismaClient } from '@prisma/client'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { cookies } from "next/headers"
+import { BUILDING_CONFIG, BuildingType } from '@/app/config/buildings'
 
 
 const prisma = new PrismaClient()
@@ -204,12 +205,7 @@ export async function submitQuizResult(activityId: string, score: number) {
 // ... (códigos anteriores)
 
 // Definição dos Prédios Disponíveis (Hardcoded por enquanto)
-const BUILDINGS = {
-  house: { name: "Casa Residencial", cost: 50, type: "house" },
-  school: { name: "Biblioteca", cost: 150, type: "school" },
-  park:   { name: "Praça Central", cost: 100, type: "park" },
-  power:  { name: "Gerador Solar", cost: 300, type: "power" }
-}
+const BUILDINGS = BUILDING_CONFIG;
 
 export async function buyBuilding(type: string, x: number, y: number) {
   const studentEmail = await getCurrentUser()

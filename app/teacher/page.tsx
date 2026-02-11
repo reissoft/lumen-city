@@ -15,20 +15,35 @@ import {
   DialogTrigger,
   DialogFooter
 } from "@/components/ui/dialog"
-import Link from "next/link" // <--- CORREÇÃO 1: Import oficial
+import Link from "next/link"
+// CORREÇÃO DAS IMPORTAÇÕES (Use os caminhos oficiais)
+import { redirect } from "next/navigation"
+import { cookies } from "next/headers"
+import { logout } from "../auth/actions" // Importe a ação
+import { LogOut } from "lucide-react"    // Importe o ícone
 
 const prisma = new PrismaClient()
 
+async function getTeacherData() {
+    const cookieStore = await cookies()
+    const email = cookieStore.get("lumen_session")?.value
+    
+    if (!email) redirect("/login")
+
+    return await prisma.teacher.findUnique({
+      where: { email: email },
+    })
+}
+
 async function getActivities() {
-  // Adicionei um fallback caso o seed não tenha rodado ou o email esteja diferente
-  const teacher = await prisma.teacher.findFirst({ 
-    where: { email: 'admin@reissoft.com' } 
-  })
+  // CORREÇÃO AQUI: Adicionado 'await' porque getTeacherData é assíncrona
+  const teacher = await getTeacherData()
   
   if (!teacher) return []
   
   return await prisma.activity.findMany({
-    where: { teacherId: teacher.id },
+    // CORREÇÃO LINHA 40: Adicionado .id
+    where: { teacherId: teacher.id }, 
     orderBy: { createdAt: 'desc' }
   })
 }
@@ -45,7 +60,6 @@ export default async function TeacherDashboard() {
             <p className="text-slate-500">Gerencie suas atividades e acompanhe o progresso.</p>
           </div>
 
-          {/* O MODAL DE CRIAÇÃO COM IA */}
           <Dialog>
             <DialogTrigger asChild>
               <Button className="bg-indigo-600 hover:bg-indigo-700">✨ Nova Atividade com IA</Button>
@@ -71,7 +85,13 @@ export default async function TeacherDashboard() {
             </DialogContent>
           </Dialog>
         </div>
-
+<div className="absolute top-4 right-4">
+  <form action={logout}>
+    <Button variant="outline" size="sm" className="gap-2 text-red-500 hover:text-red-700 hover:bg-red-50 border-red-200">
+      <LogOut size={16} /> Sair
+    </Button>
+  </form>
+</div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {activities.map((activity) => (
             <Card key={activity.id} className="hover:shadow-lg transition-shadow bg-white">
@@ -86,7 +106,6 @@ export default async function TeacherDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {/* CORREÇÃO 2: O Botão DEVE ficar DENTRO do Link */}
                 <Link href={`/teacher/activity/${activity.id}`} className="w-full block">
                    <Button variant="secondary" className="w-full">Ver Detalhes</Button>
                 </Link>

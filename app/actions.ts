@@ -5,6 +5,8 @@ import Groq from 'groq-sdk'
 import { PrismaClient } from '@prisma/client'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { cookies } from "next/headers"
+
 
 const prisma = new PrismaClient()
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
@@ -14,7 +16,7 @@ export async function generateQuiz(formData: FormData) {
   const difficulty = "médio" // Poderíamos pegar do form também
   
   // Hardcoded para teste (no futuro pegaremos da sessão do usuário logado)
-  const teacherEmail = 'admin@reissoft.com' 
+  const teacherEmail = await getCurrentUser();
 
   if (!topic) return
 
@@ -129,7 +131,7 @@ export async function deleteActivity(formData: FormData) {
 
 export async function submitQuizResult(activityId: string, score: number) {
   // Hardcoded para teste (na vida real viria da sessão)
-  const studentEmail = 'aluno@lumen.com' 
+  const studentEmail = await getCurrentUser()
 
   try {
     const student = await prisma.student.findUnique({
@@ -195,4 +197,70 @@ export async function submitQuizResult(activityId: string, score: number) {
     console.error("Erro ao submeter:", error)
     return { success: false, message: "Erro ao salvar resultado." }
   }
+}
+
+// app/actions.ts
+
+// ... (códigos anteriores)
+
+// Definição dos Prédios Disponíveis (Hardcoded por enquanto)
+const BUILDINGS = {
+  house: { name: "Casa Residencial", cost: 50, type: "house" },
+  school: { name: "Biblioteca", cost: 150, type: "school" },
+  park:   { name: "Praça Central", cost: 100, type: "park" },
+  power:  { name: "Gerador Solar", cost: 300, type: "power" }
+}
+
+export async function buyBuilding(type: string, x: number, y: number) {
+  const studentEmail = await getCurrentUser()
+
+  try {
+    const student = await prisma.student.findUnique({
+      where: { email: studentEmail },
+      include: { resources: true }
+    })
+
+    if (!student || !student.resources) return // Apenas return vazio
+
+    const buildingInfo = BUILDINGS[type as keyof typeof BUILDINGS]
+    
+    // Se não tiver ouro, apenas para a execução (sem retornar objeto de erro por enquanto)
+    if (student.resources.gold < buildingInfo.cost) {
+      return 
+    }
+
+    const currentCity = (student.cityData as any) || { buildings: [] }
+    const isOccupied = currentCity.buildings.find((b: any) => b.x === x && b.y === y)
+    
+    if (isOccupied) return 
+
+    // Adiciona o prédio
+    const newBuilding = { id: Date.now(), type, x, y }
+    currentCity.buildings.push(newBuilding)
+
+    await prisma.student.update({
+      where: { id: student.id },
+      data: {
+        resources: {
+          update: { gold: { decrement: buildingInfo.cost } }
+        },
+        cityData: currentCity
+      }
+    })
+
+    // Atualiza a tela
+    revalidatePath('/student/city')
+    
+    // REMOVA o "return { success: true ... }"
+    // Ao não retornar nada, a função vira Promise<void>, e o erro do formulário somem.
+
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+async function getCurrentUser() {
+  const email = (await cookies()).get("lumen_session")?.value
+  if (!email) redirect("/login") // Se não tiver cookie, manda pro login
+  return email
 }

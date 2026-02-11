@@ -1,0 +1,198 @@
+// app/actions.ts
+'use server'
+
+import Groq from 'groq-sdk'
+import { PrismaClient } from '@prisma/client'
+import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
+
+const prisma = new PrismaClient()
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+
+export async function generateQuiz(formData: FormData) {
+  const topic = formData.get('topic') as string
+  const difficulty = "médio" // Poderíamos pegar do form também
+  
+  // Hardcoded para teste (no futuro pegaremos da sessão do usuário logado)
+  const teacherEmail = 'admin@reissoft.com' 
+
+  if (!topic) return
+
+  try {
+    console.log(`⚡ Groq gerando quiz sobre: ${topic}...`)
+
+    // 1. Pedir para a Groq gerar o JSON
+    const completion = await groq.chat.completions.create({
+      // Usando Llama 3 70B (Rápido e Inteligente)
+      model: "llama-3.3-70b-versatile", 
+      messages: [
+        {
+          role: "system",
+          content: `Você é um assistente pedagógico especializado em criar material didático gamificado.
+          
+          Sua tarefa é gerar um Quiz sobre o tema fornecido.
+          A saída DEVE ser estritamente um JSON válido seguindo exatamente esta estrutura, sem texto adicional antes ou depois:
+          
+          {
+            "title": "Título Criativo e Curto",
+            "description": "Uma descrição engajadora de 1 frase",
+            "questions": [
+              {
+                "text": "O enunciado da pergunta",
+                "options": ["Alternativa A", "Alternativa B", "Alternativa C", "Alternativa D"],
+                "correct": 0 // Índice da resposta correta (0 a 3, number)
+              }
+            ]
+          }
+          
+          Gere 3 perguntas de dificuldade ${difficulty}.`
+        },
+        { 
+          role: "user", 
+          content: `Gere um quiz sobre o tema: ${topic}` 
+        }
+      ],
+      temperature: 0.5,
+      // Importante: Força a resposta em JSON para evitar erros de parse
+      response_format: { type: "json_object" } 
+    })
+
+    const content = completion.choices[0]?.message?.content
+    if (!content) throw new Error("Sem resposta da Groq")
+
+    console.log("Resposta bruta da Groq:", content.substring(0, 100) + "...")
+
+    // 2. Parsear o JSON
+    const quizData = JSON.parse(content)
+
+    // 3. Buscar ID do Professor
+    const teacher = await prisma.teacher.findFirst({
+      where: { email: teacherEmail }
+    })
+
+    if (!teacher) {
+      // Se não achar o professor (caso o banco tenha resetado), cria um fallback ou lança erro
+      throw new Error("Professor admin@reissoft.com não encontrado. Rode o seed novamente.")
+    }
+
+    // 4. Salvar no Banco
+    await prisma.activity.create({
+      data: {
+        title: quizData.title,
+        description: quizData.description,
+        type: 'QUIZ',
+        difficulty: 1,
+        teacherId: teacher.id,
+        // O Prisma aceita JSON direto se o tipo no schema for Json
+        payload: { 
+            questions: quizData.questions 
+        } 
+      }
+    })
+
+    // 5. Atualizar a tela
+    revalidatePath('/teacher')
+    console.log("✅ Quiz gerado e salvo via Groq!")
+    
+  } catch (error) {
+    console.error("Erro na geração:", error)
+    // Em produção, retornaria o erro para exibir um Toast no front
+  }
+
+  
+}
+
+
+export async function deleteActivity(formData: FormData) {
+  const id = formData.get('id') as string
+  
+  if (!id) return
+
+  try {
+    await prisma.activity.delete({
+      where: { id }
+    })
+    
+    // Redireciona de volta para o painel após deletar
+    revalidatePath('/teacher')
+    // Em Server Actions, para redirecionar, importamos 'redirect' de 'next/navigation'
+    // Mas como o form está na página interna, o revalidate pode não ser suficiente visualmente se não sair da página.
+    // O ideal aqui seria usar redirect('/teacher')
+  } catch (error) {
+    console.error("Erro ao deletar:", error)
+  }
+}
+
+// app/actions.ts
+
+// ... (imports anteriores e funções generateQuiz/deleteActivity mantêm-se iguais)
+
+export async function submitQuizResult(activityId: string, score: number) {
+  // Hardcoded para teste (na vida real viria da sessão)
+  const studentEmail = 'aluno@lumen.com' 
+
+  try {
+    const student = await prisma.student.findUnique({
+      where: { email: studentEmail },
+      include: { resources: true }
+    })
+
+    if (!student) throw new Error("Aluno não encontrado")
+
+    // Lógica de Gamificação:
+    // Se tirou mais que 70, ganha recompensas.
+    const passed = score >= 70
+    let rewardMessage = "Tente novamente para ganhar recursos."
+    
+    if (passed) {
+      // Cálculo da Recompensa (Ex: 10 de Ouro e 50 XP fixo)
+      const goldReward = 10
+      const xpReward = 50
+
+      // Atualiza o Aluno (Transação Atômica)
+      await prisma.$transaction([
+        // 1. Registra a tentativa
+        prisma.activityAttempt.create({
+          data: {
+            studentId: student.id,
+            activityId: activityId,
+            score: score,
+            response: {}, // Poderíamos salvar as respostas exatas aqui
+            rewarded: true
+          }
+        }),
+        // 2. Deposita o Ouro e XP
+        prisma.student.update({
+          where: { id: student.id },
+          data: {
+            xp: { increment: xpReward },
+            resources: {
+              update: {
+                gold: { increment: goldReward }
+              }
+            }
+          }
+        })
+      ])
+      
+      rewardMessage = `Parabéns! Você ganhou +${goldReward} Ouro e +${xpReward} XP!`
+    } else {
+        // Apenas registra a tentativa falha
+        await prisma.activityAttempt.create({
+            data: {
+              studentId: student.id,
+              activityId: activityId,
+              score: score,
+              response: {},
+              rewarded: false
+            }
+          })
+    }
+
+    return { success: true, message: rewardMessage, passed }
+
+  } catch (error) {
+    console.error("Erro ao submeter:", error)
+    return { success: false, message: "Erro ao salvar resultado." }
+  }
+}

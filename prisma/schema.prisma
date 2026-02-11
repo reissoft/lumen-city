@@ -1,0 +1,122 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- ESCOLAS & USUÁRIOS ---
+
+model School {
+  id        String   @id @default(uuid())
+  name      String
+  plan      PlanType @default(STARTER)
+  students  Student[]
+  teachers  Teacher[]
+  createdAt DateTime @default(now())
+}
+
+model Teacher {
+  id         String     @id @default(uuid())
+  name       String
+  email      String     @unique
+  password   String
+  schoolId   String
+  school     School     @relation(fields: [schoolId], references: [id])
+  activities Activity[]
+}
+
+model Student {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String   // Em produção, isso será o hash
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id])
+  
+  // Gamificação
+  xp        Int      @default(0)
+  level     Int      @default(1)
+  
+  // Inventário e Economia (1-to-1)
+  resources StudentResources?
+  
+  // Save Game do PlayCanvas (JSON com coordenadas dos prédios)
+  cityData  Json?    
+  
+  attempts  ActivityAttempt[]
+}
+
+model StudentResources {
+  id        String  @id @default(uuid())
+  studentId String  @unique
+  student   Student @relation(fields: [studentId], references: [id])
+  
+  gold      Int     @default(100)
+  wood      Int     @default(0)
+  energy    Int     @default(0)
+  science   Int     @default(0)
+}
+
+// --- SISTEMA PEDAGÓGICO POLIMÓRFICO ---
+
+model Activity {
+  id          String       @id @default(uuid())
+  title       String
+  description String?
+  
+  // Define como o Front vai renderizar
+  type        ActivityType 
+  
+  // Onde a mágica acontece. Armazena:
+  // - Perguntas do Quiz
+  // - Link do Youtube + Timestamps
+  // - Tema da Redação
+  payload     Json         
+
+  difficulty  Int          @default(1)
+  
+  teacherId   String
+  teacher     Teacher      @relation(fields: [teacherId], references: [id])
+  attempts    ActivityAttempt[]
+  
+  createdAt   DateTime     @default(now())
+}
+
+model ActivityAttempt {
+  id         String   @id @default(uuid())
+  studentId  String
+  student    Student  @relation(fields: [studentId], references: [id])
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id])
+  
+  // Resposta do aluno (texto, array de indices, link de audio)
+  response   Json     
+  
+  score      Float    // Nota 0-100
+  feedback   String?  // Gerado pela IA
+  
+  rewarded   Boolean  @default(false) // Se já ganhou XP/Ouro
+  createdAt  DateTime @default(now())
+}
+
+// --- ENUMS ---
+
+enum PlanType {
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum ActivityType {
+  QUIZ
+  ESSAY
+  FLASHCARD
+  VIDEO_QUEST
+  ORDERING
+  AUDIO_REPLY
+}

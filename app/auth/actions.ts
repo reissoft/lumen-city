@@ -1,5 +1,5 @@
 // app/auth/actions.ts
-'use server' // <--- ESSA LINHA É OBRIGATÓRIA NA PRIMEIRA LINHA
+'use server'
 
 import { PrismaClient } from "@prisma/client"
 import { cookies } from "next/headers"
@@ -11,7 +11,7 @@ export async function login(formData: FormData) {
   const email = formData.get("email") as string
   const password = formData.get("password") as string
 
-  // Preparar o Cookie Store (Next.js 15 exige await)
+  // Preparar o Cookie Store
   const cookieStore = await cookies()
   const expires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 1 dia
 
@@ -19,13 +19,14 @@ export async function login(formData: FormData) {
   const teacher = await prisma.teacher.findUnique({ where: { email } })
   
   if (teacher) {
-    if (teacher.password !== password) return { error: "Senha incorreta" }
+    if (teacher.password !== password) {
+        // CORREÇÃO: Redireciona em vez de retornar objeto
+        redirect("/login?error=senha_incorreta") 
+    }
     
-    // Define cookies DIRETAMENTE aqui para não perder o contexto
     cookieStore.set("lumen_session", teacher.email, { expires, httpOnly: true })
     cookieStore.set("lumen_role", 'teacher', { expires, httpOnly: true })
     
-    // Redireciona (isso deve ser a última coisa)
     redirect("/teacher")
   }
 
@@ -33,16 +34,19 @@ export async function login(formData: FormData) {
   const student = await prisma.student.findUnique({ where: { email } })
   
   if (student) {
-    if (student.password !== password) return { error: "Senha incorreta" }
+    if (student.password !== password) {
+        // CORREÇÃO: Redireciona em vez de retornar objeto
+        redirect("/login?error=senha_incorreta")
+    }
     
-    // Define cookies DIRETAMENTE aqui
     cookieStore.set("lumen_session", student.email, { expires, httpOnly: true })
     cookieStore.set("lumen_role", 'student', { expires, httpOnly: true })
     
     redirect("/student")
   }
 
-  return { error: "Usuário não encontrado" }
+  // Se não achou ninguém
+  redirect("/login?error=usuario_nao_encontrado")
 }
 
 export async function logout() {

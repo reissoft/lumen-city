@@ -225,9 +225,9 @@ export async function buyBuilding(type: string, x: number, y: number) {
     const buildingInfo = BUILDINGS[type as keyof typeof BUILDINGS]
     
     // Se não tiver ouro, apenas para a execução (sem retornar objeto de erro por enquanto)
-    if (student.resources.gold < buildingInfo.cost) {
+    /*if (student.resources.gold < buildingInfo.cost) {
       return 
-    }
+    }*/
 
     const currentCity = (student.cityData as any) || { buildings: [] }
     const isOccupied = currentCity.buildings.find((b: any) => b.x === x && b.y === y)

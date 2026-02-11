@@ -264,3 +264,37 @@ async function getCurrentUser() {
   if (!email) redirect("/login") // Se não tiver cookie, manda pro login
   return email
 }
+
+// app/actions.ts (adicione ao final)
+
+export async function createStudent(formData: FormData) {
+  const teacherEmail = await getCurrentUser() // Garante que é um prof logado
+  
+  // Buscar a escola do professor
+  const teacher = await prisma.teacher.findUnique({ where: { email: teacherEmail } })
+  if (!teacher) return { error: "Erro de permissão" }
+
+  const name = formData.get("name") as string
+  const email = formData.get("email") as string
+  const password = "123" // Senha padrão inicial (pode mudar depois)
+
+  try {
+    await prisma.student.create({
+      data: {
+        name,
+        email,
+        password, // Em prod, usaríamos bcrypt para hashear
+        schoolId: teacher.schoolId,
+        resources: {
+           create: { gold: 100, wood: 0, energy: 100 } // Kit inicial
+        },
+        cityData: { buildings: [] } // Cidade vazia
+      }
+    })
+    
+    revalidatePath("/teacher/students")
+    return { success: true }
+  } catch (e) {
+    return { error: "Erro ao criar aluno (Email já existe?)" }
+  }
+}

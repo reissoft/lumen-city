@@ -114,3 +114,5 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     scale: 0.8
   }
 }
+
+export type BuildingType = keyof typeof BUILDING_CONFIG;

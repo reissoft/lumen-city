@@ -45,7 +45,11 @@ export default function CityInterface({ student, buildings }: { student: any, bu
   return (
     <div className="w-full h-screen relative overflow-hidden bg-black select-none">
       
-      <CityScene buildings={buildings} onSelectTile={handleTileClick} />
+      <CityScene 
+        buildings={buildings} 
+        onSelectTile={handleTileClick} 
+        activeBuild={activeBuild} 
+      />
 
       {/* HUD SUPERIOR */}
       <div className="absolute top-0 left-0 w-full p-6 pointer-events-none z-10">

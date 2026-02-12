@@ -53,8 +53,8 @@ const CityScene = memo(function CityScene({
     activeBuildRef.current = activeBuild 
   }, [onSelectTile, onCancelBuild, activeBuild])
 
-  const MAP_SIZE = 48 
-  const OFFSET = 20
+  const MAP_SIZE = 100 
+  const OFFSET = 48
   const MIN_ZOOM = 5
   const MAX_ZOOM = 50
 
@@ -277,7 +277,7 @@ const CityScene = memo(function CityScene({
             }
             if (isPanning) {
                 const zoomFactor = camera.camera!.orthoHeight / 20
-                pivot.translateLocal(-event.dx * 0.05 * zoomFactor, 0, event.dy * 0.05 * zoomFactor)
+                pivot.translateLocal(-event.dx * 0.05 * zoomFactor, 0, event.dy * -0.05 * zoomFactor)
             }
             if (camera.camera && !isRotating) {
                 camera.camera.screenToWorld(event.x, event.y, camera.camera.nearClip, rayStart)

@@ -40,6 +40,9 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile }: CityScene
   const MIN_ZOOM = 5
   const MAX_ZOOM = 50
 
+  // Limites de rotação (em graus)
+  const MIN_PITCH = 0  // Limite inferior (não pode olhar muito de baixo)
+  const MAX_PITCH = 45  // Limite superior (não pode ficar completamente vertical)
  
   // --- EFEITO 1: INICIALIZAÇÃO ---
   useEffect(() => {
@@ -108,7 +111,7 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile }: CityScene
       projection: pc.PROJECTION_ORTHOGRAPHIC,
       orthoHeight: 20
     })
-    camera.setPosition(0, 15, 15) 
+    camera.setPosition(0, 45, 45) 
     camera.lookAt(0, 0, 0) 
     pivot.addChild(camera)
 
@@ -157,6 +160,10 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile }: CityScene
     let clickStartY = 0
     let targetZoom = 20
 
+    // Rastrear ângulos de rotação manualmente
+    let currentPitch = 0  // Ângulo inicial (olhando de cima)
+    let currentYaw = 0    // Ângulo inicial
+    pivot.setEulerAngles(currentPitch, currentYaw, 0)
     if (app.mouse) {
         app.mouse.on(pc.EVENT_MOUSEWHEEL, (event: any) => {
             targetZoom -= event.wheel * 5
@@ -190,7 +197,19 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile }: CityScene
 
         app.mouse.on(pc.EVENT_MOUSEMOVE, (event: any) => {
             if (isRotating) {
-                pivot.rotate(0, -event.dx * 0.3, 0)
+                // Atualiza os ângulos
+                currentPitch -= event.dy * 0.3
+                currentYaw -= event.dx * 0.3
+                
+                // Aplica limites ao pitch (rotação vertical)
+                if (currentPitch < MIN_PITCH) {
+                    currentPitch = MIN_PITCH
+                } else if (currentPitch > MAX_PITCH) {
+                    currentPitch = MAX_PITCH
+                }
+                
+                // Aplica a rotação com os limites
+                pivot.setEulerAngles(currentPitch, currentYaw, 0)
             }
             if (isPanning) {
                 const zoomFactor = camera.camera!.orthoHeight / 20
@@ -267,7 +286,7 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile }: CityScene
 
 
                         // Animação Pop
-                        const finalScale = 1 
+                        const finalScale = s 
                         let scale = 0
                         buildingEntity.setLocalScale(0, 0, 0)
                         

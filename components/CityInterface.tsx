@@ -4,56 +4,50 @@ import { useState, useCallback } from 'react'
 import CityScene from "./CityScene"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Coins, Hammer, Home, Zap, GraduationCap, TreeDeciduous, X, MousePointer2 } from "lucide-react"
+import { Coins, X, MousePointer2, Hammer, Leaf, Route, Star } from "lucide-react"
 import { buyBuilding } from "@/app/actions"
-import { BUILDING_CONFIG } from '@/app/config/buildings'
+import { BUILDING_CONFIG, CATEGORIES, BuildingCategory } from '@/app/config/buildings'
 import { cn } from '@/lib/utils'
-//import { BUILDING_CONFIG, BuildingType } from "@/config/buildings"
 
-// Configuração dos Prédios para gerar os botões
-const BUILDING_TYPES = [
-  { id: 'house', name: 'Casa', cost: 50, icon: Home, color: 'bg-blue-600 hover:bg-blue-500' },
-  { id: 'park', name: 'Parque', cost: 100, icon: TreeDeciduous, color: 'bg-green-600 hover:bg-green-500' },
-  { id: 'school', name: 'Escola', cost: 150, icon: GraduationCap, color: 'bg-red-500 hover:bg-red-400' },
-  { id: 'power', name: 'Energia', cost: 300, icon: Zap, color: 'bg-yellow-600 hover:bg-yellow-500' },
-]
+// Ícones para as categorias
+const CATEGORY_ICONS: Record<BuildingCategory, any> = {
+  construction: Hammer,
+  nature: Leaf,
+  infrastructure: Route,
+  special: Star
+}
 
 export default function CityInterface({ student, buildings }: { student: any, buildings: any[] }) {
-  // Estado: Qual prédio está selecionado para construir? (null = nenhum)
   const [activeBuild, setActiveBuild] = useState<string | null>(null)
-  const [isBuilding, setIsBuilding] = useState(false) // Feedback visual de loading
+  const [activeCategory, setActiveCategory] = useState<BuildingCategory>('construction')
+  const [isBuilding, setIsBuilding] = useState(false)
 
-  // Ação ao clicar no Mapa 3D
   const handleTileClick = useCallback(async (x: number, y: number) => {
-    // 1. Se NÃO tiver nada selecionado na barra, não faz nada (ou apenas seleciona visualmente)
     if (!activeBuild) return
 
-    // 2. Verifica se o local está livre
     const isOccupied = buildings.some(b => b.x === x && b.y === y)
-    
     if (isOccupied) {
       alert("Local ocupado!")
       return
     }
 
-    // 3. CONSTRÓI!
     setIsBuilding(true)
     await buyBuilding(activeBuild, x, y)
     setIsBuilding(false)
-    
-    // Opcional: Deselecionar após construir? 
-    // Comente a linha abaixo se quiser construir várias casas seguidas (modo "pintura")
-    setActiveBuild(null) 
-
+    // setActiveBuild(null) // Opcional: manter selecionado para construir vários
   }, [activeBuild, buildings])
+
+  // Filtra os prédios baseados na categoria atual
+  const filteredBuildings = Object.entries(BUILDING_CONFIG).filter(
+    ([_, config]) => config.category === activeCategory
+  )
 
   return (
     <div className="w-full h-screen relative overflow-hidden bg-black select-none">
       
-      {/* CENA 3D (Fundo) */}
       <CityScene buildings={buildings} onSelectTile={handleTileClick} />
 
-      {/* --- HUD SUPERIOR (Recursos) --- */}
+      {/* HUD SUPERIOR */}
       <div className="absolute top-0 left-0 w-full p-6 pointer-events-none z-10">
         <div className="flex justify-between items-start">
           <div className="bg-slate-900/80 backdrop-blur p-4 rounded-xl border border-slate-700 pointer-events-auto">
@@ -68,12 +62,12 @@ export default function CityInterface({ student, buildings }: { student: any, bu
         </div>
       </div>
 
-      {/* --- AVISO FLUTUANTE (Quando selecionado) --- */}
+      {/* AVISO DE CONSTRUÇÃO ATIVA */}
       {activeBuild && (
         <div className="absolute top-24 left-1/2 -translate-x-1/2 pointer-events-none z-20 animate-bounce">
-          <Badge className="bg-indigo-600 text-white px-6 py-2 text-lg shadow-xl border-2 border-white">
-            <MousePointer2 className="w-4 h-4 mr-2" />
-            Clique no mapa para colocar: {BUILDING_TYPES.find(b => b.id === activeBuild)?.name}
+          <Badge className="bg-indigo-600 text-white px-6 py-2 text-lg shadow-xl border-2 border-white flex items-center gap-2">
+            <MousePointer2 className="w-4 h-4" />
+            Construindo: {BUILDING_CONFIG[activeBuild]?.name}
           </Badge>
           <div className="text-center mt-2">
             <Button 
@@ -88,27 +82,66 @@ export default function CityInterface({ student, buildings }: { student: any, bu
         </div>
       )}
 
-      {/* --- BARRA DE CONSTRUÇÃO (Rodapé) --- */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto z-20 w-full max-w-3xl px-4">
-        <div className="bg-slate-900/90 backdrop-blur border border-slate-700 p-2 rounded-2xl shadow-2xl flex items-center justify-center gap-2 md:gap-4 overflow-x-auto">
-            
-            <div className="flex gap-4 overflow-x-auto">
-    {Object.entries(BUILDING_CONFIG).map(([key, config]) => {
-        const isSelected = activeBuild === key
-        return (
-            <button
+      {/* MENU INFERIOR */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto z-20 w-full max-w-4xl px-4 flex flex-col gap-2">
+        
+        {/* ABAS DE CATEGORIA */}
+        <div className="flex justify-center gap-2">
+          {Object.entries(CATEGORIES).map(([key, label]) => {
+            const isSelected = activeCategory === key
+            const Icon = CATEGORY_ICONS[key as BuildingCategory]
+            return (
+              <button
                 key={key}
-                onClick={() => setActiveBuild(isSelected ? null : key)}
-                className={cn("p-4 rounded-xl...", isSelected && "bg-indigo-600")}
-            >
-                <config.icon size={24} />
-                <span className="text-xs font-bold">{config.name}</span>
-                <span className="text-[10px] text-yellow-500">{config.cost} G</span>
-            </button>
-        )
-    })}
-</div>
+                onClick={() => setActiveCategory(key as BuildingCategory)}
+                className={cn(
+                  "px-4 py-2 rounded-t-lg text-sm font-bold flex items-center gap-2 transition-all backdrop-blur",
+                  isSelected 
+                    ? "bg-slate-900/95 text-white border-t border-x border-slate-600" 
+                    : "bg-slate-900/60 text-slate-400 hover:bg-slate-800"
+                )}
+              >
+                <Icon size={16} />
+                {label}
+              </button>
+            )
+          })}
+        </div>
 
+        {/* LISTA DE PRÉDIOS DA CATEGORIA */}
+        <div className="bg-slate-900/95 backdrop-blur border border-slate-600 p-2 rounded-2xl rounded-tl-none shadow-2xl flex items-center justify-center gap-2 overflow-x-auto min-h-[110px]">
+            {filteredBuildings.length > 0 ? (
+              filteredBuildings.map(([key, config]) => {
+                  const isSelected = activeBuild === key
+                  return (
+                      <button
+                          key={key}
+                          onClick={() => setActiveBuild(isSelected ? null : key)}
+                          className={cn(
+                              "relative group flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-200 min-w-[90px]",
+                              isSelected 
+                                  ? "bg-indigo-600 scale-105 shadow-lg ring-2 ring-white" 
+                                  : "hover:bg-slate-800 hover:-translate-y-1"
+                          )}
+                      >
+                          <div className={cn(
+                              "p-3 rounded-full mb-1 transition-colors",
+                              isSelected ? "bg-white text-indigo-600" : "bg-slate-800 text-slate-300 group-hover:bg-slate-700"
+                          )}>
+                              <config.icon size={24} />
+                          </div>
+                          <span className={cn("text-xs font-bold", isSelected ? "text-white" : "text-slate-400")}>
+                              {config.name}
+                          </span>
+                          <span className="text-[10px] text-yellow-500 font-mono">
+                              {config.cost} G
+                          </span>
+                      </button>
+                  )
+              })
+            ) : (
+              <p className="text-slate-500 text-sm py-4">Nenhum item nesta categoria ainda.</p>
+            )}
         </div>
       </div>
 

@@ -2,8 +2,7 @@
 
 import { useEffect, useRef, memo } from 'react'
 import * as pc from 'playcanvas'
-import { BUILDING_CONFIG, BuildingType } from '@/app/config/buildings'
-import { cn } from '@/lib/utils'
+import { BUILDING_CONFIG } from '@/app/config/buildings'
 
 // Se estiver usando Next.js com React 18+, isso evita erros de SSR com window
 if (typeof window !== 'undefined') {
@@ -27,29 +26,25 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile }: CityScene
   const appRef = useRef<pc.Application | null>(null)
   const onSelectTileRef = useRef(onSelectTile)
   
-  // Cache para guardar os modelos carregados
   const loadedAssets = useRef<Record<string, pc.Asset>>({})
 
   useEffect(() => {
     onSelectTileRef.current = onSelectTile
-    
   }, [onSelectTile])
 
   const MAP_SIZE = 48 
   const OFFSET = 20
   const MIN_ZOOM = 5
   const MAX_ZOOM = 50
+  const MIN_PITCH = 0 
+  const MAX_PITCH = 45
 
-  // Limites de rotação (em graus)
-  const MIN_PITCH = 0  // Limite inferior (não pode olhar muito de baixo)
-  const MAX_PITCH = 45  // Limite superior (não pode ficar completamente vertical)
- 
   // --- EFEITO 1: INICIALIZAÇÃO ---
   useEffect(() => {
     if (!canvasRef.current) return
     if (appRef.current) return
 
-    console.log("🏗️ Iniciando Engine 3D e Carregando Assets...")
+    console.log("🏗️ Iniciando Engine 3D...")
 
     const canvas = canvasRef.current
     const app = new pc.Application(canvas, {
@@ -57,14 +52,6 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile }: CityScene
       touch: new pc.TouchDevice(canvas),
       elementInput: new pc.ElementInput(canvas)
     })
-
-    Object.entries(BUILDING_CONFIG).forEach(([key, config]) => {
-        app.assets.loadFromUrl(config.url, 'container', (err, asset) => {
-            if (asset) loadedAssets.current[key] = asset
-        })
-    })
-
-
     appRef.current = app
 
     app.setCanvasFillMode(pc.FILLMODE_NONE)
@@ -83,25 +70,19 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile }: CityScene
     window.addEventListener('resize', resize)
     setTimeout(resize, 50)
 
-    // --- CARREGAR MODELOS ---
-    const loadModel = (key: string, url: string) => {
-        // 'container' é o tipo correto para GLB
-        app.assets.loadFromUrl(url, 'container', (err, asset) => {
+    // --- CARREGAR MODELOS DO CONFIG ---
+    // Agora varre o JSON completo
+    Object.entries(BUILDING_CONFIG).forEach(([key, config]) => {
+        app.assets.loadFromUrl(config.url, 'container', (err, asset) => {
             if (err) {
-                console.error(`Erro ao carregar ${key} (${url}):`, err)
+                console.warn(`Erro carregando ${key}:`, err)
                 return
             }
-            if (asset) {
-                console.log(`✅ Modelo carregado: ${key}`)
-                loadedAssets.current[key] = asset
-            }
+            if (asset) loadedAssets.current[key] = asset
         })
-    }
+    })
 
-    // Carrega todos os modelos da lista
-    Object.entries(BUILDING_CONFIG).forEach(([key, config]) => loadModel(key, config.url))
-
-    // --- CENA BÁSICA ---
+    // --- CENA ---
     const pivot = new pc.Entity('CameraPivot')
     app.root.addChild(pivot)
 
@@ -135,7 +116,6 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile }: CityScene
     ground.setPosition(0, -0.1, 0)
     app.root.addChild(ground)
 
-    // Cursor (Mantido como caixa para clareza visual, mas pode ser modelo também)
     const cursor = new pc.Entity('Cursor')
     cursor.addComponent('render', { type: 'box' })
     const cursorMat = new pc.StandardMaterial()
@@ -148,7 +128,7 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile }: CityScene
     cursor.enabled = false
     app.root.addChild(cursor)
 
-    // --- CONTROLES DE MOUSE ---
+    // --- CONTROLES ---
     const ray = new pc.Ray()
     const hitPosition = new pc.Vec3()
     const rayStart = new pc.Vec3()
@@ -159,11 +139,11 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile }: CityScene
     let clickStartX = 0
     let clickStartY = 0
     let targetZoom = 20
-
-    // Rastrear ângulos de rotação manualmente
-    let currentPitch = 0  // Ângulo inicial (olhando de cima)
-    let currentYaw = 0    // Ângulo inicial
+    let currentPitch = 0
+    let currentYaw = 0
+    
     pivot.setEulerAngles(currentPitch, currentYaw, 0)
+
     if (app.mouse) {
         app.mouse.on(pc.EVENT_MOUSEWHEEL, (event: any) => {
             targetZoom -= event.wheel * 5
@@ -197,18 +177,10 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile }: CityScene
 
         app.mouse.on(pc.EVENT_MOUSEMOVE, (event: any) => {
             if (isRotating) {
-                // Atualiza os ângulos
                 currentPitch -= event.dy * 0.3
                 currentYaw -= event.dx * 0.3
-                
-                // Aplica limites ao pitch (rotação vertical)
-                if (currentPitch < MIN_PITCH) {
-                    currentPitch = MIN_PITCH
-                } else if (currentPitch > MAX_PITCH) {
-                    currentPitch = MAX_PITCH
-                }
-                
-                // Aplica a rotação com os limites
+                if (currentPitch < MIN_PITCH) currentPitch = MIN_PITCH
+                else if (currentPitch > MAX_PITCH) currentPitch = MAX_PITCH
                 pivot.setEulerAngles(currentPitch, currentYaw, 0)
             }
             if (isPanning) {
@@ -252,40 +224,36 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile }: CityScene
     }
   }, []) 
 
-
-  // --- EFEITO 2: ATUALIZAÇÃO DOS PRÉDIOS COM GLB ---
+  // --- EFEITO 2: INSTANCIAR PRÉDIOS ---
   useEffect(() => {
     if (!appRef.current) return
     const app = appRef.current
 
-    // Intervalo para verificar se os assets terminaram de carregar
     const checkAssetsInterval = setInterval(() => {
         
         buildings.forEach(b => {
-            // Verifica se o prédio já existe na cena
             const existingEntity = app.root.findByName(`Building-${b.id}`)
             
             if (!existingEntity) {
                 const asset = loadedAssets.current[b.type]
                 
-                // Se o asset GLB carregou, instancia ele
                 if (asset && asset.resource) {
-
-                    const config = BUILDING_CONFIG[b.type as BuildingType]
-                    if (asset && asset.resource && config) {
+                    // Busca config atualizada (para pegar scale correto do arquivo de config novo)
+                    const config = BUILDING_CONFIG[b.type]
+                    
+                    if (config) {
                         const buildingEntity = (asset.resource as any).instantiateRenderEntity({ app })
                         
-                        // Aplica a escala vinda do JSON
-                        const s = config.scale
+                        const s = config.scale || 1
                         buildingEntity.setLocalScale(s, s, s)
+                        buildingEntity.name = `Building-${b.id}`
                         
-                        // Aplica a posição
-                        buildingEntity.setPosition((b.x * 2) - OFFSET, 0, (b.y * 2) - OFFSET)
+                        const worldX = (b.x * 2) - OFFSET
+                        const worldZ = (b.y * 2) - OFFSET
+                        buildingEntity.setPosition(worldX, 0, worldZ)
+                        
                         app.root.addChild(buildingEntity)
-                    
 
-
-                        // Animação Pop
                         const finalScale = s 
                         let scale = 0
                         buildingEntity.setLocalScale(0, 0, 0)
@@ -300,11 +268,10 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile }: CityScene
                         }, 16)
                     }
                 } 
-                // Se não carregou o GLB, podemos colocar um cubo temporário ou apenas esperar o próximo ciclo
             }
         })
 
-    }, 500) // Tenta a cada meio segundo
+    }, 500) 
 
     return () => clearInterval(checkAssetsInterval)
 

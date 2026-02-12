@@ -1,47 +1,116 @@
-// config/buildings.ts
-import { Home, TreeDeciduous, GraduationCap, Zap } from "lucide-react"
+// app/config/buildings.ts
+import { 
+  Home, TreeDeciduous, GraduationCap, Zap, 
+  Building2, Shrub, Route, Star, Landmark 
+} from "lucide-react"
 
-export const BUILDING_CONFIG = {
+export type BuildingCategory = 'construction' | 'nature' | 'infrastructure' | 'special'
+
+export interface BuildingDef {
+  name: string
+  description: string
+  cost: number
+  category: BuildingCategory
+  url: string
+  icon: any
+  scale: number
+}
+
+// Definição das Categorias (para usar na UI)
+export const CATEGORIES: Record<BuildingCategory, string> = {
+  construction: "Construção",
+  nature: "Natureza",
+  infrastructure: "Infraestrutura",
+  special: "Especial"
+}
+
+export const BUILDING_CONFIG: Record<string, BuildingDef> = {
+  // --- CONSTRUÇÃO ---
   house: {
     name: "Casa",
+    description: "Residência básica.",
+    category: 'construction',
     cost: 50,
     url: "/models/house.glb",
     icon: Home,
-    color: { r: 0.2, g: 0.6, b: 1 }, // Cor para o cursor/fallback
     scale: 1.0
-  },
-  park: {
-    name: "Parque",
-    cost: 100,
-    url: "/models/park.glb",
-    icon: TreeDeciduous,
-    color: { r: 0.2, g: 0.8, b: 0.2 },
-    scale: 1.2
   },
   school: {
     name: "Escola",
+    description: "Ensino para jovens.",
+    category: 'construction',
     cost: 150,
     url: "/models/school.glb",
     icon: GraduationCap,
-    color: { r: 1, g: 0.3, b: 0.3 },
     scale: 1.5
   },
   power: {
-    name: "Energia",
+    name: "Usina",
+    description: "Gera energia.",
+    category: 'construction',
     cost: 300,
     url: "/models/power.glb",
     icon: Zap,
-    color: { r: 1, g: 0.8, b: 0 },
     scale: 1.0
   },
-  academia: {
-    name: "Academia",
-    cost: 300,
-    url: "/models/academia.glb",
-    icon: Zap,
-    color: { r: 1, g: 0.8, b: 0 },
-    scale: 3
+  apartment: {
+    name: "Prédio",
+    description: "Alta densidade.",
+    category: 'construction',
+    cost: 500,
+    url: "/models/house.glb", // Usei placeholder, troque depois
+    icon: Building2,
+    scale: 1.5
+  },
+
+  // --- NATUREZA ---
+  park: {
+    name: "Árvore",
+    description: "Melhora o ar.",
+    category: 'nature',
+    cost: 25,
+    url: "/models/park.glb",
+    icon: TreeDeciduous,
+    scale: 1.2
+  },
+  bush: {
+    name: "Arbusto",
+    description: "Decoração simples.",
+    category: 'nature',
+    cost: 10,
+    url: "/models/park.glb", // Placeholder
+    icon: Shrub,
+    scale: 0.8
+  },
+
+  // --- INFRAESTRUTURA ---
+  road: {
+    name: "Rua",
+    description: "Conecta prédios.",
+    category: 'infrastructure',
+    cost: 5,
+    url: "/models/house.glb", // Placeholder (ideal seria um modelo plano)
+    icon: Route,
+    scale: 0.1 // Bem baixo para parecer chão
+  },
+
+  // --- ESPECIAL ---
+  statue: {
+    name: "Estátua",
+    description: "Glória do líder.",
+    category: 'special',
+    cost: 1000,
+    url: "/models/school.glb", // Placeholder
+    icon: Landmark,
+    scale: 0.8
+  },
+  fountain: {
+    name: "Fonte",
+    description: "Água relaxante.",
+    category: 'special',
+    cost: 800,
+    url: "/models/power.glb", // Placeholder
+    icon: Star,
+    scale: 0.8
   }
 }
-
-export type BuildingType = keyof typeof BUILDING_CONFIG

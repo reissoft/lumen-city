@@ -94,19 +94,24 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
 
   // Função para Rotacionar
   const handleRotate = async () => {
-    console.log("Rotacionar prédio ID:", selectedBuildingId);
     if (!selectedBuildingId) return;
 
+    // 1. Calcula a nova rotação CORRETAMENTE
+    // Pegamos a rotação atual, garantimos que é número, somamos 90 e pegamos o resto de 360
+    const currentRot = localBuildings.find(b => b.id === selectedBuildingId)?.rotation || 0;
+    const newRotation = (currentRot + 90) % 360;
+
+    // 2. Atualiza visualmente (Otimista)
     setLocalBuildings(prev => prev.map(b => {
-        console.log("Rotacionando prédio ID:", b.id, "Selecionado:", selectedBuildingId);
         if (b.id === selectedBuildingId) {
-            const currentRot = b.rotation || 0;
-            return { ...b, rotation: (currentRot + 90) % 360 };
+            return { ...b, rotation: newRotation };
         }
         return b;
     }));
-    await rotateBuildingAction(selectedBuildingId, (selectedBuildingData?.rotation || 0 + 90) % 360);
-  };
+
+    // 3. Salva no Banco
+    await rotateBuildingAction(selectedBuildingId, newRotation);
+};
 
   // Função para Deletar (Extra bônus)
   const handleDelete = async () => {

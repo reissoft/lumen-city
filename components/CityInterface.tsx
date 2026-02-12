@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import CityScene from "./CityScene"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Coins, X, MousePointer2, Hammer, Leaf, Route, Star, RotateCw, Trash2 } from "lucide-react"
-import { buyBuilding } from "@/app/actions"
+import { buyBuilding, demolishBuildingAction, rotateBuildingAction } from "@/app/actions"
 import { BUILDING_CONFIG, CATEGORIES, BuildingCategory } from '@/app/config/buildings'
 import { cn } from '@/lib/utils'
 
@@ -31,7 +31,8 @@ let inEditMode = false;
 export default function CityInterface({ student, buildings: initialBuildings }: { student: any, buildings: any[] }) {
   // Estado local dos prédios para permitir atualização instantânea na tela
   // (Na vida real, você salvaria a rotação no banco de dados via Server Action)
-  const [localBuildings, setLocalBuildings] = useState<BuildingData[]>(initialBuildings || []);
+  //const [localBuildings, setLocalBuildings] = useState<BuildingData[]>(initialBuildings || []);
+  const [localBuildings, setLocalBuildings] = useState<BuildingData[]>([]);
   
   const [activeBuild, setActiveBuild] = useState<string | null>(null)
   const [activeCategory, setActiveCategory] = useState<BuildingCategory>('construction')
@@ -39,11 +40,21 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
   
   // Estado do Prédio Selecionado
   const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
+        useEffect(() => {
+            console.log("Prédios iniciais do banco:", initialBuildings);
+            if (initialBuildings && initialBuildings.length > 0) {
+                console.log("📥 Sincronizando prédios do banco:", initialBuildings.length);
+                setLocalBuildings(initialBuildings);
+                
+            }
+        }, [initialBuildings]);
+
 
   const handleTileClick = useCallback(async (x: number, y: number) => {
     // 1. Verificar se clicou em um prédio existente
     const clickedBuilding = localBuildings.find(b => b.x === x && b.y === y);
     
+
     // MODO CONSTRUÇÃO
     if (activeBuild) {
       if (clickedBuilding) {
@@ -61,6 +72,8 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
       setLocalBuildings([...localBuildings, newBuilding]);
       // await buyBuilding(...) // Descomente para integrar com backend
       setIsBuilding(false);
+
+      
       // setActiveBuild(null); // Opcional: sair do modo construção
       return;
     }
@@ -80,7 +93,7 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
 
 
   // Função para Rotacionar
-  const handleRotate = () => {
+  const handleRotate = async () => {
     console.log("Rotacionar prédio ID:", selectedBuildingId);
     if (!selectedBuildingId) return;
 
@@ -92,12 +105,14 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
         }
         return b;
     }));
+    await rotateBuildingAction(selectedBuildingId, (selectedBuildingData?.rotation || 0 + 90) % 360);
   };
 
   // Função para Deletar (Extra bônus)
-  const handleDelete = () => {
+  const handleDelete = async () => {
       if (!selectedBuildingId) return;
       if (confirm("Demolir este prédio?")) {
+          await demolishBuildingAction(selectedBuildingId);
           setLocalBuildings(prev => prev.filter(b => b.id !== selectedBuildingId));
           setSelectedBuildingId(null);
       }
@@ -112,6 +127,8 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
   )
 
   return (
+
+    
     <div className="w-full h-screen relative overflow-hidden bg-black select-none">
       
       {/* CENA 3D */}

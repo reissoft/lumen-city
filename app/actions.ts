@@ -294,3 +294,61 @@ export async function createStudent(formData: FormData) {
     return { error: "Erro ao criar aluno (Email já existe?)" }
   }
 }
+
+// app/actions.ts
+
+// ... (suas outras funções: buyBuilding, generateQuiz, etc)
+
+export async function rotateBuildingAction(buildingId: number, newRotation: number) {
+  const studentEmail = await getCurrentUser();
+
+  try {
+    const student = await prisma.student.findUnique({
+      where: { email: studentEmail }
+    });
+
+    if (!student) return;
+
+    const cityData = (student.cityData as any) || { buildings: [] };
+    
+    // Localiza e atualiza a rotação do prédio específico
+    cityData.buildings = cityData.buildings.map((b: any) => 
+      b.id === buildingId ? { ...b, rotation: newRotation } : b
+    );
+
+    await prisma.student.update({
+      where: { id: student.id },
+      data: { cityData }
+    });
+
+    revalidatePath('/student/city');
+  } catch (error) {
+    console.error("Erro ao rotacionar no banco:", error);
+  }
+}
+
+export async function demolishBuildingAction(buildingId: number) {
+  const studentEmail = await getCurrentUser();
+
+  try {
+    const student = await prisma.student.findUnique({
+      where: { email: studentEmail }
+    });
+
+    if (!student) return;
+
+    const cityData = (student.cityData as any) || { buildings: [] };
+    
+    // Remove o prédio da lista
+    cityData.buildings = cityData.buildings.filter((b: any) => b.id !== buildingId);
+
+    await prisma.student.update({
+      where: { id: student.id },
+      data: { cityData }
+    });
+
+    revalidatePath('/student/city');
+  } catch (error) {
+    console.error("Erro ao demolir no banco:", error);
+  }
+}

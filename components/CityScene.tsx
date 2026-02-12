@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, memo } from 'react'
+import { useEffect, useRef, memo, useState } from 'react'
 import * as pc from 'playcanvas'
 import { BUILDING_CONFIG, BuildingType } from '@/app/config/buildings'
 
@@ -36,11 +36,14 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile, activeBuild
   
   // Referência para guardar o estado anterior e comparar
   const prevBuildingsLength = useRef(0);
-
+    const [assetsReady, setAssetsReady] = useState(false);
   useEffect(() => {
+    
     onSelectTileRef.current = onSelectTile
     onCancelBuildRef.current = onCancelBuild 
-    activeBuildRef.current = activeBuild     
+    activeBuildRef.current = activeBuild 
+    
+    
   }, [onSelectTile])
 
   const MAP_SIZE = 48 
@@ -71,6 +74,7 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile, activeBuild
     app.setCanvasResolution(pc.RESOLUTION_AUTO)
     app.start()
 
+
     // Configurações básicas
     const scene = app.scene as any;
     scene.exposure = 1.0; 
@@ -80,6 +84,7 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile, activeBuild
     Object.entries(BUILDING_CONFIG).forEach(([key, config]) => {
         app.assets.loadFromUrl(config.url, 'container', (err, asset) => {
             if (asset) loadedAssets.current[key] = asset
+            setAssetsReady(prev => !prev);
         })
     })
 
@@ -267,6 +272,9 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile, activeBuild
 
     appRef.current = app
 
+    
+
+
     return () => {
       window.removeEventListener('resize', resize)
       app.destroy()
@@ -279,7 +287,7 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile, activeBuild
   useEffect(() => {
     if (!appRef.current) return
     const app = appRef.current
-    
+    console.log("🔄 Sincronizando Cena. Assets disponíveis:", Object.keys(loadedAssets.current).length);
     // 1. Atualiza Ghost
     if (ghostEntity.current) {
         // Limpa filhos do cursor
@@ -388,7 +396,7 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile, activeBuild
     })
 
     return () => { app.off('update', updateEvent); }
-  }, [buildings, activeBuild]) // Dependências estritas
+  }, [buildings, activeBuild,assetsReady]) // Dependências estritas
 
   return (
     <canvas 

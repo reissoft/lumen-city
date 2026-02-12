@@ -19,11 +19,21 @@ interface CitySceneProps {
   buildings: Building[]
   onSelectTile?: (x: number, y: number) => void
   onCancelBuild?: () => void;
+  // NOVA PROP: Avisa o pai quando terminar de baixar tudo
+  onAssetsLoaded?: () => void; 
   activeBuild: string | null 
   selectedBuildingId: number | null 
 }
 
-const CityScene = memo(function CityScene({ buildings, onSelectTile, activeBuild, selectedBuildingId,onCancelBuild }: CitySceneProps) {
+const CityScene = memo(function CityScene({ 
+  buildings, 
+  onSelectTile, 
+  activeBuild, 
+  selectedBuildingId, 
+  onCancelBuild,
+  onAssetsLoaded 
+}: CitySceneProps) {
+
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const appRef = useRef<pc.Application | null>(null)
   const onSelectTileRef = useRef(onSelectTile)
@@ -34,17 +44,14 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile, activeBuild
   const ghostEntity = useRef<pc.Entity | null>(null) 
   const ghostMaterial = useRef<pc.StandardMaterial | null>(null) 
   
-  // Referência para guardar o estado anterior e comparar
-  const prevBuildingsLength = useRef(0);
-    const [assetsReady, setAssetsReady] = useState(false);
+  // Controle interno para saber se assets estão prontos para renderizar
+  const [assetsReady, setAssetsReady] = useState(false);
+
   useEffect(() => {
-    
     onSelectTileRef.current = onSelectTile
     onCancelBuildRef.current = onCancelBuild 
     activeBuildRef.current = activeBuild 
-    
-    
-  }, [onSelectTile])
+  }, [onSelectTile, onCancelBuild, activeBuild])
 
   const MAP_SIZE = 48 
   const OFFSET = 20
@@ -56,7 +63,7 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile, activeBuild
     if (!canvasRef.current) return
     if (appRef.current) return
 
-    console.log("🚀 Iniciando Engine V2 (Delete/Rotate Fixed)...")
+    console.log("🚀 Iniciando Engine V3 (Com Loading Screen)...")
 
     const canvas = canvasRef.current
     const app = new pc.Application(canvas, {
@@ -74,17 +81,36 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile, activeBuild
     app.setCanvasResolution(pc.RESOLUTION_AUTO)
     app.start()
 
-
     // Configurações básicas
     const scene = app.scene as any;
     scene.exposure = 1.0; 
     scene.ambientLight = new pc.Color(0.2, 0.2, 0.3); 
 
-    // Carregar Assets
+    // --- CARREGAMENTO DE ASSETS (COM CONTADOR) ---
+    let loadedCount = 0;
+    const totalAssets = Object.keys(BUILDING_CONFIG).length;
+
+    // Caso não tenha nenhum asset configurado, libera imediatamente
+    if (totalAssets === 0) {
+        setAssetsReady(true);
+        if (onAssetsLoaded) onAssetsLoaded();
+    }
+
     Object.entries(BUILDING_CONFIG).forEach(([key, config]) => {
         app.assets.loadFromUrl(config.url, 'container', (err, asset) => {
-            if (asset) loadedAssets.current[key] = asset
-            setAssetsReady(prev => !prev);
+            if (asset) {
+                loadedAssets.current[key] = asset
+                loadedCount++;
+                
+                // Se carregou o ÚLTIMO asset da lista:
+                if (loadedCount === totalAssets) {
+                    console.log("📦 Todos os assets carregados!");
+                    // 1. Avisa o componente local para rodar o Efeito 2
+                    setAssetsReady(true); 
+                    // 2. Avisa o Pai (Interface) para sumir com a tela preta
+                    if (onAssetsLoaded) onAssetsLoaded();
+                }
+            }
         })
     })
 
@@ -272,9 +298,6 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile, activeBuild
 
     appRef.current = app
 
-    
-
-
     return () => {
       window.removeEventListener('resize', resize)
       app.destroy()
@@ -283,14 +306,16 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile, activeBuild
   }, []) 
 
 
-  // --- EFEITO 2: SINCRONIZAÇÃO DA CENA (CRUCIAL PARA DELETE E ROTATE) ---
+  // --- EFEITO 2: SINCRONIZAÇÃO DA CENA ---
   useEffect(() => {
     if (!appRef.current) return
     const app = appRef.current
+    
+    // Log para confirmar que está rodando após os assets carregarem
     console.log("🔄 Sincronizando Cena. Assets disponíveis:", Object.keys(loadedAssets.current).length);
+
     // 1. Atualiza Ghost
     if (ghostEntity.current) {
-        // Limpa filhos do cursor
         while(ghostEntity.current.children.length > 0) {
             ghostEntity.current.children[0].destroy();
         }
@@ -332,28 +357,20 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile, activeBuild
     const updateEvent = () => updateGhostColor();
     app.on('update', updateEvent);
 
-
-    // --- 2. DELETAR (GARBAGE COLLECTION CORRIGIDO) ---
-    // Cria uma CÓPIA do array de filhos usando [...app.root.children]
-    // Isso evita erros de índice ao deletar enquanto itera
+    // --- 2. DELETAR ---
     const allEntities = [...app.root.children].filter(node => node.name.startsWith('Building-'));
-    
     allEntities.forEach(entity => {
         const id = parseInt(entity.name.split('-')[1]);
         const stillExists = buildings.some(b => b.id === id);
-        
         if (!stillExists) {
-            console.log(`🗑️ Deletando visualmente o ID: ${id}`);
             entity.destroy();
         }
     });
 
-
-    // --- 3. CRIAR E ATUALIZAR (COM ROTAÇÃO) ---
+    // --- 3. CRIAR E ATUALIZAR ---
     buildings.forEach(b => {
         let buildingEntity = app.root.findByName(`Building-${b.id}`) as pc.Entity;
         
-        // Se não existe, cria
         if (!buildingEntity) {
             const asset = loadedAssets.current[b.type]
             if (asset && asset.resource) {
@@ -383,20 +400,14 @@ const CityScene = memo(function CityScene({ buildings, onSelectTile, activeBuild
             }
         }
 
-        // --- ATUALIZAÇÃO DE PROPRIEDADES (ROTAÇÃO) ---
-        // Roda para TODOS os prédios, novos ou velhos
         if (buildingEntity) {
             const targetRot = b.rotation || 0;
-            // setEulerAngles(x, y, z) -> Giramos no Y (Eixo vertical)
             buildingEntity.setEulerAngles(0, targetRot, 0);
-            
-            // Log para debug (aparecerá no console do navegador se estiver girando)
-            // console.log(`Atualizando prédio ${b.id} para rotação ${targetRot}`);
         }
     })
 
     return () => { app.off('update', updateEvent); }
-  }, [buildings, activeBuild,assetsReady]) // Dependências estritas
+  }, [buildings, activeBuild, assetsReady]) // AssetsReady garante que roda de novo quando baixar
 
   return (
     <canvas 

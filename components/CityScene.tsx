@@ -205,19 +205,11 @@ const CityScene = memo(function CityScene({
     ground.setPosition(0, -0.05, 0); // Levemente abaixo de 0 para evitar z-fighting com a base dos prédios
     app.root.addChild(ground);
 
-    
-
-    
-
-    /*const ground = new pc.Entity('Ground')
-    ground.addComponent('render', { type: 'box' })
-    const groundMat = new pc.StandardMaterial()
-    groundMat.diffuse = new pc.Color(0.15, 0.18, 0.22) 
-    groundMat.update()
-    ground.render!.material = groundMat
-    ground.setLocalScale(MAP_SIZE, 0.1, MAP_SIZE)
-    ground.setPosition(0, -0.1, 0)
-    app.root.addChild(ground)*/
+    scene.fog.type = pc.FOG_LINEAR;
+        scene.fog.color = new pc.Color(0.06, 0.09, 0.16); // Cor do fundo da neblina
+        scene.fog.start = 50;
+        scene.fog.end = 120;
+        scene.updateShaders = true;
 
     const cursor = new pc.Entity('Cursor')
     cursor.setPosition(0, 0, 0)

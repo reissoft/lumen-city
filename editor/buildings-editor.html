@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor de Buildings - City Builder</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0a0e15;
+      --bg-panel: #131822;
+      --bg-card: #1a1f2e;
+      --border: #2a3142;
+      --accent: #00ff88;
+      --accent-dim: #00cc6a;
+      --text: #e4e8f0;
+      --text-dim: #8892a6;
+      --danger: #ff4466;
+      --warning: #ffaa00;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg-dark);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+    
+    /* Animated Grid Background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(rgba(0, 255, 136, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 136, 0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      animation: grid-drift 20s linear infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    @keyframes grid-drift {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(50px, 50px); }
+    }
+    
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1800px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    /* Header */
+    header {
+      background: var(--bg-panel);
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      animation: scan 3s ease-in-out infinite;
+    }
+    
+    @keyframes scan {
+      0%, 100% { left: -100%; }
+      50% { left: 100%; }
+    }
+    
+    h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 3.5rem;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+      margin-bottom: 0.5rem;
+    }
+    
+    .subtitle {
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+    }
+    
+    /* Toolbar */
+    .toolbar {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+    
+    .btn {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      color: var(--text);
+      padding: 0.75rem 1.5rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.1), transparent);
+      transition: left 0.3s;
+    }
+    
+    .btn:hover::before {
+      left: 100%;
+    }
+    
+    .btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateY(-2px);
+    }
+    
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg-dark);
+      border-color: var(--accent);
+    }
+    
+    .btn-primary:hover {
+      background: var(--accent-dim);
+      border-color: var(--accent-dim);
+      color: var(--bg-dark);
+    }
+    
+    .btn-danger {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+    
+    .btn-danger:hover {
+      background: var(--danger);
+      color: var(--bg-dark);
+    }
+    
+    /* Category Tabs */
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid var(--border);
+    }
+    
+    .tab {
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: var(--text-dim);
+      padding: 1rem 1.5rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+    }
+    
+    .tab:hover {
+      color: var(--text);
+      background: rgba(0, 255, 136, 0.05);
+    }
+    
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    
+    /* Grid Layout */
+    .editor-grid {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 2rem;
+      align-items: start;
+    }
+    
+    /* Buildings List */
+    .buildings-list {
+      display: grid;
+      gap: 1rem;
+    }
+    
+    .building-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      padding: 1.5rem;
+      display: grid;
+      grid-template-columns: 60px 1fr auto;
+      gap: 1.5rem;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+    }
+    
+    .building-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--accent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    
+    .building-card:hover {
+      border-color: var(--accent);
+      transform: translateX(4px);
+    }
+    
+    .building-card:hover::before {
+      opacity: 1;
+    }
+    
+    .building-card.active {
+      border-color: var(--accent);
+      background: rgba(0, 255, 136, 0.05);
+    }
+    
+    .building-card.active::before {
+      opacity: 1;
+    }
+    
+    .building-icon {
+      width: 60px;
+      height: 60px;
+      background: var(--bg-panel);
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+    }
+    
+    .building-info h3 {
+      font-size: 1.1rem;
+      margin-bottom: 0.25rem;
+      color: var(--text);
+      font-family: 'Bebas Neue', sans-serif;
+      letter-spacing: 0.05em;
+    }
+    
+    .building-info p {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      margin-bottom: 0.5rem;
+    }
+    
+    .building-meta {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .building-meta span {
+      background: var(--bg-panel);
+      padding: 0.25rem 0.5rem;
+      border-radius: 2px;
+    }
+    
+    .building-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .icon-btn {
+      background: var(--bg-panel);
+      border: 2px solid var(--border);
+      color: var(--text-dim);
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 1rem;
+    }
+    
+    .icon-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: scale(1.1);
+    }
+    
+    .icon-btn.danger:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+    
+    /* Editor Panel */
+    .editor-panel {
+      background: var(--bg-panel);
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      padding: 2rem;
+      position: sticky;
+      top: 2rem;
+      max-height: calc(100vh - 4rem);
+      overflow-y: auto;
+    }
+    
+    .editor-panel h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.8rem;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid var(--border);
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    label {
+      display: block;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 0.5rem;
+    }
+    
+    input, textarea, select {
+      width: 100%;
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      color: var(--text);
+      padding: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
+    }
+    
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    
+    .file-input-wrapper {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .file-input-wrapper input[type="file"] {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+    }
+    
+    .file-input-label {
+      display: block;
+      background: var(--bg-card);
+      border: 2px dashed var(--border);
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--text-dim);
+    }
+    
+    .file-input-label:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    
+    .current-file {
+      font-size: 0.75rem;
+      color: var(--accent);
+      margin-top: 0.5rem;
+      word-break: break-all;
+    }
+    
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-dim);
+    }
+    
+    .empty-state svg {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 1rem;
+      opacity: 0.3;
+    }
+    
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(10, 14, 21, 0.95);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal.active {
+      display: flex;
+    }
+    
+    .modal-content {
+      background: var(--bg-panel);
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      padding: 2rem;
+      max-width: 600px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: modalSlide 0.3s ease-out;
+    }
+    
+    @keyframes modalSlide {
+      from {
+        opacity: 0;
+        transform: translateY(-50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid var(--border);
+    }
+    
+    .modal-header h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.8rem;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+    }
+    
+    .close-modal {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    
+    .close-modal:hover {
+      color: var(--danger);
+    }
+    
+    pre {
+      background: var(--bg-dark);
+      border: 2px solid var(--border);
+      padding: 1.5rem;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 0.75rem;
+      line-height: 1.6;
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: var(--bg-dark);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 5px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--accent);
+    }
+    
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .editor-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .editor-panel {
+        position: static;
+        max-height: none;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 2.5rem;
+      }
+      
+      .building-card {
+        grid-template-columns: 50px 1fr;
+        gap: 1rem;
+      }
+      
+      .building-actions {
+        grid-column: 1 / -1;
+        justify-content: flex-end;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>BUILDING EDITOR</h1>
+      <div class="subtitle">Visual Configuration Manager v2.0</div>
+    </header>
+    
+    <div class="toolbar">
+      <button class="btn btn-primary" onclick="addNewBuilding()">
+        ➕ Novo Building
+      </button>
+      <button class="btn" onclick="exportJSON()">
+        💾 Exportar TypeScript
+      </button>
+      <button class="btn" onclick="exportJSONOnly()">
+        📦 Exportar JSON
+      </button>
+      <button class="btn" onclick="importJSON()">
+        📥 Importar Arquivo
+      </button>
+      <button class="btn" onclick="showPreview()">
+        👁️ Preview Código
+      </button>
+    </div>
+    
+    <div class="tabs">
+      <button class="tab active" data-category="all" onclick="filterCategory('all')">
+        Todos
+      </button>
+      <button class="tab" data-category="construction" onclick="filterCategory('construction')">
+        Construção
+      </button>
+      <button class="tab" data-category="nature" onclick="filterCategory('nature')">
+        Natureza
+      </button>
+      <button class="tab" data-category="infrastructure" onclick="filterCategory('infrastructure')">
+        Infraestrutura
+      </button>
+      <button class="tab" data-category="special" onclick="filterCategory('special')">
+        Especial
+      </button>
+    </div>
+    
+    <div class="editor-grid">
+      <div class="buildings-list" id="buildingsList">
+        <!-- Buildings will be populated here -->
+      </div>
+      
+      <div class="editor-panel" id="editorPanel">
+        <h2>Selecione um Building</h2>
+        <div class="empty-state">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+          <p>Clique em um building à esquerda<br>para editar suas propriedades</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal de Preview JSON -->
+  <div class="modal" id="jsonModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Preview do JSON</h2>
+        <button class="close-modal" onclick="closeModal()">&times;</button>
+      </div>
+      <pre id="jsonPreview"></pre>
+      <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="copyJSON()">
+        📋 Copiar para Clipboard
+      </button>
+    </div>
+  </div>
+  
+  <script>
+    // Ícones em emoji para cada tipo
+    const ICONS = {
+      'Home': '🏠',
+      'TreeDeciduous': '🌳',
+      'GraduationCap': '🎓',
+      'Zap': '⚡',
+      'Building2': '🏢',
+      'Shrub': '🌿',
+      'Route': '🛣️',
+      'Star': '⭐',
+      'Landmark': '🗿'
+    };
+    
+    // Dados iniciais dos buildings
+    let buildings = {
+      house: {
+        name: "Casa",
+        description: "Residência básica.",
+        category: 'construction',
+        cost: 50,
+        url: "/models/house.glb",
+        icon: 'Home',
+        scale: 1.0
+      },
+      school: {
+        name: "Escola",
+        description: "Ensino para jovens.",
+        category: 'construction',
+        cost: 150,
+        url: "/models/school.glb",
+        icon: 'GraduationCap',
+        scale: 1.5
+      },
+      power: {
+        name: "Usina",
+        description: "Gera energia.",
+        category: 'construction',
+        cost: 300,
+        url: "/models/power.glb",
+        icon: 'Zap',
+        scale: 1.0
+      },
+      apartment: {
+        name: "Prédio",
+        description: "Alta densidade.",
+        category: 'construction',
+        cost: 500,
+        url: "/models/house.glb",
+        icon: 'Building2',
+        scale: 1.5
+      },
+      park: {
+        name: "Árvore",
+        description: "Melhora o ar.",
+        category: 'nature',
+        cost: 25,
+        url: "/models/park.glb",
+        icon: 'TreeDeciduous',
+        scale: 1.2
+      },
+      bush: {
+        name: "Arbusto",
+        description: "Decoração simples.",
+        category: 'nature',
+        cost: 10,
+        url: "/models/park.glb",
+        icon: 'Shrub',
+        scale: 0.8
+      },
+      road: {
+        name: "Rua",
+        description: "Conecta prédios.",
+        category: 'infrastructure',
+        cost: 5,
+        url: "/models/house.glb",
+        icon: 'Route',
+        scale: 0.1
+      },
+      statue: {
+        name: "Estátua",
+        description: "Glória do líder.",
+        category: 'special',
+        cost: 1000,
+        url: "/models/school.glb",
+        icon: 'Landmark',
+        scale: 0.8
+      },
+      fountain: {
+        name: "Fonte",
+        description: "Água relaxante.",
+        category: 'special',
+        cost: 800,
+        url: "/models/power.glb",
+        icon: 'Star',
+        scale: 0.8
+      }
+    };
+    
+    let currentCategory = 'all';
+    let selectedBuilding = null;
+    
+    // Renderizar lista de buildings
+    function renderBuildings() {
+      const listElement = document.getElementById('buildingsList');
+      listElement.innerHTML = '';
+      
+      const filteredBuildings = Object.entries(buildings).filter(([key, building]) => {
+        if (currentCategory === 'all') return true;
+        return building.category === currentCategory;
+      });
+      
+      if (filteredBuildings.length === 0) {
+        listElement.innerHTML = `
+          <div class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+            </svg>
+            <p>Nenhum building nesta categoria</p>
+          </div>
+        `;
+        return;
+      }
+      
+      filteredBuildings.forEach(([key, building]) => {
+        const card = document.createElement('div');
+        card.className = `building-card ${selectedBuilding === key ? 'active' : ''}`;
+        card.innerHTML = `
+          <div class="building-icon">${ICONS[building.icon] || '🏗️'}</div>
+          <div class="building-info">
+            <h3>${building.name}</h3>
+            <p>${building.description}</p>
+            <div class="building-meta">
+              <span>💰 ${building.cost}</span>
+              <span>📏 ${building.scale}x</span>
+              <span>${getCategoryLabel(building.category)}</span>
+            </div>
+          </div>
+          <div class="building-actions">
+            <button class="icon-btn" onclick="editBuilding('${key}')" title="Editar">✏️</button>
+            <button class="icon-btn danger" onclick="deleteBuilding('${key}')" title="Deletar">🗑️</button>
+          </div>
+        `;
+        listElement.appendChild(card);
+      });
+    }
+    
+    // Editar building
+    function editBuilding(key) {
+      selectedBuilding = key;
+      const building = buildings[key];
+      const panel = document.getElementById('editorPanel');
+      
+      panel.innerHTML = `
+        <h2>Editar Building</h2>
+        <form onsubmit="saveBuilding(event, '${key}')">
+          <div class="form-group">
+            <label>ID / Chave</label>
+            <input type="text" id="buildingKey" value="${key}" required>
+          </div>
+          
+          <div class="form-group">
+            <label>Nome</label>
+            <input type="text" id="buildingName" value="${building.name}" required>
+          </div>
+          
+          <div class="form-group">
+            <label>Descrição</label>
+            <textarea id="buildingDescription" required>${building.description}</textarea>
+          </div>
+          
+          <div class="form-group">
+            <label>Categoria</label>
+            <select id="buildingCategory" required>
+              <option value="construction" ${building.category === 'construction' ? 'selected' : ''}>Construção</option>
+              <option value="nature" ${building.category === 'nature' ? 'selected' : ''}>Natureza</option>
+              <option value="infrastructure" ${building.category === 'infrastructure' ? 'selected' : ''}>Infraestrutura</option>
+              <option value="special" ${building.category === 'special' ? 'selected' : ''}>Especial</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>Custo</label>
+            <input type="number" id="buildingCost" value="${building.cost}" required min="0">
+          </div>
+          
+          <div class="form-group">
+            <label>Escala</label>
+            <input type="number" id="buildingScale" value="${building.scale}" required step="0.1" min="0.1">
+          </div>
+          
+          <div class="form-group">
+            <label>URL do Modelo 3D</label>
+            <input type="text" id="buildingUrl" value="${building.url}" required>
+          </div>
+          
+          <div class="form-group">
+            <label>Ícone</label>
+            <select id="buildingIcon" required>
+              ${Object.keys(ICONS).map(icon => 
+                `<option value="${icon}" ${building.icon === icon ? 'selected' : ''}>${ICONS[icon]} ${icon}</option>`
+              ).join('')}
+            </select>
+          </div>
+          
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 0.5rem;">
+            💾 Salvar Alterações
+          </button>
+          <button type="button" class="btn" style="width: 100%;" onclick="cancelEdit()">
+            ❌ Cancelar
+          </button>
+        </form>
+      `;
+      
+      renderBuildings();
+    }
+    
+    // Salvar building
+    function saveBuilding(event, oldKey) {
+      event.preventDefault();
+      
+      const newKey = document.getElementById('buildingKey').value.trim();
+      const newBuilding = {
+        name: document.getElementById('buildingName').value,
+        description: document.getElementById('buildingDescription').value,
+        category: document.getElementById('buildingCategory').value,
+        cost: parseInt(document.getElementById('buildingCost').value),
+        url: document.getElementById('buildingUrl').value,
+        icon: document.getElementById('buildingIcon').value,
+        scale: parseFloat(document.getElementById('buildingScale').value)
+      };
+      
+      // Se a chave mudou, deletar antiga e criar nova
+      if (oldKey !== newKey) {
+        delete buildings[oldKey];
+      }
+      
+      buildings[newKey] = newBuilding;
+      selectedBuilding = newKey;
+      
+      renderBuildings();
+      editBuilding(newKey); // Recarregar o editor
+      
+      // Feedback visual
+      showNotification('Building salvo com sucesso! ✅');
+    }
+    
+    // Cancelar edição
+    function cancelEdit() {
+      selectedBuilding = null;
+      const panel = document.getElementById('editorPanel');
+      panel.innerHTML = `
+        <h2>Selecione um Building</h2>
+        <div class="empty-state">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+          <p>Clique em um building à esquerda<br>para editar suas propriedades</p>
+        </div>
+      `;
+      renderBuildings();
+    }
+    
+    // Deletar building
+    function deleteBuilding(key) {
+      if (!confirm(`Tem certeza que deseja deletar "${buildings[key].name}"?`)) return;
+      
+      delete buildings[key];
+      if (selectedBuilding === key) {
+        cancelEdit();
+      }
+      renderBuildings();
+      showNotification('Building deletado! 🗑️');
+    }
+    
+    // Adicionar novo building
+    function addNewBuilding() {
+      const newKey = prompt('Digite a chave/ID do novo building (ex: hospital):');
+      if (!newKey || newKey.trim() === '') return;
+      
+      const key = newKey.trim().toLowerCase().replace(/\s+/g, '_');
+      
+      if (buildings[key]) {
+        alert('Já existe um building com essa chave!');
+        return;
+      }
+      
+      buildings[key] = {
+        name: "Novo Building",
+        description: "Descrição do building",
+        category: 'construction',
+        cost: 100,
+        url: "/models/default.glb",
+        icon: 'Home',
+        scale: 1.0
+      };
+      
+      selectedBuilding = key;
+      renderBuildings();
+      editBuilding(key);
+      showNotification('Novo building criado! ✨');
+    }
+    
+    // Filtrar por categoria
+    function filterCategory(category) {
+      currentCategory = category;
+      
+      // Atualizar tabs
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+        if (tab.dataset.category === category) {
+          tab.classList.add('active');
+        }
+      });
+      
+      renderBuildings();
+    }
+    
+    // Obter label da categoria
+    function getCategoryLabel(category) {
+      const labels = {
+        construction: '🏗️ Construção',
+        nature: '🌳 Natureza',
+        infrastructure: '🛣️ Infra',
+        special: '⭐ Especial'
+      };
+      return labels[category] || category;
+    }
+    
+    // Exportar JSON
+    function exportJSON() {
+      const output = generateTypeScriptCode();
+      const blob = new Blob([output], { type: 'text/typescript' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'buildings.ts';
+      a.click();
+      URL.revokeObjectURL(url);
+      showNotification('TypeScript exportado! 📥');
+    }
+    
+    // Exportar apenas JSON
+    function exportJSONOnly() {
+      const output = JSON.stringify(buildings, null, 2);
+      const blob = new Blob([output], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'buildings.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      showNotification('JSON exportado! 📦');
+    }
+    
+    // Importar JSON
+    function importJSON() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json,.ts';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            let content = event.target.result;
+            let parsedData;
+            
+            // Se for TypeScript, extrair apenas o objeto BUILDING_CONFIG
+            if (content.includes('BUILDING_CONFIG')) {
+              // Extrair o objeto entre BUILDING_CONFIG = { ... }
+              const match = content.match(/BUILDING_CONFIG[:\s]*(?:Record[^=]*)?=\s*({[\s\S]*?})\s*(?:export|$)/);
+              
+              if (match) {
+                let objectString = match[1];
+                
+                // Substituir referências de ícones por strings
+                const iconNames = ['Home', 'TreeDeciduous', 'GraduationCap', 'Zap', 'Building2', 'Shrub', 'Route', 'Star', 'Landmark'];
+                iconNames.forEach(iconName => {
+                  const regex = new RegExp(`icon:\\s*${iconName}`, 'g');
+                  objectString = objectString.replace(regex, `icon: "${iconName}"`);
+                });
+                
+                // Usar Function constructor ao invés de eval para mais segurança
+                parsedData = (new Function('return ' + objectString))();
+              } else {
+                throw new Error('Não foi possível encontrar BUILDING_CONFIG no arquivo');
+              }
+            } else {
+              // Se for JSON puro
+              parsedData = JSON.parse(content);
+            }
+            
+            // Validar estrutura básica
+            if (typeof parsedData !== 'object') {
+              throw new Error('Formato inválido: esperado um objeto');
+            }
+            
+            // Verificar se tem pelo menos uma propriedade válida
+            const firstKey = Object.keys(parsedData)[0];
+            if (firstKey && !parsedData[firstKey].name) {
+              throw new Error('Formato inválido: propriedades do building não encontradas');
+            }
+            
+            buildings = parsedData;
+            cancelEdit();
+            renderBuildings();
+            showNotification('JSON importado com sucesso! 📤');
+          } catch (error) {
+            alert('Erro ao importar arquivo:\n\n' + error.message + '\n\nCertifique-se de que o arquivo contém um BUILDING_CONFIG válido ou JSON válido.');
+            console.error('Erro detalhado:', error);
+          }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
+    }
+    
+    // Preview do JSON
+    function showPreview() {
+      const modal = document.getElementById('jsonModal');
+      const preview = document.getElementById('jsonPreview');
+      preview.textContent = generateTypeScriptCode();
+      modal.classList.add('active');
+    }
+    
+    // Fechar modal
+    function closeModal() {
+      document.getElementById('jsonModal').classList.remove('active');
+    }
+    
+    // Copiar JSON
+    function copyJSON() {
+      const text = generateTypeScriptCode();
+      navigator.clipboard.writeText(text).then(() => {
+        showNotification('Código copiado! 📋');
+      });
+    }
+    
+    // Gerar código TypeScript completo
+    function generateTypeScriptCode() {
+      const iconImports = [...new Set(Object.values(buildings).map(b => b.icon))];
+      
+      let code = `// app/config/buildings.ts
+import { 
+  ${iconImports.join(', ')}
+} from "lucide-react"
+
+export type BuildingCategory = 'construction' | 'nature' | 'infrastructure' | 'special'
+
+export interface BuildingDef {
+  name: string
+  description: string
+  cost: number
+  category: BuildingCategory
+  url: string
+  icon: any
+  scale: number
+}
+
+// Definição das Categorias (para usar na UI)
+export const CATEGORIES: Record<BuildingCategory, string> = {
+  construction: "Construção",
+  nature: "Natureza",
+  infrastructure: "Infraestrutura",
+  special: "Especial"
+}
+
+export const BUILDING_CONFIG: Record<string, BuildingDef> = `;
+      
+      code += JSON.stringify(buildings, (key, value) => {
+        if (key === 'icon') {
+          return `__ICON_${value}__`;
+        }
+        return value;
+      }, 2);
+      
+      // Substituir ícones por referências de variável
+      iconImports.forEach(icon => {
+        code = code.replace(`"__ICON_${icon}__"`, icon);
+      });
+      
+      code += `\n\nexport type BuildingType = keyof typeof BUILDING_CONFIG;\n`;
+      
+      return code;
+    }
+    
+    // Notificação toast
+    function showNotification(message) {
+      const existing = document.querySelector('.notification');
+      if (existing) existing.remove();
+      
+      const notification = document.createElement('div');
+      notification.className = 'notification';
+      notification.textContent = message;
+      notification.style.cssText = `
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        background: var(--accent);
+        color: var(--bg-dark);
+        padding: 1rem 1.5rem;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        z-index: 10000;
+        animation: slideIn 0.3s ease-out;
+      `;
+      
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
+    
+    // Inicializar
+    renderBuildings();
+    
+    // Adicionar animações CSS
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideIn {
+        from {
+          transform: translateX(400px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      
+      @keyframes slideOut {
+        from {
+          transform: translateX(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateX(400px);
+          opacity: 0;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
+</body>
+</html>

@@ -173,7 +173,43 @@ const CityScene = memo(function CityScene({
     light.setEulerAngles(45, 135, 0)
     app.root.addChild(light)
 
-    const ground = new pc.Entity('Ground')
+
+    // --- GROUND (CHÃO) COM GRID ---
+    const ground = new pc.Entity('Ground');
+    ground.addComponent('render', { type: 'box' });
+    
+    const groundMat = new pc.StandardMaterial();
+    
+    // 1. Gera e aplica a textura
+    const gridTexture = createGridTexture(app.graphicsDevice);
+    groundMat.diffuseMap = gridTexture;
+    
+    // 2. TILING (Repetição)
+    // Se o mapa tem tamanho 48 e cada tile tem tamanho 2:
+    // 48 / 2 = 24 repetições. Assim, cada quadrado visual terá 2 metros.
+    const tileCount = MAP_SIZE / 2;
+    groundMat.diffuseMapTiling.set(tileCount, tileCount);
+    
+    // 3. OFFSET (O Pulo do Gato 😺)
+    // Deslocamos a textura em 0.5 (meio tile).
+    // Isso faz com que as LINHAS fiquem nas coordenadas ímpares (1, 3, 5)
+    // E os CENTROS fiquem nas coordenadas pares (0, 2, 4), onde seus prédios "snappam".
+    groundMat.diffuseMapOffset.set(0.5, 0.5);
+
+    groundMat.update();
+    
+    ground.render!.material = groundMat;
+    
+    // Mantém a escala original
+    ground.setLocalScale(MAP_SIZE, 0.1, MAP_SIZE);
+    ground.setPosition(0, -0.05, 0); // Levemente abaixo de 0 para evitar z-fighting com a base dos prédios
+    app.root.addChild(ground);
+
+    
+
+    
+
+    /*const ground = new pc.Entity('Ground')
     ground.addComponent('render', { type: 'box' })
     const groundMat = new pc.StandardMaterial()
     groundMat.diffuse = new pc.Color(0.15, 0.18, 0.22) 
@@ -181,7 +217,7 @@ const CityScene = memo(function CityScene({
     ground.render!.material = groundMat
     ground.setLocalScale(MAP_SIZE, 0.1, MAP_SIZE)
     ground.setPosition(0, -0.1, 0)
-    app.root.addChild(ground)
+    app.root.addChild(ground)*/
 
     const cursor = new pc.Entity('Cursor')
     cursor.setPosition(0, 0, 0)
@@ -419,3 +455,40 @@ const CityScene = memo(function CityScene({
 })
 
 export default CityScene
+
+
+// Função auxiliar: Cria uma textura de Grid via código
+const createGridTexture = (device: pc.GraphicsDevice) => {
+  const canvas = document.createElement('canvas');
+  // Tamanho 64x64 é suficiente para um grid simples (potência de 2)
+  canvas.width = 64; 
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+  
+  if (ctx) {
+    // 1. Fundo (O chão)
+    ctx.fillStyle = '#0f172a'; // Slate 900 (Escuro/Moderno)
+    ctx.fillRect(0, 0, 64, 64);
+
+    // 2. Linhas da Grade
+    ctx.strokeStyle = '#334155'; // Slate 700 (Mais claro)
+    ctx.lineWidth = 4; // Linha mais grossa para ficar visível ao longe
+    
+    // Desenha a borda. Como o stroke é centralizado, desenhamos
+    // nas bordas do canvas para que o tiling junte as metades.
+    ctx.strokeRect(0, 0, 64, 64);
+  }
+
+  const texture = new pc.Texture(device, {
+    width: 64,
+    height: 64,
+    format: pc.PIXELFORMAT_R8_G8_B8_A8,
+    mipmaps: true,
+    anisotropy: 4, // Importante: Evita que as linhas borrem à distância
+    addressU: pc.ADDRESS_REPEAT,
+    addressV: pc.ADDRESS_REPEAT
+  });
+
+  texture.setSource(canvas);
+  return texture;
+};

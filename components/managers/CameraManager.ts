@@ -1,4 +1,4 @@
-// managers/CameraManager.ts - Gerencia câmera e controles
+// managers/CameraManager.ts - VERSÃO CORRIGIDA
 import * as pc from 'playcanvas';
 import {
   CAMERA_CONFIG,
@@ -31,13 +31,14 @@ export class CameraManager {
   private rayStart = new pc.Vec3();
   private rayEnd = new pc.Vec3();
 
-  // Callbacks
-  private onSelectTile?: (x: number, y: number) => void;
-  private onCancelBuild?: () => void;
-  private getActiveBuild?: () => string | null;
+  // Callbacks - AGORA SÃO PÚBLICAS PARA ATUALIZAÇÃO
+  public onSelectTile?: (x: number, y: number) => void;
+  public onCancelBuild?: () => void;
+  public getActiveBuild?: () => string | null;
 
   constructor(
     app: pc.Application,
+    cursorEntity?: pc.Entity,
     callbacks?: {
       onSelectTile?: (x: number, y: number) => void;
       onCancelBuild?: () => void;
@@ -52,9 +53,15 @@ export class CameraManager {
     // Criar entidades
     this.pivot = this.createPivot();
     this.camera = this.createCamera();
-    this.cursor = this.createCursor();
+    this.cursor = cursorEntity || this.createCursor();
 
     this.setupInputHandlers();
+    
+    console.log('🎮 CameraManager inicializado:', {
+      hasOnSelectTile: !!this.onSelectTile,
+      hasOnCancelBuild: !!this.onCancelBuild,
+      hasGetActiveBuild: !!this.getActiveBuild
+    });
   }
 
   private createPivot(): pc.Entity {
@@ -124,16 +131,47 @@ export class CameraManager {
       }
     });
 
-    // Mouse up
+    // Mouse up - VERSÃO CORRIGIDA
     this.app.mouse.on(pc.EVENT_MOUSEUP, (event: any) => {
       if (event.button === pc.MOUSEBUTTON_LEFT) {
         this.isPanning = false;
         const dist = Math.hypot(event.x - this.clickStartX, event.y - this.clickStartY);
-        if (dist < 5 && this.cursor.enabled && this.onSelectTile) {
-          const gridX = (this.cursor.getPosition().x + OFFSET) / 2;
-          const gridY = (this.cursor.getPosition().z + OFFSET) / 2;
-          this.onSelectTile(gridX, gridY);
+        
+        // DIAGNÓSTICO DETALHADO
+        const cursorPos = this.cursor.getPosition();
+        const gridX = (cursorPos.x + OFFSET) / 2;
+        const gridY = (cursorPos.z + OFFSET) / 2;
+        
+        console.log('🖱️ Mouse up - Diagnóstico completo:', { 
+          dist,
+          distOk: dist < 5,
+          cursorEnabled: this.cursor.enabled,
+          cursorPosition: { x: cursorPos.x, y: cursorPos.y, z: cursorPos.z },
+          gridPosition: { x: gridX, y: gridY },
+          hasCallback: !!this.onSelectTile,
+          callbackType: typeof this.onSelectTile
+        });
+        
+        // CONDIÇÕES SEPARADAS PARA DEBUG
+        if (dist >= 5) {
+          console.log('❌ Falhou: Distância muito grande (arrastou o mouse)', { dist });
+          return;
         }
+        
+        if (!this.cursor.enabled) {
+          console.log('❌ Falhou: Cursor desabilitado (fora do mapa)');
+          return;
+        }
+        
+        if (!this.onSelectTile) {
+          console.log('❌ PROBLEMA CRÍTICO: onSelectTile não está definido!');
+          return;
+        }
+        
+        // Se chegou aqui, tudo está OK!
+        console.log('✅ SUCESSO! Chamando onSelectTile:', { gridX, gridY });
+        this.onSelectTile(gridX, gridY);
+        
       } else if (event.button === pc.MOUSEBUTTON_RIGHT) {
         this.isRotating = false;
       }

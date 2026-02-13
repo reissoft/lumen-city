@@ -149,6 +149,15 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/building-e.glb",
     "icon": Home,
     "scale": 1
+  },
+  "missao-jacobina": {
+    "name": "MISSAO JACOBINA",
+    "description": "Igreja da Missão de Jacobina",
+    "category": "special",
+    "cost": 0,
+    "url": "/models/specials/missao.glb",
+    "icon": Star,
+    "scale": 5
   }
 }
 

@@ -5,7 +5,7 @@ import CityScene from "./CityScene"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Coins, X, MousePointer2, Hammer, Leaf, Route, Star, RotateCw, Trash2, Loader2 } from "lucide-react"
-import { demolishBuildingAction, rotateBuildingAction } from "@/app/actions"
+import { buyBuilding, demolishBuildingAction, rotateBuildingAction } from "@/app/actions"
 import { BUILDING_CONFIG, CATEGORIES, BuildingCategory } from '@/app/config/buildings'
 import { cn } from '@/lib/utils'
 
@@ -62,6 +62,7 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
       const newBuilding = { id: Date.now(), type: activeBuild, x, y, rotation: 0 };
       setLocalBuildings([...localBuildings, newBuilding]);
       setIsBuilding(false);
+      await buyBuilding(activeBuild, x, y);
       return;
     }
     if (clickedBuilding) {

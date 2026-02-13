@@ -25,11 +25,6 @@ const CityScene = memo(function CityScene({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const appRef = useRef<pc.Application | null>(null)
   
-  // Refs para callbacks (evita recriação de handlers)
-  const onSelectTileRef = useRef(onSelectTile)
-  const onCancelBuildRef = useRef(onCancelBuild) 
-  const activeBuildRef = useRef(activeBuild)   
-  
   // Managers
   const assetManagerRef = useRef<AssetManager | null>(null)
   const materialManagerRef = useRef<MaterialManager | null>(null)
@@ -40,19 +35,12 @@ const CityScene = memo(function CityScene({
   // Controle de assets
   const [assetsReady, setAssetsReady] = useState(false)
 
-  // Atualiza refs quando props mudam
-  useEffect(() => {
-    onSelectTileRef.current = onSelectTile
-    onCancelBuildRef.current = onCancelBuild 
-    activeBuildRef.current = activeBuild 
-  }, [onSelectTile, onCancelBuild, activeBuild])
-
   // --- EFEITO 1: INICIALIZAÇÃO DA ENGINE (Roda 1 vez) ---
   useEffect(() => {
     if (!canvasRef.current) return
     if (appRef.current) return
 
-    console.log("🚀 Iniciando Engine V4 (Modular)...")
+    console.log("🚀 Iniciando Engine V6 (Callbacks Públicos)...")
 
     const canvas = canvasRef.current
     const app = new pc.Application(canvas, {
@@ -81,10 +69,21 @@ const CityScene = memo(function CityScene({
     const materialManager = new MaterialManager(app)
     materialManagerRef.current = materialManager
 
-    const cameraManager = new CameraManager(app, {
-      onSelectTile: (x, y) => onSelectTileRef.current?.(x, y),
-      onCancelBuild: () => onCancelBuildRef.current?.(),
-      getActiveBuild: () => activeBuildRef.current
+    // Criar cursor/ghost ANTES do CameraManager
+    const cursorEntity = new pc.Entity('Cursor')
+    cursorEntity.setPosition(0, 0, 0)
+    app.root.addChild(cursorEntity)
+
+    const cameraManager = new CameraManager(app, cursorEntity, {
+      onSelectTile: (x, y) => {
+        console.log('🎯 onSelectTile chamado dentro do CameraManager:', { x, y })
+        // Callback inicial (será atualizado pelo effect abaixo)
+      },
+      onCancelBuild: () => {
+        console.log('🚫 onCancelBuild chamado dentro do CameraManager')
+        // Callback inicial (será atualizado pelo effect abaixo)
+      },
+      getActiveBuild: () => activeBuild
     })
     cameraManagerRef.current = cameraManager
 
@@ -93,7 +92,7 @@ const CityScene = memo(function CityScene({
 
     const ghostManager = new GhostManager(
       app, 
-      cameraManager.getCursor(), 
+      cursorEntity,
       assetManager, 
       materialManager
     )
@@ -132,8 +131,33 @@ const CityScene = memo(function CityScene({
     }
   }, []) 
 
+  // --- EFEITO 2: ATUALIZA CALLBACKS (Sempre que props mudam) ---
+  useEffect(() => {
+    const cameraManager = cameraManagerRef.current
+    if (!cameraManager) return
 
-  // --- EFEITO 2: SINCRONIZAÇÃO DA CENA ---
+    console.log('🔄 Atualizando callbacks do CameraManager:', {
+      hasOnSelectTile: !!onSelectTile,
+      hasOnCancelBuild: !!onCancelBuild,
+      activeBuild
+    })
+
+    // Atualiza diretamente as propriedades públicas
+    cameraManager.onSelectTile = (x, y) => {
+      console.log('📞 onSelectTile recebido - chamando callback do React:', { x, y })
+      onSelectTile?.(x, y)
+    }
+
+    cameraManager.onCancelBuild = () => {
+      console.log('📞 onCancelBuild recebido - chamando callback do React')
+      onCancelBuild?.()
+    }
+
+    cameraManager.getActiveBuild = () => activeBuild
+
+  }, [onSelectTile, onCancelBuild, activeBuild])
+
+  // --- EFEITO 3: SINCRONIZAÇÃO DA CENA ---
   useEffect(() => {
     if (!appRef.current || !assetsReady) return
     

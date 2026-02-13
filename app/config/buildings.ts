@@ -1,7 +1,6 @@
 // app/config/buildings.ts
 import { 
-  Home, TreeDeciduous, GraduationCap, Zap, 
-  Building2, Shrub, Route, Star, Landmark 
+  Home, GraduationCap, Zap, Building2, TreeDeciduous, Shrub, Route, Landmark, Star
 } from "lucide-react"
 
 export type BuildingCategory = 'construction' | 'nature' | 'infrastructure' | 'special'
@@ -25,93 +24,131 @@ export const CATEGORIES: Record<BuildingCategory, string> = {
 }
 
 export const BUILDING_CONFIG: Record<string, BuildingDef> = {
-  // --- CONSTRUÇÃO ---
-  house: {
-    name: "Casa",
-    description: "Residência básica.",
-    category: 'construction',
-    cost: 50,
-    url: "/models/house.glb",
-    icon: Home,
-    scale: 1.0
+  "house": {
+    "name": "Casa",
+    "description": "Residência básica.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/house.glb",
+    "icon": Home,
+    "scale": 1
   },
-  school: {
-    name: "Escola",
-    description: "Ensino para jovens.",
-    category: 'construction',
-    cost: 150,
-    url: "/models/school.glb",
-    icon: GraduationCap,
-    scale: 1.5
+  "school": {
+    "name": "Escola",
+    "description": "Ensino para jovens.",
+    "category": "construction",
+    "cost": 20,
+    "url": "/models/school.glb",
+    "icon": GraduationCap,
+    "scale": 1.5
   },
-  power: {
-    name: "Usina",
-    description: "Gera energia.",
-    category: 'construction',
-    cost: 300,
-    url: "/models/power.glb",
-    icon: Zap,
-    scale: 1.0
+  "power": {
+    "name": "Usina",
+    "description": "Gera energia.",
+    "category": "construction",
+    "cost": 50,
+    "url": "/models/power.glb",
+    "icon": Zap,
+    "scale": 1
   },
-  apartment: {
-    name: "Prédio",
-    description: "Alta densidade.",
-    category: 'construction',
-    cost: 500,
-    url: "/models/house.glb", // Usei placeholder, troque depois
-    icon: Building2,
-    scale: 1.5
+  "apartment": {
+    "name": "Prédio",
+    "description": "Alta densidade.",
+    "category": "construction",
+    "cost": 20,
+    "url": "/models/house.glb",
+    "icon": Building2,
+    "scale": 1.5
   },
-
-  // --- NATUREZA ---
-  park: {
-    name: "Árvore",
-    description: "Melhora o ar.",
-    category: 'nature',
-    cost: 25,
-    url: "/models/park.glb",
-    icon: TreeDeciduous,
-    scale: 1.2
+  "park": {
+    "name": "Árvore",
+    "description": "Melhora o ar.",
+    "category": "nature",
+    "cost": 25,
+    "url": "/models/park.glb",
+    "icon": TreeDeciduous,
+    "scale": 1.2
   },
-  bush: {
-    name: "Arbusto",
-    description: "Decoração simples.",
-    category: 'nature',
-    cost: 10,
-    url: "/models/park.glb", // Placeholder
-    icon: Shrub,
-    scale: 0.8
+  "bush": {
+    "name": "Arbusto",
+    "description": "Decoração simples.",
+    "category": "nature",
+    "cost": 10,
+    "url": "/models/park.glb",
+    "icon": Shrub,
+    "scale": 0.8
   },
-
-  // --- INFRAESTRUTURA ---
-  road: {
-    name: "Rua",
-    description: "Conecta prédios.",
-    category: 'infrastructure',
-    cost: 5,
-    url: "/models/house.glb", // Placeholder (ideal seria um modelo plano)
-    icon: Route,
-    scale: 0.1 // Bem baixo para parecer chão
+  "road": {
+    "name": "Rua",
+    "description": "Conecta prédios.",
+    "category": "infrastructure",
+    "cost": 5,
+    "url": "/models/house.glb",
+    "icon": Route,
+    "scale": 0.1
   },
-
-  // --- ESPECIAL ---
-  statue: {
-    name: "Estátua",
-    description: "Glória do líder.",
-    category: 'special',
-    cost: 1000,
-    url: "/models/school.glb", // Placeholder
-    icon: Landmark,
-    scale: 0.8
+  "statue": {
+    "name": "Estátua",
+    "description": "Glória do líder.",
+    "category": "special",
+    "cost": 1000,
+    "url": "/models/school.glb",
+    "icon": Landmark,
+    "scale": 0.8
   },
-  fountain: {
-    name: "Fonte",
-    description: "Água relaxante.",
-    category: 'special',
-    cost: 800,
-    url: "/models/power.glb", // Placeholder
-    icon: Star,
-    scale: 0.8
+  "fountain": {
+    "name": "Fonte",
+    "description": "Água relaxante.",
+    "category": "special",
+    "cost": 800,
+    "url": "/models/power.glb",
+    "icon": Star,
+    "scale": 0.8
+  },
+  "casa_2": {
+    "name": "CASA 2",
+    "description": "Resiodência básica",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/building-e.glb",
+    "icon": Home,
+    "scale": 1
+  },
+  "casa_3": {
+    "name": "CASA 3",
+    "description": "Resiodência básica",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/building-b.glb",
+    "icon": Home,
+    "scale": 1
+  },
+  "casa_4": {
+    "name": "CASA 4",
+    "description": "Resiodência básica",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/building-c.glb",
+    "icon": Home,
+    "scale": 1
+  },
+  "casa_5": {
+    "name": "CASA 5",
+    "description": "Residência básica.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/building-d.glb",
+    "icon": Home,
+    "scale": 1
+  },
+  "casa_6": {
+    "name": "CASA 6",
+    "description": "Residência básica.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/building-e.glb",
+    "icon": Home,
+    "scale": 1
   }
 }
 

@@ -1,0 +1,10 @@
+// index.ts - Exports centralizados
+export { default as CityScene } from './CityScene'
+export * from './constants'
+export { AssetManager } from './managers/AssetManager'
+export { MaterialManager } from './managers/MaterialManager'
+export { CameraManager } from './managers/CameraManager'
+export { BuildingManager } from './managers/BuildingManager'
+export { GhostManager } from './managers/GhostManager'
+export { SceneSetup } from './setup/SceneSetup'
+export { createGridTexture, loadSkybox } from './utils/texture'

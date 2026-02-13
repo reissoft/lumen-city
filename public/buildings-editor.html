@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Editor de Buildings - City Builder</title>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <style>
     :root {
       --bg-dark: #0a0e15;
@@ -552,6 +555,109 @@
       }
     }
     
+    /* 3D Viewer */
+    .viewer-3d {
+      width: 100%;
+      height: 300px;
+      background: var(--bg-dark);
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+      margin-top: 1.5rem;
+    }
+    
+    .viewer-3d canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+    
+    .viewer-controls {
+      position: absolute;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0.5rem;
+      z-index: 10;
+      background: rgba(19, 24, 34, 0.9);
+      padding: 0.5rem;
+      border-radius: 4px;
+      border: 2px solid var(--border);
+    }
+    
+    .viewer-controls button {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      color: var(--text-dim);
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 1rem;
+      border-radius: 2px;
+    }
+    
+    .viewer-controls button:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    
+    .viewer-info {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      background: rgba(19, 24, 34, 0.9);
+      padding: 0.75rem 1rem;
+      border-radius: 4px;
+      border: 2px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      z-index: 10;
+    }
+    
+    .viewer-loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--accent);
+      font-size: 0.9rem;
+      text-align: center;
+      z-index: 5;
+    }
+    
+    .viewer-loading::after {
+      content: '...';
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+    
+    @keyframes dots {
+      0%, 20% { content: '.'; }
+      40% { content: '..'; }
+      60%, 100% { content: '...'; }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .viewer-error {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--danger);
+      font-size: 0.85rem;
+      text-align: center;
+      max-width: 80%;
+      z-index: 5;
+    }
+    
     @media (max-width: 768px) {
       h1 {
         font-size: 2.5rem;
@@ -565,6 +671,19 @@
       .building-actions {
         grid-column: 1 / -1;
         justify-content: flex-end;
+      }
+      
+      .viewer-3d {
+        height: 250px;
+      }
+      
+      /* Modal responsivo */
+      #assetModal .modal-content > div[style*="grid"] {
+        grid-template-columns: 1fr !important;
+      }
+      
+      #assetModal #modalViewer3d {
+        height: 300px;
       }
     }
   </style>
@@ -633,13 +752,86 @@
   <div class="modal" id="jsonModal">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>Preview do JSON</h2>
+        <h2>Preview do Código</h2>
         <button class="close-modal" onclick="closeModal()">&times;</button>
       </div>
       <pre id="jsonPreview"></pre>
       <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="copyJSON()">
         📋 Copiar para Clipboard
       </button>
+    </div>
+  </div>
+  
+  <!-- Modal de Seleção de Assets -->
+  <div class="modal" id="assetModal">
+    <div class="modal-content" style="max-width: 1000px;">
+      <div class="modal-header">
+        <h2>Selecionar Asset 3D</h2>
+        <button class="close-modal" onclick="closeAssetPickerCleanup()">&times;</button>
+      </div>
+      
+      <div style="display: grid; grid-template-columns: 1fr 400px; gap: 2rem; align-items: start;">
+        <div>
+          <div class="form-group">
+            <label>Selecionar Arquivo do Computador</label>
+            <input type="file" id="fileSelector" accept=".glb,.gltf" style="display: none;" onchange="handleFileSelection(event)">
+            <button class="btn btn-primary" style="width: 100%;" onclick="document.getElementById('fileSelector').click()">
+              📂 Abrir Explorer e Selecionar Arquivo
+            </button>
+            <small style="display: block; margin-top: 0.5rem; color: var(--text-dim); font-size: 0.75rem;">
+              Selecione um arquivo .glb ou .gltf da pasta public/models
+            </small>
+          </div>
+          
+          <div style="margin: 1.5rem 0; padding: 1rem; background: var(--bg-dark); border: 2px solid var(--border); border-radius: 4px;">
+            <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.1em;">
+              📁 Ou escolha um atalho rápido:
+            </div>
+            <div id="assetList" style="display: flex; flex-direction: column; gap: 0.5rem;">
+              <!-- Assets comuns serão listados aqui -->
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>Ou digite o caminho manualmente</label>
+            <div style="display: flex; gap: 0.5rem;">
+              <input type="text" id="manualAssetPath" placeholder="/models/cd13445678875.glb" style="flex: 1;">
+              <button class="btn" onclick="previewManualPath()">👁️ Preview</button>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" onclick="useManualPath()">
+              ✅ Usar este Caminho
+            </button>
+          </div>
+        </div>
+        
+        <!-- Preview 3D no Modal -->
+        <div>
+          <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.1em;">
+            👁️ Preview do Modelo
+          </div>
+          <div class="viewer-3d" id="modalViewer3d" style="height: 400px;">
+            <div class="viewer-loading" id="modalViewerLoading" style="display: none;">Carregando preview</div>
+            <div class="viewer-info" id="modalViewerInfo" style="display: none;">
+              🎮 Arraste para rotacionar<br>
+              🖱️ Scroll para zoom
+            </div>
+            <div class="viewer-controls" id="modalViewerControls" style="display: none;">
+              <button onclick="resetModalCamera()" title="Resetar Câmera">🔄</button>
+            </div>
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: var(--text-dim); font-size: 0.85rem;">
+              Selecione um arquivo<br>para visualizar
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div style="padding: 1rem; background: rgba(0, 255, 136, 0.1); border: 2px solid var(--accent); border-radius: 4px; font-size: 0.8rem; line-height: 1.6; margin-top: 1rem;">
+        <strong style="color: var(--accent);">💡 Como funciona:</strong><br>
+        • O arquivo deve estar em <code style="background: var(--bg-dark); padding: 0.2rem 0.4rem; border-radius: 2px;">/public/models/</code><br>
+        • Use o Explorer para navegar e selecionar<br>
+        • O preview será exibido automaticamente<br>
+        • Exemplo: <code style="background: var(--bg-dark); padding: 0.2rem 0.4rem; border-radius: 2px;">/models/cd13445678875.glb</code>
+      </div>
     </div>
   </div>
   
@@ -745,6 +937,16 @@
     let currentCategory = 'all';
     let selectedBuilding = null;
     
+    // Three.js 3D Viewer
+    let scene, camera, renderer, controls, currentModel, gridHelper;
+    let animationId = null;
+    let wireframeMode = false;
+    let showGrid = true;
+    
+    // Three.js 3D Viewer do Modal
+    let modalScene, modalCamera, modalRenderer, modalControls, modalCurrentModel, modalGridHelper;
+    let modalAnimationId = null;
+    
     // Renderizar lista de buildings
     function renderBuildings() {
       const listElement = document.getElementById('buildingsList');
@@ -831,12 +1033,15 @@
           
           <div class="form-group">
             <label>Escala</label>
-            <input type="number" id="buildingScale" value="${building.scale}" required step="0.1" min="0.1">
+            <input type="number" id="buildingScale" value="${building.scale}" required step="0.1" min="0.1" onchange="updateModelScale()">
           </div>
           
           <div class="form-group">
             <label>URL do Modelo 3D</label>
-            <input type="text" id="buildingUrl" value="${building.url}" required>
+            <input type="text" id="buildingUrl" value="${building.url}" required onchange="reload3DModel()">
+            <button type="button" class="btn" style="width: 100%; margin-top: 0.5rem;" onclick="openAssetPicker()">
+              📁 Selecionar Asset da Pasta
+            </button>
           </div>
           
           <div class="form-group">
@@ -855,9 +1060,29 @@
             ❌ Cancelar
           </button>
         </form>
+        
+        <!-- Visualizador 3D -->
+        <div class="viewer-3d" id="viewer3d">
+          <div class="viewer-loading" id="viewerLoading">Carregando modelo 3D</div>
+          <div class="viewer-info" id="viewerInfo" style="display: none;">
+            🎮 Arraste para rotacionar<br>
+            🖱️ Scroll para zoom
+          </div>
+          <div class="viewer-controls" id="viewerControls" style="display: none;">
+            <button onclick="resetCamera()" title="Resetar Câmera">🔄</button>
+            <button onclick="toggleWireframe()" title="Wireframe">📐</button>
+            <button onclick="toggleGrid()" title="Grid">⊞</button>
+          </div>
+        </div>
       `;
       
       renderBuildings();
+      
+      // Inicializar visualizador 3D após um pequeno delay para garantir que o DOM foi atualizado
+      setTimeout(() => {
+        init3DViewer();
+        load3DModel(building.url);
+      }, 100);
     }
     
     // Salvar building
@@ -893,6 +1118,7 @@
     // Cancelar edição
     function cancelEdit() {
       selectedBuilding = null;
+      cleanup3DViewer();
       const panel = document.getElementById('editorPanel');
       panel.innerHTML = `
         <h2>Selecione um Building</h2>
@@ -904,6 +1130,28 @@
         </div>
       `;
       renderBuildings();
+    }
+    
+    // Recarregar modelo 3D quando URL mudar
+    function reload3DModel() {
+      const url = document.getElementById('buildingUrl').value;
+      if (url) {
+        load3DModel(url);
+      }
+    }
+    
+    // Atualizar escala do modelo
+    function updateModelScale() {
+      if (!currentModel) return;
+      const scale = parseFloat(document.getElementById('buildingScale').value);
+      
+      // Recalcular a escala baseado no tamanho original
+      const box = new THREE.Box3().setFromObject(currentModel);
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const baseScale = 3 / maxDim;
+      
+      currentModel.scale.setScalar(baseScale * scale);
     }
     
     // Deletar building
@@ -1074,6 +1322,115 @@
       document.getElementById('jsonModal').classList.remove('active');
     }
     
+    // Abrir seletor de assets
+    function openAssetPicker() {
+      document.getElementById('assetModal').classList.add('active');
+      loadCommonAssets();
+    }
+    
+    // Fechar seletor de assets
+    function closeAssetPicker() {
+      document.getElementById('assetModal').classList.remove('active');
+    }
+    
+    // Processar arquivo selecionado
+    function handleFileSelection(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      // Pegar o nome do arquivo
+      const fileName = file.name;
+      
+      // Assumindo que está em /public/models/
+      const path = `/models/${fileName}`;
+      
+      // Fazer preview automático
+      loadModalPreview(path);
+      
+      // Atualizar campo manual
+      document.getElementById('manualAssetPath').value = path;
+      
+      // Resetar input para permitir selecionar o mesmo arquivo novamente
+      event.target.value = '';
+      
+      showNotification('Preview carregado! 👁️');
+    }
+    
+    // Carregar assets comuns
+    function loadCommonAssets() {
+      const assetList = document.getElementById('assetList');
+      const commonAssets = [
+        { name: '🏠 house.glb', path: '/models/house.glb' },
+        { name: '🏫 school.glb', path: '/models/school.glb' },
+        { name: '⚡ power.glb', path: '/models/power.glb' },
+        { name: '🌳 park.glb', path: '/models/park.glb' },
+        { name: '🏢 building.glb', path: '/models/building.glb' },
+        { name: '🛣️ road.glb', path: '/models/road.glb' }
+      ];
+      
+      assetList.innerHTML = commonAssets.map(asset => `
+        <button class="btn" style="justify-content: flex-start; text-align: left;" onclick="previewAsset('${asset.path}')">
+          ${asset.name}
+        </button>
+      `).join('');
+    }
+    
+    // Preview de asset ao clicar nos atalhos
+    function previewAsset(path) {
+      document.getElementById('manualAssetPath').value = path;
+      loadModalPreview(path);
+    }
+    
+    // Preview do caminho manual
+    function previewManualPath() {
+      const path = document.getElementById('manualAssetPath').value.trim();
+      if (!path) {
+        alert('Digite um caminho primeiro');
+        return;
+      }
+      loadModalPreview(path);
+    }
+    
+    
+    // Selecionar um asset
+    function selectAsset(path) {
+      document.getElementById('buildingUrl').value = path;
+      closeAssetPicker();
+      reload3DModel();
+      showNotification('Asset selecionado! 📁');
+    }
+    
+    // Usar caminho manual
+    function useManualPath() {
+      const path = document.getElementById('manualAssetPath').value.trim();
+      if (!path) {
+        alert('Digite um caminho válido');
+        return;
+      }
+      
+      // O caminho já deve estar correto (ex: /models/house.glb)
+      let finalPath = path;
+      
+      // Se começar com /public, remover (redundante)
+      if (path.startsWith('/public/')) {
+        finalPath = path.replace('/public/', '/');
+      } else if (!path.startsWith('/')) {
+        // Se não começar com /, adicionar
+        finalPath = '/' + path;
+      }
+      
+      document.getElementById('buildingUrl').value = finalPath;
+      closeAssetPicker();
+      reload3DModel();
+      showNotification('Caminho definido! ✅');
+    }
+    
+    // Fechar seletor de assets e limpar
+    function closeAssetPickerCleanup() {
+      closeAssetPicker();
+      cleanupModal3DViewer();
+    }
+    
     // Copiar JSON
     function copyJSON() {
       const text = generateTypeScriptCode();
@@ -1158,6 +1515,376 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = `;
         notification.style.animation = 'slideOut 0.3s ease-out';
         setTimeout(() => notification.remove(), 300);
       }, 3000);
+    }
+    
+    // ===== VISUALIZADOR 3D =====
+    
+    // Inicializar visualizador 3D
+    function init3DViewer() {
+      const container = document.getElementById('viewer3d');
+      if (!container) return;
+      
+      // Limpar renderizador anterior se existir
+      if (renderer) {
+        cancelAnimationFrame(animationId);
+        renderer.dispose();
+        const oldCanvas = container.querySelector('canvas');
+        if (oldCanvas) oldCanvas.remove();
+      }
+      
+      // Cena
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0a0e15);
+      
+      // Câmera
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+      camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+      camera.position.set(5, 5, 5);
+      
+      // Renderizador
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      container.appendChild(renderer.domElement);
+      
+      // Controles
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.minDistance = 2;
+      controls.maxDistance = 20;
+      
+      // Luzes
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+      scene.add(ambientLight);
+      
+      const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+      directionalLight1.position.set(5, 10, 5);
+      scene.add(directionalLight1);
+      
+      const directionalLight2 = new THREE.DirectionalLight(0x00ff88, 0.3);
+      directionalLight2.position.set(-5, 5, -5);
+      scene.add(directionalLight2);
+      
+      // Grid
+      gridHelper = new THREE.GridHelper(10, 10, 0x00ff88, 0x2a3142);
+      gridHelper.material.opacity = 0.3;
+      gridHelper.material.transparent = true;
+      scene.add(gridHelper);
+      
+      // Animação
+      function animate() {
+        animationId = requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      animate();
+      
+      // Resize
+      window.addEventListener('resize', onWindowResize);
+    }
+    
+    // Redimensionar
+    function onWindowResize() {
+      if (!camera || !renderer) return;
+      const container = document.getElementById('viewer3d');
+      if (!container) return;
+      
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    }
+    
+    // Carregar modelo 3D
+    function load3DModel(url) {
+      const loading = document.getElementById('viewerLoading');
+      const info = document.getElementById('viewerInfo');
+      const controls = document.getElementById('viewerControls');
+      
+      // Mostrar loading
+      loading.style.display = 'block';
+      info.style.display = 'none';
+      controls.style.display = 'none';
+      
+      // Remover modelo anterior
+      if (currentModel) {
+        scene.remove(currentModel);
+        currentModel = null;
+      }
+      
+      // Verificar se existe erro anterior
+      const existingError = document.querySelector('.viewer-error');
+      if (existingError) existingError.remove();
+      
+      // Carregar novo modelo
+      const loader = new THREE.GLTFLoader();
+      
+      loader.load(
+        url,
+        function (gltf) {
+          currentModel = gltf.scene;
+          
+          // Centralizar modelo
+          const box = new THREE.Box3().setFromObject(currentModel);
+          const center = box.getCenter(new THREE.Vector3());
+          currentModel.position.sub(center);
+          
+          // Escalar modelo para caber na cena
+          const size = box.getSize(new THREE.Vector3());
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const scale = 3 / maxDim;
+          currentModel.scale.multiplyScalar(scale);
+          
+          scene.add(currentModel);
+          
+          // Esconder loading
+          loading.style.display = 'none';
+          info.style.display = 'block';
+          controls.style.display = 'flex';
+          
+          showNotification('Modelo 3D carregado! 🎮');
+        },
+        function (xhr) {
+          // Progresso
+          const percent = (xhr.loaded / xhr.total) * 100;
+          loading.textContent = `Carregando modelo 3D (${Math.round(percent)}%)`;
+        },
+        function (error) {
+          console.error('Erro ao carregar modelo:', error);
+          loading.style.display = 'none';
+          
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'viewer-error';
+          errorDiv.innerHTML = `
+            ⚠️ Erro ao carregar modelo<br>
+            <small>${url}</small><br><br>
+            <small>Verifique se o arquivo existe</small>
+          `;
+          document.getElementById('viewer3d').appendChild(errorDiv);
+        }
+      );
+    }
+    
+    // Resetar câmera
+    function resetCamera() {
+      if (!camera || !controls) return;
+      camera.position.set(5, 5, 5);
+      controls.target.set(0, 0, 0);
+      controls.update();
+      showNotification('Câmera resetada! 🔄');
+    }
+    
+    // Toggle wireframe
+    function toggleWireframe() {
+      if (!currentModel) return;
+      wireframeMode = !wireframeMode;
+      
+      currentModel.traverse((child) => {
+        if (child.isMesh) {
+          child.material.wireframe = wireframeMode;
+        }
+      });
+      
+      showNotification(wireframeMode ? 'Wireframe ativado! 📐' : 'Wireframe desativado! 📐');
+    }
+    
+    // Toggle grid
+    function toggleGrid() {
+      if (!gridHelper) return;
+      showGrid = !showGrid;
+      gridHelper.visible = showGrid;
+      showNotification(showGrid ? 'Grid ativado! ⊞' : 'Grid desativado! ⊞');
+    }
+    
+    // Limpar visualizador
+    function cleanup3DViewer() {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+      if (renderer) {
+        renderer.dispose();
+        renderer = null;
+      }
+      if (controls) {
+        controls.dispose();
+        controls = null;
+      }
+      scene = null;
+      camera = null;
+      currentModel = null;
+      gridHelper = null;
+    }
+    
+    // ===== VISUALIZADOR 3D DO MODAL =====
+    
+    // Inicializar visualizador 3D do modal
+    function initModal3DViewer() {
+      const container = document.getElementById('modalViewer3d');
+      if (!container) return;
+      
+      // Limpar renderizador anterior se existir
+      if (modalRenderer) {
+        cancelAnimationFrame(modalAnimationId);
+        modalRenderer.dispose();
+        const oldCanvas = container.querySelector('canvas');
+        if (oldCanvas) oldCanvas.remove();
+      }
+      
+      // Cena
+      modalScene = new THREE.Scene();
+      modalScene.background = new THREE.Color(0x0a0e15);
+      
+      // Câmera
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+      modalCamera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+      modalCamera.position.set(5, 5, 5);
+      
+      // Renderizador
+      modalRenderer = new THREE.WebGLRenderer({ antialias: true });
+      modalRenderer.setSize(width, height);
+      modalRenderer.setPixelRatio(window.devicePixelRatio);
+      container.appendChild(modalRenderer.domElement);
+      
+      // Controles
+      modalControls = new THREE.OrbitControls(modalCamera, modalRenderer.domElement);
+      modalControls.enableDamping = true;
+      modalControls.dampingFactor = 0.05;
+      modalControls.minDistance = 2;
+      modalControls.maxDistance = 20;
+      
+      // Luzes
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+      modalScene.add(ambientLight);
+      
+      const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+      directionalLight1.position.set(5, 10, 5);
+      modalScene.add(directionalLight1);
+      
+      const directionalLight2 = new THREE.DirectionalLight(0x00ff88, 0.3);
+      directionalLight2.position.set(-5, 5, -5);
+      modalScene.add(directionalLight2);
+      
+      // Grid
+      modalGridHelper = new THREE.GridHelper(10, 10, 0x00ff88, 0x2a3142);
+      modalGridHelper.material.opacity = 0.3;
+      modalGridHelper.material.transparent = true;
+      modalScene.add(modalGridHelper);
+      
+      // Animação
+      function animate() {
+        modalAnimationId = requestAnimationFrame(animate);
+        modalControls.update();
+        modalRenderer.render(modalScene, modalCamera);
+      }
+      animate();
+    }
+    
+    // Carregar preview no modal
+    function loadModalPreview(url) {
+      const loading = document.getElementById('modalViewerLoading');
+      const info = document.getElementById('modalViewerInfo');
+      const controls = document.getElementById('modalViewerControls');
+      
+      // Inicializar visualizador se ainda não foi inicializado
+      if (!modalScene) {
+        initModal3DViewer();
+      }
+      
+      // Mostrar loading
+      loading.style.display = 'block';
+      info.style.display = 'none';
+      controls.style.display = 'none';
+      
+      // Remover modelo anterior
+      if (modalCurrentModel) {
+        modalScene.remove(modalCurrentModel);
+        modalCurrentModel = null;
+      }
+      
+      // Remover erro anterior se existir
+      const container = document.getElementById('modalViewer3d');
+      const existingError = container.querySelector('.viewer-error');
+      if (existingError) existingError.remove();
+      
+      // Carregar novo modelo
+      const loader = new THREE.GLTFLoader();
+      
+      loader.load(
+        url,
+        function (gltf) {
+          modalCurrentModel = gltf.scene;
+          
+          // Centralizar modelo
+          const box = new THREE.Box3().setFromObject(modalCurrentModel);
+          const center = box.getCenter(new THREE.Vector3());
+          modalCurrentModel.position.sub(center);
+          
+          // Escalar modelo para caber na cena
+          const size = box.getSize(new THREE.Vector3());
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const scale = 3 / maxDim;
+          modalCurrentModel.scale.multiplyScalar(scale);
+          
+          modalScene.add(modalCurrentModel);
+          
+          // Esconder loading
+          loading.style.display = 'none';
+          info.style.display = 'block';
+          controls.style.display = 'flex';
+          
+          showNotification('Preview carregado! 👁️');
+        },
+        function (xhr) {
+          // Progresso
+          const percent = (xhr.loaded / xhr.total) * 100;
+          loading.textContent = `Carregando (${Math.round(percent)}%)`;
+        },
+        function (error) {
+          console.error('Erro ao carregar preview:', error);
+          loading.style.display = 'none';
+          
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'viewer-error';
+          errorDiv.innerHTML = `
+            ⚠️ Erro ao carregar preview<br>
+            <small>${url}</small><br><br>
+            <small>Verifique se o arquivo existe</small>
+          `;
+          container.appendChild(errorDiv);
+        }
+      );
+    }
+    
+    // Resetar câmera do modal
+    function resetModalCamera() {
+      if (!modalCamera || !modalControls) return;
+      modalCamera.position.set(5, 5, 5);
+      modalControls.target.set(0, 0, 0);
+      modalControls.update();
+      showNotification('Câmera resetada! 🔄');
+    }
+    
+    // Limpar visualizador do modal
+    function cleanupModal3DViewer() {
+      if (modalAnimationId) {
+        cancelAnimationFrame(modalAnimationId);
+        modalAnimationId = null;
+      }
+      if (modalRenderer) {
+        modalRenderer.dispose();
+        modalRenderer = null;
+      }
+      if (modalControls) {
+        modalControls.dispose();
+        modalControls = null;
+      }
+      modalScene = null;
+      modalCamera = null;
+      modalCurrentModel = null;
+      modalGridHelper = null;
     }
     
     // Inicializar

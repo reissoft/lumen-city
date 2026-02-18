@@ -5,9 +5,11 @@ import CityScene from "./CityScene"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Coins, X, MousePointer2, Hammer, Leaf, Route, Star, RotateCw, Trash2, Loader2 } from "lucide-react"
+import { Users, Briefcase, Smile, ShieldAlert } from 'lucide-react';
 import { buyBuilding, demolishBuildingAction, rotateBuildingAction } from "@/app/actions"
 import { BUILDING_CONFIG, CATEGORIES, BuildingCategory } from '@/app/config/buildings'
 import { cn } from '@/lib/utils'
+import { useCityStats } from '@/app/hooks/useCityStats';
 
 // ... (CATEGORY_ICONS e BuildingData Interfaces iguais ao seu) ...
 const CATEGORY_ICONS: Record<BuildingCategory, any> = {
@@ -102,6 +104,8 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
     ([_, config]) => config.category === activeCategory
   )
 
+  const stats = useCityStats(localBuildings);
+
   return (
     <div className="w-full h-screen relative overflow-hidden bg-black select-none">
       
@@ -133,20 +137,55 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
 
       {/* ... (O RESTO DO SEU HUD E BOTÕES PERMANECE IGUAL) ... */}
       
-      {/* HUD SUPERIOR */}
-      <div className="absolute top-0 left-0 w-full p-6 pointer-events-none z-10">
+      {/* HUD SUPERIOR ATUALIZADO */}
+    <div className="absolute top-0 left-0 w-full p-6 pointer-events-none z-10">
         <div className="flex justify-between items-start">
-          <div className="bg-slate-900/80 backdrop-blur p-4 rounded-xl border border-slate-700 pointer-events-auto">
-            <h1 className="text-xl font-bold text-white">Lumen City</h1>
-            <p className="text-xs text-slate-400">População: {localBuildings.length * 5}</p>
+          
+          {/* PAINEL DE STATUS */}
+          <div className="bg-slate-900/90 backdrop-blur p-4 rounded-xl border border-slate-700 pointer-events-auto flex gap-6 text-white shadow-xl">
+            
+            {/* População */}
+            <div className="flex flex-col items-center">
+                <div className="flex items-center gap-2 text-slate-400 text-xs uppercase font-bold">
+                    <Users size={14} /> População
+                </div>
+                <span className="text-xl font-bold">{stats.population}</span>
+            </div>
+
+            {/* Felicidade (Muda de cor se estiver baixo) */}
+            <div className="flex flex-col items-center">
+                <div className="flex items-center gap-2 text-slate-400 text-xs uppercase font-bold">
+                    <Smile size={14} /> Felicidade
+                </div>
+                <span className={cn("text-xl font-bold", stats.happiness < 50 ? "text-red-500" : "text-green-400")}>
+                    {stats.happiness}%
+                </span>
+            </div>
+
+            {/* Desemprego (Só mostra se tiver gente) */}
+            <div className="flex flex-col items-center">
+                <div className="flex items-center gap-2 text-slate-400 text-xs uppercase font-bold">
+                    <Briefcase size={14} /> Desemprego
+                </div>
+                <span className={cn("text-xl font-bold", stats.unemployed > 0 ? "text-yellow-500" : "text-slate-200")}>
+                    {stats.unemployed}
+                </span>
+            </div>
+             
+             {/* Segurança */}
+             <div className="flex flex-col items-center">
+                <div className="flex items-center gap-2 text-slate-400 text-xs uppercase font-bold">
+                    <ShieldAlert size={14} /> Segurança
+                </div>
+                <span className="text-xl font-bold">{stats.securityLevel}%</span>
+            </div>
+
           </div>
-          <div className="pointer-events-auto">
-            <Badge className="bg-yellow-500 text-slate-900 text-lg px-4 py-2 border-2 border-white shadow-lg">
-              <Coins className="w-5 h-5 mr-2" /> {student.resources?.gold ?? 0}
-            </Badge>
-          </div>
+
+          {/* ... Seu Badge de Dinheiro continua aqui ... */}
         </div>
-      </div>
+    </div>
+
 
       {/* MENU DE SELEÇÃO */}
       {selectedBuildingId && selectedConfig && !activeBuild && (

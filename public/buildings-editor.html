@@ -989,9 +989,18 @@
               <span>${getCategoryLabel(building.category)}</span>
             </div>
           </div>
-          <div class="building-actions">
-            <button class="icon-btn" onclick="editBuilding('${key}')" title="Editar">✏️</button>
-            <button class="icon-btn danger" onclick="deleteBuilding('${key}')" title="Deletar">🗑️</button>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.4rem;">
+            ${building.stats ? `<div style="display:flex;gap:0.3rem;flex-wrap:wrap;justify-content:flex-end;">
+              ${building.stats.population ? `<span style="font-size:0.65rem;background:rgba(0,255,136,0.12);border:1px solid rgba(0,255,136,0.3);color:var(--accent);padding:0.15rem 0.4rem;border-radius:3px;">👥 ${building.stats.population}</span>` : ''}
+              ${building.stats.jobs ? `<span style="font-size:0.65rem;background:rgba(255,170,0,0.12);border:1px solid rgba(255,170,0,0.3);color:var(--warning);padding:0.15rem 0.4rem;border-radius:3px;">💼 ${building.stats.jobs}</span>` : ''}
+              ${building.stats.pollution ? `<span style="font-size:0.65rem;background:rgba(255,68,102,0.12);border:1px solid rgba(255,68,102,0.3);color:var(--danger);padding:0.15rem 0.4rem;border-radius:3px;">🏭 ${building.stats.pollution}</span>` : ''}
+              ${building.stats.security ? `<span style="font-size:0.65rem;background:rgba(100,150,255,0.12);border:1px solid rgba(100,150,255,0.3);color:#6496ff;padding:0.15rem 0.4rem;border-radius:3px;">🚔 ${building.stats.security}</span>` : ''}
+              ${building.stats.entertainment ? `<span style="font-size:0.65rem;background:rgba(200,100,255,0.12);border:1px solid rgba(200,100,255,0.3);color:#c864ff;padding:0.15rem 0.4rem;border-radius:3px;">🎡 ${building.stats.entertainment}</span>` : ''}
+            </div>` : ''}
+            <div class="building-actions">
+              <button class="icon-btn" onclick="editBuilding('${key}')" title="Editar">✏️</button>
+              <button class="icon-btn danger" onclick="deleteBuilding('${key}')" title="Deletar">🗑️</button>
+            </div>
           </div>
         `;
         listElement.appendChild(card);
@@ -1069,6 +1078,45 @@
             <input type="hidden" id="buildingIcon" value="${building.icon}">
           </div>
           
+          <!-- STATS -->
+          <div class="form-group">
+            <label style="color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 1rem; display: block;">
+              📊 Stats do Building
+            </label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+              <div>
+                <label style="font-size:0.7rem;">
+                  👥 População
+                </label>
+                <input type="number" id="statPopulation" value="${building.stats?.population ?? ''}" min="0" placeholder="0">
+              </div>
+              <div>
+                <label style="font-size:0.7rem;">
+                  💼 Empregos
+                </label>
+                <input type="number" id="statJobs" value="${building.stats?.jobs ?? ''}" min="0" placeholder="0">
+              </div>
+              <div>
+                <label style="font-size:0.7rem;">
+                  🏭 Poluição
+                </label>
+                <input type="number" id="statPollution" value="${building.stats?.pollution ?? ''}" min="0" placeholder="0">
+              </div>
+              <div>
+                <label style="font-size:0.7rem;">
+                  🚔 Segurança
+                </label>
+                <input type="number" id="statSecurity" value="${building.stats?.security ?? ''}" placeholder="0">
+              </div>
+              <div style="grid-column: 1 / -1;">
+                <label style="font-size:0.7rem;">
+                  🎡 Entretenimento
+                </label>
+                <input type="number" id="statEntertainment" value="${building.stats?.entertainment ?? ''}" min="0" placeholder="0">
+              </div>
+            </div>
+          </div>
+
           <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 0.5rem;">
             💾 Salvar Alterações
           </button>
@@ -1106,6 +1154,14 @@
       event.preventDefault();
       
       const newKey = document.getElementById('buildingKey').value.trim();
+      // Coletar stats (apenas campos preenchidos)
+      const stats = {};
+      const statFields = ['population', 'jobs', 'pollution', 'security', 'entertainment'];
+      statFields.forEach(field => {
+        const el = document.getElementById('stat' + field.charAt(0).toUpperCase() + field.slice(1));
+        if (el && el.value !== '') stats[field] = parseInt(el.value);
+      });
+
       const newBuilding = {
         name: document.getElementById('buildingName').value,
         description: document.getElementById('buildingDescription').value,
@@ -1113,7 +1169,8 @@
         cost: parseInt(document.getElementById('buildingCost').value),
         url: document.getElementById('buildingUrl').value,
         icon: document.getElementById('buildingIcon').value,
-        scale: parseFloat(document.getElementById('buildingScale').value)
+        scale: parseFloat(document.getElementById('buildingScale').value),
+        ...(Object.keys(stats).length > 0 ? { stats } : {})
       };
       
       // Preservar iconImage se já existir
@@ -1207,7 +1264,8 @@
         cost: 100,
         url: "/models/default.glb",
         icon: 'Home',
-        scale: 1.0
+        scale: 1.0,
+        stats: {}
       };
       
       selectedBuilding = key;
@@ -1472,6 +1530,14 @@ import {
 
 export type BuildingCategory = 'construction' | 'nature' | 'infrastructure' | 'special'
 
+export interface BuildingStats {
+  population?: number
+  jobs?: number
+  pollution?: number
+  security?: number
+  entertainment?: number
+}
+
 export interface BuildingDef {
   name: string
   description: string
@@ -1480,6 +1546,8 @@ export interface BuildingDef {
   url: string
   icon: any
   scale: number
+  iconImage?: string
+  stats?: BuildingStats
 }
 
 // Definição das Categorias (para usar na UI)

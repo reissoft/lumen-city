@@ -1,8 +1,4 @@
 // app/config/buildings.ts
-import { 
-  Home, Route, Star, TreeDeciduous
-} from "lucide-react"
-
 export type BuildingCategory = 'construction' | 'nature' | 'infrastructure' | 'special'
 
 export interface BuildingDef {
@@ -14,6 +10,16 @@ export interface BuildingDef {
   icon: any
   scale: number
   iconImage: string
+  stats?: BuildingStats;
+}
+
+export interface BuildingStats {
+  population?: number;      // Quantas pessoas moram (Casas)
+  jobs?: number;            // Quantos empregos gera (Indústria/Comércio)
+  pollution?: number;       // Impacto negativo (Indústria)
+  security?: number;        // Impacto positivo (Polícia) ou negativo (Bares suspeitos?)
+  entertainment?: number;   // Impacto na felicidade (Parques)
+  
 }
 
 // Definição das Categorias (para usar na UI)
@@ -31,9 +37,14 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "category": "construction",
     "cost": 10,
     "url": "/models/building-b.glb",
-    "icon": Home,
+    "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/building-b_icon.png"
+    "iconImage": "/models/building-b_icon.png",
+    "stats": {
+      population: 4,
+      pollution: 1 // Gera um pouquinho de lixo
+    }
+
   },
   "building_c": {
     "name": "Building C",
@@ -1131,7 +1142,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "category": "infrastructure",
     "cost": 1,
     "url": "/models/infra/construction-barrier.glb",
-    "icon": Route,
+    "icon": "__ICON_Home__",
     "scale": 2,
     "iconImage": "/models/infra/construction-barrier_icon.png"
   },
@@ -1571,7 +1582,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "category": "special",
     "cost": 1000,
     "url": "/models/specials/missao.glb",
-    "icon": Star,
+    "icon": "__ICON_Home__",
     "scale": 2,
     "iconImage": "/models/specials/missao_icon.png"
   },
@@ -1931,7 +1942,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "category": "nature",
     "cost": 25,
     "url": "/models/suburban/tree-large.glb",
-    "icon": TreeDeciduous,
+    "icon": "__ICON_Home__",
     "scale": 2,
     "iconImage": "/models/suburban/tree-large_icon.png"
   },

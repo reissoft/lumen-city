@@ -277,6 +277,8 @@
       align-items: center;
       justify-content: center;
       font-size: 1.8rem;
+      overflow: hidden;
+      flex-shrink: 0;
     }
     
     .building-info h3 {
@@ -938,13 +940,12 @@
     let selectedBuilding = null;
     
     // Three.js 3D Viewer
-    let scene, camera, renderer, controls, currentModel, gridHelper;
+    let scene, camera, renderer, controls, currentModel;
     let animationId = null;
     let wireframeMode = false;
-    let showGrid = true;
     
     // Three.js 3D Viewer do Modal
-    let modalScene, modalCamera, modalRenderer, modalControls, modalCurrentModel, modalGridHelper;
+    let modalScene, modalCamera, modalRenderer, modalControls, modalCurrentModel;
     let modalAnimationId = null;
     
     // Renderizar lista de buildings
@@ -972,8 +973,13 @@
       filteredBuildings.forEach(([key, building]) => {
         const card = document.createElement('div');
         card.className = `building-card ${selectedBuilding === key ? 'active' : ''}`;
+        
+        const iconHtml = building.iconImage
+          ? `<img src="${building.iconImage}" alt="${building.name}" style="width:100%;height:100%;object-fit:cover;border-radius:2px;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span style="display:none;align-items:center;justify-content:center;width:100%;height:100%;font-size:1.8rem;">${ICONS[building.icon] || '🏗️'}</span>`
+          : `${ICONS[building.icon] || '🏗️'}`;
+        
         card.innerHTML = `
-          <div class="building-icon">${ICONS[building.icon] || '🏗️'}</div>
+          <div class="building-icon">${iconHtml}</div>
           <div class="building-info">
             <h3>${building.name}</h3>
             <p>${building.description}</p>
@@ -1045,12 +1051,22 @@
           </div>
           
           <div class="form-group">
-            <label>Ícone</label>
-            <select id="buildingIcon" required>
-              ${Object.keys(ICONS).map(icon => 
-                `<option value="${icon}" ${building.icon === icon ? 'selected' : ''}>${ICONS[icon]} ${icon}</option>`
-              ).join('')}
-            </select>
+            <label>Ícone Atual</label>
+            <div style="background: var(--bg-dark); border: 2px solid var(--border); border-radius: 4px; padding: 1rem; display: flex; align-items: center; gap: 1rem; min-height: 80px;">
+              ${building.iconImage 
+                ? `<img id="iconPreview" src="${building.iconImage}" alt="Ícone" style="width:64px;height:64px;object-fit:cover;border-radius:4px;border:2px solid var(--accent);" onerror="this.style.display='none';document.getElementById('iconPlaceholder').style.display='flex'">
+                   <span id="iconPlaceholder" style="display:none;width:64px;height:64px;align-items:center;justify-content:center;font-size:2rem;background:var(--bg-panel);border-radius:4px;border:2px solid var(--border);">${ICONS[building.icon] || '🏗️'}</span>`
+                : `<img id="iconPreview" style="display:none;width:64px;height:64px;object-fit:cover;border-radius:4px;border:2px solid var(--accent);">
+                   <span id="iconPlaceholder" style="display:flex;width:64px;height:64px;align-items:center;justify-content:center;font-size:2rem;background:var(--bg-panel);border-radius:4px;border:2px dashed var(--border);">${ICONS[building.icon] || '🏗️'}</span>`
+              }
+              <div style="flex:1; font-size: 0.78rem; color: var(--text-dim); line-height: 1.6;">
+                ${building.iconImage 
+                  ? `<span style="color:var(--accent);">✅ Ícone definido</span><br><span style="word-break:break-all;">${building.iconImage}</span>`
+                  : `<span style="color:var(--warning);">⚠️ Sem ícone definido</span><br>Carregue o modelo 3D e clique em<br><strong style="color:var(--accent);">📸 Salvar Ícone</strong> no visualizador`
+                }
+              </div>
+            </div>
+            <input type="hidden" id="buildingIcon" value="${building.icon}">
           </div>
           
           <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 0.5rem;">
@@ -1071,7 +1087,7 @@
           <div class="viewer-controls" id="viewerControls" style="display: none;">
             <button onclick="resetCamera()" title="Resetar Câmera">🔄</button>
             <button onclick="toggleWireframe()" title="Wireframe">📐</button>
-            <button onclick="toggleGrid()" title="Grid">⊞</button>
+            <button onclick="saveIcon('${key}')" title="Salvar Ícone 3D" style="background: var(--accent); color: var(--bg-dark); border-color: var(--accent); font-size: 0.7rem; width: auto; padding: 0 0.5rem; font-family: JetBrains Mono, monospace; font-weight: 600;">📸 Salvar Ícone</button>
           </div>
         </div>
       `;
@@ -1099,6 +1115,12 @@
         icon: document.getElementById('buildingIcon').value,
         scale: parseFloat(document.getElementById('buildingScale').value)
       };
+      
+      // Preservar iconImage se já existir
+      const oldBuilding = buildings[oldKey];
+      if (oldBuilding && oldBuilding.iconImage) {
+        newBuilding.iconImage = oldBuilding.iconImage;
+      }
       
       // Se a chave mudou, deletar antiga e criar nova
       if (oldKey !== newKey) {
@@ -1543,7 +1565,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = `;
       camera.position.set(5, 5, 5);
       
       // Renderizador
-      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
       renderer.setSize(width, height);
       renderer.setPixelRatio(window.devicePixelRatio);
       container.appendChild(renderer.domElement);
@@ -1566,12 +1588,6 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = `;
       const directionalLight2 = new THREE.DirectionalLight(0x00ff88, 0.3);
       directionalLight2.position.set(-5, 5, -5);
       scene.add(directionalLight2);
-      
-      // Grid
-      gridHelper = new THREE.GridHelper(10, 10, 0x00ff88, 0x2a3142);
-      gridHelper.material.opacity = 0.3;
-      gridHelper.material.transparent = true;
-      scene.add(gridHelper);
       
       // Animação
       function animate() {
@@ -1689,13 +1705,67 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = `;
       showNotification(wireframeMode ? 'Wireframe ativado! 📐' : 'Wireframe desativado! 📐');
     }
     
-    // Toggle grid
-    function toggleGrid() {
-      if (!gridHelper) return;
-      showGrid = !showGrid;
-      gridHelper.visible = showGrid;
-      showNotification(showGrid ? 'Grid ativado! ⊞' : 'Grid desativado! ⊞');
+    // Salvar ícone 3D como PNG com dialogo de local
+    async function saveIcon(buildingKey) {
+      if (!renderer || !currentModel) {
+        showNotification('Modelo 3D nao carregado! ⚠️');
+        return;
+      }
+      renderer.render(scene, camera);
+      const canvas = renderer.domElement;
+      const building = buildings[buildingKey];
+      const modelUrl = building.url;
+      const suggestedName = modelUrl.replace(/\.(glb|gltf)$/i, '_icon.png').split('/').pop();
+      const iconPath = modelUrl.replace(/\.(glb|gltf)$/i, '_icon.png');
+
+      if (window.showSaveFilePicker) {
+        try {
+          const fileHandle = await window.showSaveFilePicker({
+            suggestedName: suggestedName,
+            types: [{ description: 'PNG Image', accept: { 'image/png': ['.png'] } }]
+          });
+          canvas.toBlob(async (blob) => {
+            const writable = await fileHandle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+            buildings[buildingKey].iconImage = iconPath;
+            renderBuildings();
+            updateIconPreview(buildingKey);
+            showNotification('Icone salvo com sucesso! 📸');
+          }, 'image/png');
+        } catch (err) {
+          if (err.name !== 'AbortError') showNotification('Erro ao salvar icone ⚠️');
+        }
+      } else {
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = suggestedName;
+          a.click();
+          URL.revokeObjectURL(url);
+          buildings[buildingKey].iconImage = iconPath;
+          renderBuildings();
+          updateIconPreview(buildingKey);
+          showNotification('Icone baixado! Mova para: ' + iconPath + ' 📸');
+        }, 'image/png');
+      }
     }
+
+    function updateIconPreview(buildingKey) {
+      const preview = document.getElementById('iconPreview');
+      if (!preview) return;
+      const building = buildings[buildingKey];
+      if (building && building.iconImage) {
+        preview.src = building.iconImage;
+        preview.style.display = 'block';
+        const placeholder = document.getElementById('iconPlaceholder');
+        if (placeholder) placeholder.style.display = 'none';
+      }
+    }
+    
+    // Toggle grid (mantido por compatibilidade)
+    function toggleGrid() {}
     
     // Limpar visualizador
     function cleanup3DViewer() {
@@ -1714,7 +1784,6 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = `;
       scene = null;
       camera = null;
       currentModel = null;
-      gridHelper = null;
     }
     
     // ===== VISUALIZADOR 3D DO MODAL =====
@@ -1766,12 +1835,6 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = `;
       const directionalLight2 = new THREE.DirectionalLight(0x00ff88, 0.3);
       directionalLight2.position.set(-5, 5, -5);
       modalScene.add(directionalLight2);
-      
-      // Grid
-      modalGridHelper = new THREE.GridHelper(10, 10, 0x00ff88, 0x2a3142);
-      modalGridHelper.material.opacity = 0.3;
-      modalGridHelper.material.transparent = true;
-      modalScene.add(modalGridHelper);
       
       // Animação
       function animate() {
@@ -1884,7 +1947,6 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = `;
       modalScene = null;
       modalCamera = null;
       modalCurrentModel = null;
-      modalGridHelper = null;
     }
     
     // Inicializar

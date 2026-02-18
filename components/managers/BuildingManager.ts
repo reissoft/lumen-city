@@ -50,7 +50,11 @@ export class BuildingManager {
       ) as pc.Entity;
 
       if (!buildingEntity) {
-        buildingEntity = this.createBuilding(b);
+        // Tenta criar (retorna asset ou cubo)
+        const newEntity = this.createBuilding(b);
+        if (newEntity) {
+          buildingEntity = newEntity;
+        }
       }
 
       if (buildingEntity) {
@@ -60,29 +64,50 @@ export class BuildingManager {
   }
 
   /**
-   * Cria um novo prédio
+   * Cria um novo prédio (Tenta Asset -> Se falhar, cria Cubo)
    */
-  private createBuilding(building: Building): pc.Entity | null {
+  private createBuilding(building: Building): pc.Entity {
     const asset = this.assetManager.getAsset(building.type);
-
-    if (!asset || !asset.resource) {
-      console.warn(`⚠️ Asset não encontrado para: ${building.type}`);
-      return null;
-    }
-
     const config = BUILDING_CONFIG[building.type as BuildingType];
-    if (!config) {
-      console.warn(`⚠️ Config não encontrada para: ${building.type}`);
-      return null;
+    const scale = config?.scale || 1;
+    
+    let buildingEntity: pc.Entity | null = null;
+
+    // 1. TENTATIVA: Criar a partir do Asset GLB
+    if (asset && asset.resource) {
+      try {
+        // instantiateRenderEntity é específico para assets tipo 'container' (GLB)
+        buildingEntity = (asset.resource as any).instantiateRenderEntity({
+          app: this.app,
+        });
+      } catch (e) {
+        console.error(`❌ Erro ao instanciar asset para ${building.type}:`, e);
+      }
+    } else {
+        // Log para debug: se você ver isso no console, o asset não carregou ou o nome está errado
+        if (!asset) console.warn(`⚠️ Asset não encontrado no Manager: ${building.type}`);
+        else console.warn(`⚠️ Asset encontrado mas sem recurso (resource): ${building.type}`);
     }
 
-    const buildingEntity = (asset.resource as any).instantiateRenderEntity({
-      app: this.app,
-    });
+    // 2. FALLBACK: Se falhou acima (buildingEntity ainda é null), cria o Cubo
+    if (!buildingEntity) {
+      buildingEntity = new pc.Entity();
+      buildingEntity.addComponent('render', { type: 'box' });
+      
+      // Material cinza para não ficar branco estourado
+      const material = new pc.StandardMaterial();
+      material.diffuse = new pc.Color(0.5, 0.5, 0.5); 
+      material.update();
+      if (buildingEntity.render) {
+        buildingEntity.render.material = material;
+      }
+    }
 
-    const scale = config.scale || 1;
-    buildingEntity.setLocalScale(scale, scale, scale);
+    // 3. Configurações Finais (Nome, Posição, Escala)
     buildingEntity.name = `Building-${building.id}`;
+    
+    // Configura a escala (seja modelo ou cubo)
+    buildingEntity.setLocalScale(scale, scale, scale);
 
     const worldX = building.x * 2 - OFFSET;
     const worldZ = building.y * 2 - OFFSET;
@@ -90,10 +115,8 @@ export class BuildingManager {
 
     this.app.root.addChild(buildingEntity);
 
-    // Animação de pop
+    // Animação de entrada
     this.animateBuildingPop(buildingEntity, scale);
-
-    console.log(`🏢 Prédio criado: ${building.type} (ID: ${building.id})`);
 
     return buildingEntity;
   }

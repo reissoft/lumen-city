@@ -187,6 +187,7 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
       {/* MENU INFERIOR */}
       {!selectedBuildingId && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto z-20 w-full max-w-5xl px-4 flex flex-col gap-2 animate-in slide-in-from-bottom-10">
+            {/* Abas de Categoria */}
             <div className="flex justify-center gap-2">
             {Object.entries(CATEGORIES).map(([key, label]) => {
                 const isSelected = activeCategory === key
@@ -205,48 +206,68 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
                 )
             })}
             </div>
-            <div className="relative">
-            <button
-              onClick={() => { const el = document.getElementById('buildScroll'); if(el) el.scrollBy({left: -200, behavior: 'smooth'}) }}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-slate-800/90 hover:bg-slate-700 border border-slate-600 rounded-full w-8 h-8 flex items-center justify-center text-white shadow-lg -translate-x-1/2 transition-all"
-            >&#8249;</button>
-            <div id="buildScroll" className="bg-slate-900/95 backdrop-blur border border-slate-600 p-2 rounded-2xl rounded-tl-none shadow-2xl flex items-center gap-2 overflow-x-auto min-h-[110px] scroll-smooth px-4" style={{scrollbarWidth:'none', msOverflowStyle:'none'}}>
-                {filteredBuildings.length > 0 ? (
-                filteredBuildings.map(([key, config]) => {
-                    const isSelected = activeBuild === key
-                    return (
-                        <button
-                            key={key}
-                            onClick={() => setActiveBuild(isSelected ? null : key)}
-                            className={cn(
-                                "relative group flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-200 min-w-[90px]",
-                                isSelected ? "bg-indigo-600 scale-105 shadow-lg ring-2 ring-white" : "hover:bg-slate-800 hover:-translate-y-1"
-                            )}
-                        >
-                            {config.iconImage ? (
-                                <img
-                                    src={config.iconImage}
-                                    alt={config.name}
-                                    className={cn("w-14 h-14 rounded-xl object-cover mb-1 transition-all", isSelected ? "ring-2 ring-white" : "opacity-90 group-hover:opacity-100")}
-                                />
-                            ) : (
-                                <div className={cn("p-3 rounded-full mb-1 transition-colors", isSelected ? "bg-white text-indigo-600" : "bg-slate-800 text-slate-300 group-hover:bg-slate-700")}>
-                                    <config.icon size={24} />
-                                </div>
-                            )}
-                            <span className={cn("text-xs font-bold", isSelected ? "text-white" : "text-slate-400")}>{config.name}</span>
-                            <span className="text-[10px] text-yellow-500 font-mono">{config.cost} G</span>
-                        </button>
-                    )
-                })
-                ) : (
-                <p className="text-slate-500 text-sm py-4">Nenhum item nesta categoria ainda.</p>
-                )}
-            </div>
-            <button
-              onClick={() => { const el = document.getElementById('buildScroll'); if(el) el.scrollBy({left: 200, behavior: 'smooth'}) }}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-slate-800/90 hover:bg-slate-700 border border-slate-600 rounded-full w-8 h-8 flex items-center justify-center text-white shadow-lg translate-x-1/2 transition-all"
-            >&#8250;</button>
+
+            {/* Container Principal da Lista (Fundo e Bordas agora ficam aqui) */}
+            <div className="bg-slate-900/95 backdrop-blur border border-slate-600 p-2 rounded-2xl rounded-tl-none shadow-2xl flex items-center gap-2">
+                
+                {/* Seta Esquerda (Agora faz parte do fluxo, não é absolute) */}
+                <button
+                  onClick={() => { const el = document.getElementById('buildScroll'); if(el) el.scrollBy({left: -200, behavior: 'smooth'}) }}
+                  className="p-2 hover:bg-slate-700 rounded-full text-slate-400 hover:text-white transition-colors shrink-0"
+                >
+                    <span className="text-2xl pb-1 block">&#8249;</span>
+                </button>
+
+                {/* Área de Scroll */}
+                <div 
+                    id="buildScroll" 
+                    className="flex gap-2 overflow-x-auto flex-1 scroll-smooth py-2 px-1" 
+                    style={{scrollbarWidth:'none', msOverflowStyle:'none'}}
+                >
+                    {filteredBuildings.length > 0 ? (
+                    filteredBuildings.map(([key, config]) => {
+                        const isSelected = activeBuild === key
+                        return (
+                            <button
+                                key={key}
+                                onClick={() => setActiveBuild(isSelected ? null : key)}
+                                className={cn(
+                                    // ADICIONADO: w-24 h-32 shrink-0 (Tamanho fixo para evitar esticar)
+                                    "relative group flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 w-28 h-32 shrink-0 border border-transparent",
+                                    isSelected ? "bg-indigo-600 scale-105 shadow-lg ring-2 ring-white" : "hover:bg-slate-800 hover:border-slate-700"
+                                )}
+                            >
+                                {config.iconImage ? (
+                                    <img
+                                        src={config.iconImage}
+                                        alt={config.name}
+                                        // Garante que a imagem fique contida
+                                        className={cn("w-16 h-16 rounded-md object-contain mb-2 transition-all", isSelected ? "ring-2 ring-white/50" : "opacity-90 group-hover:opacity-100")}
+                                    />
+                                ) : (
+                                    <div className={cn("p-3 rounded-full mb-2 transition-colors", isSelected ? "bg-white text-indigo-600" : "bg-slate-800 text-slate-300 group-hover:bg-slate-700")}>
+                                        <config.icon size={28} />
+                                    </div>
+                                )}
+                                <span className={cn("text-xs font-bold text-center line-clamp-1 w-full", isSelected ? "text-white" : "text-slate-400")}>{config.name}</span>
+                                <span className="text-[10px] text-yellow-500 font-mono mt-1">{config.cost} G</span>
+                            </button>
+                        )
+                    })
+                    ) : (
+                    <div className="w-full text-center py-4">
+                        <p className="text-slate-500 text-sm">Nenhum item nesta categoria ainda.</p>
+                    </div>
+                    )}
+                </div>
+
+                {/* Seta Direita */}
+                <button
+                  onClick={() => { const el = document.getElementById('buildScroll'); if(el) el.scrollBy({left: 200, behavior: 'smooth'}) }}
+                  className="p-2 hover:bg-slate-700 rounded-full text-slate-400 hover:text-white transition-colors shrink-0"
+                >
+                  <span className="text-2xl pb-1 block">&#8250;</span>
+                </button>
             </div>
         </div>
       )}

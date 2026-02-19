@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea" // Importar Textarea
 import { Wand2, Loader2, UploadCloud, File, X, AlertTriangle } from "lucide-react"
 import mammoth from "mammoth"
 
@@ -19,21 +20,22 @@ import { Document, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 
-// Configuração do worker, necessária para a react-pdf
+// Configuração do worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 interface QuizGeneratorCardProps {
   topic: string;
   isGenerating: boolean;
-  handleGeneration: (contextText: string) => void;
+  handleGeneration: (contextText: string, additionalNotes: string) => void; // Atualizado
 }
 
 export default function QuizGeneratorCard({ topic, isGenerating, handleGeneration }: QuizGeneratorCardProps) {
   const [file, setFile] = useState<File | null>(null)
   const [contextText, setContextText] = useState("")
+  const [additionalNotes, setAdditionalNotes] = useState("") // Novo estado
   const [fileError, setFileError] = useState<string | null>(null)
   const [isParsingFile, setIsParsingFile] = useState(false)
-  const [isDraggingOver, setIsDraggingOver] = useState(false) // Novo estado para o drag-and-drop
+  const [isDraggingOver, setIsDraggingOver] = useState(false)
 
   const onDocumentLoadSuccess = useCallback(async (pdf: any) => {
     setIsParsingFile(true);
@@ -102,7 +104,6 @@ export default function QuizGeneratorCard({ topic, isGenerating, handleGeneratio
     setFileError(null);
   };
 
-  // Funções para Drag and Drop
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       if (!isDisabled) setIsDraggingOver(true);
@@ -138,9 +139,9 @@ export default function QuizGeneratorCard({ topic, isGenerating, handleGeneratio
       <Card className={`hover:border-indigo-500/50 transition-all ${isDisabled ? 'opacity-50' : ''}`}>
         <CardHeader>
           <CardTitle className="flex items-center gap-3"><Wand2 className="text-indigo-600" />Gerar Quiz com IA</CardTitle>
-          <CardDescription>Defina um tema ou envie um arquivo para a IA criar a atividade.</CardDescription>
+          <CardDescription>Defina um tema, envie um arquivo e adicione notas para a IA criar a atividade.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
           <div className="space-y-3">
               <Label>Baseado em Arquivo (Opcional)</Label>
               <div 
@@ -169,9 +170,20 @@ export default function QuizGeneratorCard({ topic, isGenerating, handleGeneratio
               </div>
               {fileError && <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-2 rounded-md"><AlertTriangle size={16} /><span>{fileError}</span></div>}
           </div>
+          <div className="space-y-3">
+            <Label htmlFor="additional-notes">Instruções Adicionais para a IA (Opcional)</Label>
+            <Textarea 
+              id="additional-notes"
+              placeholder="Ex: Crie questões mais difíceis, foque no capítulo 3, use um tom mais informal..."
+              value={additionalNotes}
+              onChange={(e) => setAdditionalNotes(e.target.value)}
+              disabled={isDisabled}
+              className="resize-none"
+            />
+          </div>
         </CardContent>
         <CardFooter>
-          <Button onClick={() => handleGeneration(contextText)} className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={isDisabled || !topic}>
+          <Button onClick={() => handleGeneration(contextText, additionalNotes)} className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={isDisabled || !topic}>
             {isGenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Gerando...</> : isParsingFile ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Processando...</> : 'Gerar Mágica ✨'}
           </Button>
         </CardFooter>

@@ -19,17 +19,15 @@ import { ArrowLeft, PlusCircle } from "lucide-react"
 import Link from "next/link"
 import dynamic from 'next/dynamic'
 
-// Importação dinâmica do componente cliente com SSR desativado.
 const QuizGeneratorCard = dynamic(() => import('./QuizGeneratorCard'), { ssr: false });
 
 export default function CreateActivityPage() {
   const router = useRouter()
   const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
   const [isGenerating, startTransition] = useTransition()
 
-  // A lógica de geração de quiz permanece aqui, mas agora recebe o texto extraído.
-  const handleGenerateQuiz = (contextText: string) => {
+  // Atualizado para aceitar additionalNotes
+  const handleGenerateQuiz = (contextText: string, additionalNotes: string) => {
     if (!title) {
       alert("Por favor, insira um tema para o quiz.")
       return
@@ -39,6 +37,10 @@ export default function CreateActivityPage() {
     formData.append("topic", title)
     if (contextText) {
       formData.append("contextText", contextText)
+    }
+    // Adicionar as notas ao FormData
+    if (additionalNotes) {
+      formData.append("additionalNotes", additionalNotes)
     }
     
     startTransition(async () => {
@@ -58,7 +60,6 @@ export default function CreateActivityPage() {
             <Link href="/teacher"><ArrowLeft size={16} /> Voltar</Link>
         </Button>
 
-        {/* O campo de título agora fica fora, controlando ambos os cards */}
         <div className="mb-8">
             <Label htmlFor="title" className="text-lg font-semibold">Tema Principal da Atividade</Label>
             <Input
@@ -72,14 +73,12 @@ export default function CreateActivityPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* O componente cliente é renderizado aqui */}
           <QuizGeneratorCard 
             topic={title}
             isGenerating={isGenerating}
             handleGeneration={handleGenerateQuiz}
           />
 
-          {/* Card de Criação Manual (sem alterações significativas) */}
           <Card className={`hover:border-green-500/50 transition-all ${isGenerating ? 'opacity-50' : ''}`}>
             <CardHeader>
               <CardTitle className="flex items-center gap-3">
@@ -92,7 +91,7 @@ export default function CreateActivityPage() {
             </CardHeader>
             <CardFooter>
               <Link 
-                href={`/teacher/create-activity/manual?title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}`}
+                href={`/teacher/create-activity/manual?title=${encodeURIComponent(title)}`}
                 className={`w-full ${isGenerating || !title ? 'pointer-events-none' : ''}`}>
                 <Button variant="secondary" className="w-full border-green-200 text-green-700" disabled={isGenerating || !title}>
                   Começar a Criar

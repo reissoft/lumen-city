@@ -14,8 +14,8 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
 export async function generateQuiz(formData: FormData) {
   const topic = formData.get('topic') as string
-  // O texto virá diretamente do formulário, não mais o arquivo
   const contextText = formData.get('contextText') as string
+  const additionalNotes = formData.get('additionalNotes') as string // Novo
   const teacherEmail = await getCurrentUser()
   let newActivity: Activity;
 
@@ -23,7 +23,7 @@ export async function generateQuiz(formData: FormData) {
       throw new Error("O tema do quiz é obrigatório.");
   }
 
-  // O prompt continua o mesmo, usando o contextText recebido
+  // Prompt atualizado para incluir instruções adicionais
   const systemPrompt = `
     Você é um assistente pedagógico especializado em criar material didático gamificado.
     Sua tarefa é gerar um Quiz sobre o tema fornecido. A saída DEVE ser estritamente um JSON válido seguindo esta estrutura, sem texto adicional antes ou depois:
@@ -43,13 +43,21 @@ export async function generateQuiz(formData: FormData) {
             }
         ]
     }
-    Gere 3 perguntas.
+    Gere 5 perguntas caso não seja informado a quantidade no contexto.
 
     ${contextText ? 
     `---CONTEXTO---
     Use o seguinte texto como fonte primária e obrigatória para criar as perguntas e respostas. As perguntas devem ser diretamente baseadas neste conteúdo:
     ${contextText}
     ---FIM DO CONTEXTO---` 
+    : ''
+    }
+
+    ${additionalNotes ? 
+    `---INSTRUÇÕES ADICIONAIS---
+    Leve em consideração as seguintes instruções do professor ao gerar o quiz:
+    ${additionalNotes}
+    ---FIM DAS INSTRUÇÕES---` 
     : ''
     }
   `;

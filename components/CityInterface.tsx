@@ -4,14 +4,16 @@ import { useState, useCallback, useEffect } from 'react'
 import CityScene from "./CityScene"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Coins, X, MousePointer2, Hammer, Leaf, Route, Star, RotateCw, Trash2, Loader2 } from "lucide-react"
-import { Users, Briefcase, Smile, ShieldAlert } from 'lucide-react';
-import { buyBuilding, demolishBuildingAction, rotateBuildingAction } from "@/app/actions"
+
+// 1. ADICIONEI OS ÍCONES NOVOS AQUI (Pencil, Check)
+import { Coins, X, MousePointer2, Hammer, Leaf, Route, Star, RotateCw, Trash2, Loader2, Users, Briefcase, Smile, ShieldAlert, MapPin, Pencil, Check } from "lucide-react"
+
+// 2. IMPORTANTE: Certifique-se que updateCityName existe no actions.ts
+import { buyBuilding, demolishBuildingAction, rotateBuildingAction, updateCityName } from "@/app/actions"
 import { BUILDING_CONFIG, CATEGORIES, BuildingCategory } from '@/app/config/buildings'
 import { cn } from '@/lib/utils'
 import { useCityStats } from '@/app/hooks/useCityStats';
 
-// ... (CATEGORY_ICONS e BuildingData Interfaces iguais ao seu) ...
 const CATEGORY_ICONS: Record<BuildingCategory, any> = {
   construction: Hammer,
   nature: Leaf,
@@ -35,28 +37,53 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
   const [activeCategory, setActiveCategory] = useState<BuildingCategory>('construction')
   const [isBuilding, setIsBuilding] = useState(false)
   const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
-
-  // --- LOADING SCREEN STATE ---
   const [isLoading, setIsLoading] = useState(true);
 
-  // Callback chamado pelo CityScene quando o PlayCanvas terminar de baixar os assets
+  // --- NOVO: LÓGICA DE NOME DA CIDADE ---
+  // Pega o nome do JSON resources ou usa o padrão
+  const initialName = student.resources?.cityName || "Lumen City";
+  
+  // Estados para edição
+  const [tempCityName, setTempCityName] = useState(initialName);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isSavingName, setIsSavingName] = useState(false);
+
+  // FUNÇÃO DE SALVAR O NOME
+  const handleSaveName = async () => {
+    if (!tempCityName || tempCityName.trim() === "") return;
+    
+    setIsSavingName(true);
+
+    try {
+        // Chama o Backend passando o ID do aluno
+        await updateCityName(student.id, tempCityName);
+
+        // Atualiza localmente (Otimismo)
+        if (!student.resources) student.resources = {};
+        student.resources.cityName = tempCityName; 
+        
+        setIsEditingName(false);
+    } catch (error) {
+        console.error("Erro ao salvar nome:", error);
+    } finally {
+        setIsSavingName(false);
+    }
+  };
+  // --------------------------------------
+
   const handleAssetsLoaded = useCallback(() => {
-     // Pequeno delay para garantir que a renderização do frame ocorreu
      setTimeout(() => {
          setIsLoading(false);
      }, 300);
   }, []);
 
-  // Sync inicial para garantir que os dados do banco entrem no estado
   useEffect(() => {
     if (initialBuildings && initialBuildings.length > 0) {
         setLocalBuildings(initialBuildings);
     }
   }, [initialBuildings]);
 
-
   const handleTileClick = useCallback(async (x: number, y: number) => {
-    // ... (Sua lógica idêntica de handleTileClick) ...
     const clickedBuilding = localBuildings.find(b => b.x === x && b.y === y);
     if (activeBuild) {
       if (clickedBuilding) { alert("Local ocupado!"); return; }
@@ -74,11 +101,8 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
     }
   }, [activeBuild, localBuildings]);
 
-
   const handleRotate = async () => {
     if (!selectedBuildingId) return;
-    
-    // CORREÇÃO DOS PARÊNTESES NA LÓGICA DE ROTAÇÃO
     const currentRot = localBuildings.find(b => b.id === selectedBuildingId)?.rotation || 0;
     const newRotation = (currentRot + 90) % 360;
 
@@ -105,11 +129,11 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
   )
 
   const stats = useCityStats(localBuildings);
-
+  
   return (
     <div className="w-full h-screen relative overflow-hidden bg-black select-none">
       
-      {/* --- TELA DE LOADING --- */}
+      {/* TELA DE LOADING */}
       <div className={cn(
           "absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 transition-opacity duration-700 pointer-events-none",
           isLoading ? "opacity-100" : "opacity-0"
@@ -130,61 +154,119 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
         activeBuild={activeBuild} 
         selectedBuildingId={selectedBuildingId}
         onCancelBuild={() => setActiveBuild(null)}
-        
-        // Passa a função de remover o loading
         onAssetsLoaded={handleAssetsLoaded}
       />
-
-      {/* ... (O RESTO DO SEU HUD E BOTÕES PERMANECE IGUAL) ... */}
       
-      {/* HUD SUPERIOR ATUALIZADO */}
-    <div className="absolute top-0 left-0 w-full p-6 pointer-events-none z-10">
-        <div className="flex justify-between items-start">
-          
-          {/* PAINEL DE STATUS */}
-          <div className="bg-slate-900/90 backdrop-blur p-4 rounded-xl border border-slate-700 pointer-events-auto flex gap-6 text-white shadow-xl">
-            
-            {/* População */}
-            <div className="flex flex-col items-center">
-                <div className="flex items-center gap-2 text-slate-400 text-xs uppercase font-bold">
-                    <Users size={14} /> População
-                </div>
-                <span className="text-xl font-bold">{stats.population}</span>
-            </div>
+    {/* HUD SUPERIOR */}
+      <div className="absolute top-0 left-0 w-full p-6 pointer-events-none z-10">
+        
+        {/* NOME DA CIDADE (AGORA É EDITÁVEL) */}
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 pointer-events-auto z-20">
+            <div className={cn(
+                "backdrop-blur-md px-8 py-2 rounded-full border-b-2 shadow-[0_0_15px_rgba(99,102,241,0.3)] flex flex-col items-center transition-all duration-300",
+                isEditingName 
+                    ? "bg-slate-900 border-indigo-500 scale-110" 
+                    : "bg-slate-950/80 border-indigo-500/50 hover:bg-slate-900 hover:border-indigo-400 group cursor-pointer"
+            )}>
+                <span className="text-[10px] text-slate-400 font-bold tracking-[0.3em] uppercase mb-0.5">
+                    Prefeito: {student?.name || "Jogador"}
+                </span>
 
-            {/* Felicidade (Muda de cor se estiver baixo) */}
-            <div className="flex flex-col items-center">
-                <div className="flex items-center gap-2 text-slate-400 text-xs uppercase font-bold">
-                    <Smile size={14} /> Felicidade
+                {isEditingName ? (
+                    /* MODO EDIÇÃO */
+                    <div className="flex items-center gap-2 mt-1">
+                        <input 
+                            autoFocus
+                            type="text" 
+                            value={tempCityName}
+                            onChange={(e) => setTempCityName(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveName();
+                                if (e.key === 'Escape') {
+                                    setTempCityName(initialName);
+                                    setIsEditingName(false);
+                                }
+                            }}
+                            className="bg-transparent border-b border-white/20 text-center text-xl font-black text-white tracking-widest outline-none w-48 placeholder-slate-600"
+                            maxLength={20}
+                        />
+                        <button onClick={handleSaveName} disabled={isSavingName} className="p-1 hover:bg-green-500/20 rounded-full text-green-400 transition-colors">
+                            {isSavingName ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                        </button>
+                        <button onClick={() => {
+                            setTempCityName(initialName);
+                            setIsEditingName(false);
+                        }} className="p-1 hover:bg-red-500/20 rounded-full text-red-400 transition-colors">
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+                ) : (
+                    /* MODO VISUALIZAÇÃO */
+                    <div 
+                        onClick={() => {
+                            setTempCityName(student.resources?.cityName || "Lumen City");
+                            setIsEditingName(true);
+                        }}
+                        className="flex items-center gap-3 group-hover:scale-105 transition-transform"
+                    >
+                        <MapPin className="w-5 h-5 text-indigo-500 fill-indigo-500/20" />
+                        <h1 className="text-2xl font-black text-white tracking-widest uppercase" style={{textShadow: "0 2px 10px rgba(0,0,0,0.5)"}}>
+                            {student.resources?.cityName || "Lumen City"}
+                        </h1>
+                        <Pencil className="w-3 h-3 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                )}
+            </div>
+        </div>
+
+        {/* CONTAINER FLEX PARA LATERAIS */}
+        <div className="flex justify-between items-start w-full relative z-10">
+          
+          {/* LADO ESQUERDO: PAINEL DE STATUS */}
+          <div className="bg-slate-900/90 backdrop-blur p-3 rounded-xl border border-slate-700 pointer-events-auto flex gap-6 text-white shadow-xl mt-2">
+            <div className="flex flex-col items-center min-w-[60px]">
+                <div className="flex items-center gap-1.5 text-slate-400 text-[10px] uppercase font-bold tracking-wider">
+                    <Users size={12} /> População
                 </div>
-                <span className={cn("text-xl font-bold", stats.happiness < 50 ? "text-red-500" : "text-green-400")}>
+                <span className="text-lg font-bold">{stats.population}</span>
+            </div>
+            <div className="flex flex-col items-center min-w-[60px]">
+                <div className="flex items-center gap-1.5 text-slate-400 text-[10px] uppercase font-bold tracking-wider">
+                    <Smile size={12} /> Felicidade
+                </div>
+                <span className={cn("text-lg font-bold", stats.happiness < 50 ? "text-red-500" : "text-emerald-400")}>
                     {stats.happiness}%
                 </span>
             </div>
-
-            {/* Desemprego (Só mostra se tiver gente) */}
-            <div className="flex flex-col items-center">
-                <div className="flex items-center gap-2 text-slate-400 text-xs uppercase font-bold">
-                    <Briefcase size={14} /> Desemprego
+            {stats.unemployed > 0 && (
+                <div className="flex flex-col items-center min-w-[60px]">
+                    <div className="flex items-center gap-1.5 text-slate-400 text-[10px] uppercase font-bold tracking-wider">
+                        <Briefcase size={12} /> Desemprego
+                    </div>
+                    <span className="text-lg font-bold text-yellow-500">
+                        {(stats.unemployed / (stats.population || 1) * 100).toFixed(0)}%
+                    </span>
                 </div>
-                <span className={cn("text-xl font-bold", stats.unemployed > 0 ? "text-yellow-500" : "text-slate-200")}>
-                    {stats.unemployed}
+            )}
+             <div className="flex flex-col items-center min-w-[60px]">
+                <div className="flex items-center gap-1.5 text-slate-400 text-[10px] uppercase font-bold tracking-wider">
+                    <ShieldAlert size={12} /> Segurança
+                </div>
+                <span className={cn("text-lg font-bold", stats.securityLevel < 50 ? "text-red-500" : "text-blue-400")}>
+                    {stats.securityLevel}%
                 </span>
             </div>
-             
-             {/* Segurança */}
-             <div className="flex flex-col items-center">
-                <div className="flex items-center gap-2 text-slate-400 text-xs uppercase font-bold">
-                    <ShieldAlert size={14} /> Segurança
-                </div>
-                <span className="text-xl font-bold">{stats.securityLevel}%</span>
-            </div>
-
           </div>
 
-          {/* ... Seu Badge de Dinheiro continua aqui ... */}
+          {/* LADO DIREITO: DINHEIRO */}
+          <div className="pointer-events-auto mt-2">
+            <Badge className="bg-amber-500 hover:bg-amber-600 text-slate-900 text-lg px-6 py-2 border-2 border-white/20 shadow-lg shadow-amber-900/20 transition-transform hover:scale-105 cursor-default">
+              <Coins className="w-5 h-5 mr-2 fill-slate-900/20" /> 
+              {student.resources?.gold ?? 0}
+            </Badge>
+          </div>
         </div>
-    </div>
+      </div>
 
 
       {/* MENU DE SELEÇÃO */}
@@ -246,10 +328,9 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
             })}
             </div>
 
-            {/* Container Principal da Lista (Fundo e Bordas agora ficam aqui) */}
+            {/* Container Principal da Lista */}
             <div className="bg-slate-900/95 backdrop-blur border border-slate-600 p-2 rounded-2xl rounded-tl-none shadow-2xl flex items-center gap-2">
                 
-                {/* Seta Esquerda (Agora faz parte do fluxo, não é absolute) */}
                 <button
                   onClick={() => { const el = document.getElementById('buildScroll'); if(el) el.scrollBy({left: -200, behavior: 'smooth'}) }}
                   className="p-2 hover:bg-slate-700 rounded-full text-slate-400 hover:text-white transition-colors shrink-0"
@@ -257,7 +338,6 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
                     <span className="text-2xl pb-1 block">&#8249;</span>
                 </button>
 
-                {/* Área de Scroll */}
                 <div 
                     id="buildScroll" 
                     className="flex gap-2 overflow-x-auto flex-1 scroll-smooth py-2 px-1" 
@@ -271,7 +351,6 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
                                 key={key}
                                 onClick={() => setActiveBuild(isSelected ? null : key)}
                                 className={cn(
-                                    // ADICIONADO: w-24 h-32 shrink-0 (Tamanho fixo para evitar esticar)
                                     "relative group flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 w-28 h-32 shrink-0 border border-transparent",
                                     isSelected ? "bg-indigo-600 scale-105 shadow-lg ring-2 ring-white" : "hover:bg-slate-800 hover:border-slate-700"
                                 )}
@@ -280,7 +359,6 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
                                     <img
                                         src={config.iconImage}
                                         alt={config.name}
-                                        // Garante que a imagem fique contida
                                         className={cn("w-16 h-16 rounded-md object-contain mb-2 transition-all", isSelected ? "ring-2 ring-white/50" : "opacity-90 group-hover:opacity-100")}
                                     />
                                 ) : (
@@ -300,7 +378,6 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
                     )}
                 </div>
 
-                {/* Seta Direita */}
                 <button
                   onClick={() => { const el = document.getElementById('buildScroll'); if(el) el.scrollBy({left: 200, behavior: 'smooth'}) }}
                   className="p-2 hover:bg-slate-700 rounded-full text-slate-400 hover:text-white transition-colors shrink-0"

@@ -32,178 +32,242 @@ export const CATEGORIES: Record<BuildingCategory, string> = {
 
 export const BUILDING_CONFIG: Record<string, BuildingDef> = {
   "building_b": {
-    "name": "Building B",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa.",
     "category": "construction",
     "cost": 10,
     "url": "/models/building-b.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/building-b_icon.png",
     "stats": {
-      population: 4,
-      pollution: 1 // Gera um pouquinho de lixo
-    }
-
+      "population": 4,
+      "pollution": 1
+    },
+    "iconImage": "/models/building-b_icon.png"
   },
   "building_c": {
-    "name": "Building C",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa.",
     "category": "construction",
     "cost": 10,
     "url": "/models/building-c.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 4,
+      "pollution": 1
+    },
     "iconImage": "/models/building-c_icon.png"
   },
   "building_d": {
-    "name": "Building D",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa.",
     "category": "construction",
     "cost": 10,
     "url": "/models/building-d.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 4,
+      "pollution": 1
+    },
     "iconImage": "/models/building-d_icon.png"
   },
   "building_e": {
-    "name": "Building E",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa média.",
     "category": "construction",
     "cost": 10,
     "url": "/models/building-e.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 5,
+      "pollution": 1
+    },
     "iconImage": "/models/building-e_icon.png"
   },
   "building_f": {
-    "name": "Building F",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa alta.",
     "category": "construction",
     "cost": 10,
     "url": "/models/building-f.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 6,
+      "pollution": 1
+    },
     "iconImage": "/models/building-f_icon.png"
   },
   "building_g": {
-    "name": "Building G",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa.",
     "category": "construction",
     "cost": 10,
     "url": "/models/building-g.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 6,
+      "pollution": 1
+    },
     "iconImage": "/models/building-g_icon.png"
   },
   "building_h": {
-    "name": "Building H",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa.",
     "category": "construction",
     "cost": 10,
     "url": "/models/building-h.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 6,
+      "pollution": 1
+    },
     "iconImage": "/models/building-h_icon.png"
   },
   "building_i": {
-    "name": "Building I",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa grande.",
     "category": "construction",
     "cost": 10,
     "url": "/models/building-i.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 9,
+      "pollution": 2
+    },
     "iconImage": "/models/building-i_icon.png"
   },
   "building_k": {
-    "name": "Building K",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa grande.",
     "category": "construction",
     "cost": 10,
     "url": "/models/building-k.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 10,
+      "pollution": 2
+    },
     "iconImage": "/models/building-k_icon.png"
   },
   "building_l": {
-    "name": "Building L",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa grande.",
     "category": "construction",
     "cost": 10,
     "url": "/models/building-l.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 12,
+      "pollution": 3
+    },
     "iconImage": "/models/building-l_icon.png"
   },
   "building_m": {
-    "name": "Building M",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa grande.",
     "category": "construction",
     "cost": 10,
     "url": "/models/building-m.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 12,
+      "pollution": 3
+    },
     "iconImage": "/models/building-m_icon.png"
   },
   "building_n": {
-    "name": "Building N",
-    "description": "Descrição Placeholder.",
+    "name": "Hospital",
+    "description": "Uma simples Hospital.",
     "category": "construction",
     "cost": 10,
     "url": "/models/building-n.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "jobs": 8,
+      "pollution": 4,
+      "security": 2
+    },
     "iconImage": "/models/building-n_icon.png"
   },
   "building_skyscraper_a": {
-    "name": "Building Skyscraper A",
-    "description": "Descrição Placeholder.",
+    "name": "Edifício",
+    "description": "Um prédio para trabalho.",
     "category": "construction",
     "cost": 10,
     "url": "/models/building-skyscraper-a.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "jobs": 10,
+      "pollution": 5
+    },
     "iconImage": "/models/building-skyscraper-a_icon.png"
   },
   "building_skyscraper_b": {
-    "name": "Building Skyscraper B",
-    "description": "Descrição Placeholder.",
+    "name": "Edifício",
+    "description": "Um prédio para trabalho.",
     "category": "construction",
     "cost": 10,
     "url": "/models/building-skyscraper-b.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "jobs": 14,
+      "pollution": 7
+    },
     "iconImage": "/models/building-skyscraper-b_icon.png"
   },
   "building_skyscraper_c": {
-    "name": "Building Skyscraper C",
-    "description": "Descrição Placeholder.",
+    "name": "Edifício",
+    "description": "Um prédio para trabalho.",
     "category": "construction",
     "cost": 10,
     "url": "/models/building-skyscraper-c.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "jobs": 12,
+      "pollution": 6
+    },
     "iconImage": "/models/building-skyscraper-c_icon.png"
   },
   "building_skyscraper_d": {
-    "name": "Building Skyscraper D",
-    "description": "Descrição Placeholder.",
+    "name": "Edifício",
+    "description": "Um prédio para trabalho.",
     "category": "construction",
     "cost": 10,
     "url": "/models/building-skyscraper-d.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "jobs": 16,
+      "pollution": 8
+    },
     "iconImage": "/models/building-skyscraper-d_icon.png"
   },
   "building_skyscraper_e": {
-    "name": "Building Skyscraper E",
-    "description": "Descrição Placeholder.",
+    "name": "Edifício",
+    "description": "Um prédio para trabalho.",
     "category": "construction",
     "cost": 10,
     "url": "/models/building-skyscraper-e.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "jobs": 10,
+      "pollution": 5
+    },
     "iconImage": "/models/building-skyscraper-e_icon.png"
   },
   "detail_awning_wide": {
@@ -397,203 +461,285 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "iconImage": "/models/low-detail-building-wide-b_icon.png"
   },
   "building_a": {
-    "name": "Building A",
-    "description": "Descrição Placeholder.",
+    "name": "Indústria",
+    "description": "Uma indústria para trabalho.",
     "category": "construction",
     "cost": 10,
     "url": "/models/buildings/building-a.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "jobs": 6,
+      "pollution": 3
+    },
     "iconImage": "/models/buildings/building-a_icon.png"
   },
   "building_b_1": {
-    "name": "Building B",
-    "description": "Descrição Placeholder.",
+    "name": "Indústria",
+    "description": "Uma indústria para trabalho.",
     "category": "construction",
     "cost": 10,
     "url": "/models/buildings/building-b.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "jobs": 6,
+      "pollution": 3
+    },
     "iconImage": "/models/buildings/building-b_icon.png"
   },
   "building_c_1": {
-    "name": "Building C",
-    "description": "Descrição Placeholder.",
+    "name": "Fábrica",
+    "description": "Uma fábrica para trabalho.",
     "category": "construction",
     "cost": 10,
     "url": "/models/buildings/building-c.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "jobs": 10,
+      "pollution": 5
+    },
     "iconImage": "/models/buildings/building-c_icon.png"
   },
   "building_d_1": {
-    "name": "Building D",
-    "description": "Descrição Placeholder.",
+    "name": "Indústria",
+    "description": "Uma indústria para trabalho.",
     "category": "construction",
     "cost": 10,
     "url": "/models/buildings/building-d.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "jobs": 8,
+      "pollution": 4
+    },
     "iconImage": "/models/buildings/building-d_icon.png"
   },
   "building_e_1": {
-    "name": "Building E",
-    "description": "Descrição Placeholder.",
+    "name": "Fábrica",
+    "description": "Uma fábrica para trabalho.",
     "category": "construction",
     "cost": 10,
     "url": "/models/buildings/building-e.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "jobs": 6,
+      "pollution": 3
+    },
     "iconImage": "/models/buildings/building-e_icon.png"
   },
   "building_f_1": {
-    "name": "Building F",
-    "description": "Descrição Placeholder.",
+    "name": "Fábrica",
+    "description": "Uma fábrica para trabalho.",
     "category": "construction",
     "cost": 10,
     "url": "/models/buildings/building-f.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "jobs": 6,
+      "pollution": 3
+    },
     "iconImage": "/models/buildings/building-f_icon.png"
   },
   "building_g_1": {
-    "name": "Building G",
-    "description": "Descrição Placeholder.",
+    "name": "Indústria",
+    "description": "Uma indústria para trabalho.",
     "category": "construction",
     "cost": 10,
     "url": "/models/buildings/building-g.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "jobs": 8,
+      "pollution": 4
+    },
     "iconImage": "/models/buildings/building-g_icon.png"
   },
   "building_h_1": {
-    "name": "Building H",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa pequena.",
     "category": "construction",
     "cost": 10,
     "url": "/models/buildings/building-h.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 2,
+      "pollution": 1
+    },
     "iconImage": "/models/buildings/building-h_icon.png"
   },
   "building_i_1": {
-    "name": "Building I",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa pequena.",
     "category": "construction",
     "cost": 10,
     "url": "/models/buildings/building-i.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 2,
+      "pollution": 1
+    },
     "iconImage": "/models/buildings/building-i_icon.png"
   },
   "building_j": {
-    "name": "Building J",
-    "description": "Descrição Placeholder.",
+    "name": "Armazém",
+    "description": "Um simples armazém.",
     "category": "construction",
     "cost": 10,
     "url": "/models/buildings/building-j.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "jobs": 2,
+      "pollution": 1
+    },
     "iconImage": "/models/buildings/building-j_icon.png"
   },
   "building_k_1": {
-    "name": "Building K",
-    "description": "Descrição Placeholder.",
+    "name": "Armazém",
+    "description": "Um simples armazém.",
     "category": "construction",
     "cost": 10,
     "url": "/models/buildings/building-k.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "jobs": 2,
+      "pollution": 1
+    },
     "iconImage": "/models/buildings/building-k_icon.png"
   },
   "building_l_1": {
-    "name": "Building L",
-    "description": "Descrição Placeholder.",
+    "name": "Fábrica",
+    "description": "Uma fábrica para trabalho.",
     "category": "construction",
     "cost": 10,
     "url": "/models/buildings/building-l.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "jobs": 6,
+      "pollution": 3
+    },
     "iconImage": "/models/buildings/building-l_icon.png"
   },
   "building_m_1": {
-    "name": "Building M",
-    "description": "Descrição Placeholder.",
+    "name": "Fábrica",
+    "description": "Uma fábrica para trabalho.",
     "category": "construction",
     "cost": 10,
     "url": "/models/buildings/building-m.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "jobs": 8,
+      "pollution": 4
+    },
     "iconImage": "/models/buildings/building-m_icon.png"
   },
   "building_n_1": {
-    "name": "Building N",
-    "description": "Descrição Placeholder.",
+    "name": "Fábrica",
+    "description": "Uma fábrica para trabalho.",
     "category": "construction",
     "cost": 10,
     "url": "/models/buildings/building-n.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "jobs": 6,
+      "pollution": 3
+    },
     "iconImage": "/models/buildings/building-n_icon.png"
   },
   "building_o": {
-    "name": "Building O",
-    "description": "Descrição Placeholder.",
+    "name": "Indústria",
+    "description": "Uma indústria para trabalho.",
     "category": "construction",
     "cost": 10,
     "url": "/models/buildings/building-o.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "jobs": 4,
+      "pollution": 2
+    },
     "iconImage": "/models/buildings/building-o_icon.png"
   },
   "building_p": {
-    "name": "Building P",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casinha.",
     "category": "construction",
     "cost": 10,
     "url": "/models/buildings/building-p.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 2,
+      "pollution": 1
+    },
     "iconImage": "/models/buildings/building-p_icon.png"
   },
   "building_q": {
-    "name": "Building Q",
-    "description": "Descrição Placeholder.",
+    "name": "Polícia",
+    "description": "Um simples porto de polícia.",
     "category": "construction",
     "cost": 10,
     "url": "/models/buildings/building-q.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "jobs": 6,
+      "pollution": 3,
+      "security": 3
+    },
     "iconImage": "/models/buildings/building-q_icon.png"
   },
   "building_r": {
-    "name": "Building R",
-    "description": "Descrição Placeholder.",
+    "name": "Polícia",
+    "description": "Um simples porto de polícia.",
     "category": "construction",
     "cost": 10,
     "url": "/models/buildings/building-r.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "jobs": 4,
+      "pollution": 2,
+      "security": 2
+    },
     "iconImage": "/models/buildings/building-r_icon.png"
   },
   "building_s": {
-    "name": "Building S",
-    "description": "Descrição Placeholder.",
+    "name": "Armazém",
+    "description": "Um simples armazém.",
     "category": "construction",
     "cost": 10,
     "url": "/models/buildings/building-s.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "jobs": 4,
+      "pollution": 2
+    },
     "iconImage": "/models/buildings/building-s_icon.png"
   },
   "building_t": {
-    "name": "Building T",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa.",
     "category": "construction",
     "cost": 10,
     "url": "/models/buildings/building-t.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 6,
+      "pollution": 1
+    },
     "iconImage": "/models/buildings/building-t_icon.png"
   },
   "chimney_basic": {
@@ -1578,222 +1724,310 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
   },
   "missao": {
     "name": "Missao",
-    "description": "Descrição Placeholder.",
+    "description": "Uma igreja.",
     "category": "special",
     "cost": 1000,
     "url": "/models/specials/missao.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "pollution": 1,
+      "entertainment": 3
+    },
     "iconImage": "/models/specials/missao_icon.png"
   },
   "building_type_a": {
-    "name": "Building Type A",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa.",
     "category": "construction",
     "cost": 10,
     "url": "/models/suburban/building-type-a.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 5,
+      "pollution": 1
+    },
     "iconImage": "/models/suburban/building-type-a_icon.png"
   },
   "building_type_b": {
-    "name": "Building Type B",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa.",
     "category": "construction",
     "cost": 10,
     "url": "/models/suburban/building-type-b.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 5,
+      "pollution": 1
+    },
     "iconImage": "/models/suburban/building-type-b_icon.png"
   },
   "building_type_c": {
-    "name": "Building Type C",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa média.",
     "category": "construction",
     "cost": 10,
     "url": "/models/suburban/building-type-c.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 6,
+      "pollution": 1
+    },
     "iconImage": "/models/suburban/building-type-c_icon.png"
   },
   "building_type_d": {
-    "name": "Building Type D",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa média.",
     "category": "construction",
     "cost": 10,
     "url": "/models/suburban/building-type-d.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 6,
+      "pollution": 1
+    },
     "iconImage": "/models/suburban/building-type-d_icon.png"
   },
   "building_type_e": {
-    "name": "Building Type E",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa média.",
     "category": "construction",
     "cost": 10,
     "url": "/models/suburban/building-type-e.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 6,
+      "pollution": 1
+    },
     "iconImage": "/models/suburban/building-type-e_icon.png"
   },
   "building_type_f": {
-    "name": "Building Type F",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa grande.",
     "category": "construction",
     "cost": 10,
     "url": "/models/suburban/building-type-f.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 8,
+      "pollution": 2
+    },
     "iconImage": "/models/suburban/building-type-f_icon.png"
   },
   "building_type_g": {
-    "name": "Building Type G",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa pequena.",
     "category": "construction",
     "cost": 10,
     "url": "/models/suburban/building-type-g.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 2,
+      "pollution": 1
+    },
     "iconImage": "/models/suburban/building-type-g_icon.png"
   },
   "building_type_h": {
-    "name": "Building Type H",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa pequena.",
     "category": "construction",
     "cost": 10,
     "url": "/models/suburban/building-type-h.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 3,
+      "pollution": 1
+    },
     "iconImage": "/models/suburban/building-type-h_icon.png"
   },
   "building_type_i": {
-    "name": "Building Type I",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa pequena.",
     "category": "construction",
     "cost": 10,
     "url": "/models/suburban/building-type-i.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 3,
+      "pollution": 1
+    },
     "iconImage": "/models/suburban/building-type-i_icon.png"
   },
   "building_type_j": {
-    "name": "Building Type J",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa.",
     "category": "construction",
     "cost": 10,
     "url": "/models/suburban/building-type-j.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 4,
+      "pollution": 1
+    },
     "iconImage": "/models/suburban/building-type-j_icon.png"
   },
   "building_type_k": {
-    "name": "Building Type K",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa.",
     "category": "construction",
     "cost": 10,
     "url": "/models/suburban/building-type-k.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 4,
+      "pollution": 1
+    },
     "iconImage": "/models/suburban/building-type-k_icon.png"
   },
   "building_type_l": {
-    "name": "Building Type L",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa.",
     "category": "construction",
     "cost": 10,
     "url": "/models/suburban/building-type-l.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 4,
+      "pollution": 1
+    },
     "iconImage": "/models/suburban/building-type-l_icon.png"
   },
   "building_type_m": {
-    "name": "Building Type M",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa média.",
     "category": "construction",
     "cost": 10,
     "url": "/models/suburban/building-type-m.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 5,
+      "pollution": 1
+    },
     "iconImage": "/models/suburban/building-type-m_icon.png"
   },
   "building_type_n": {
-    "name": "Building Type N",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa média.",
     "category": "construction",
     "cost": 10,
     "url": "/models/suburban/building-type-n.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 6,
+      "pollution": 1
+    },
     "iconImage": "/models/suburban/building-type-n_icon.png"
   },
   "building_type_o": {
-    "name": "Building Type O",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa média.",
     "category": "construction",
     "cost": 10,
     "url": "/models/suburban/building-type-o.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 6,
+      "pollution": 1
+    },
     "iconImage": "/models/suburban/building-type-o_icon.png"
   },
   "building_type_p": {
-    "name": "Building Type P",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa média.",
     "category": "construction",
     "cost": 10,
     "url": "/models/suburban/building-type-p.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 6,
+      "pollution": 1
+    },
     "iconImage": "/models/suburban/building-type-p_icon.png"
   },
   "building_type_q": {
-    "name": "Building Type Q",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa média.",
     "category": "construction",
     "cost": 10,
     "url": "/models/suburban/building-type-q.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 7,
+      "pollution": 1
+    },
     "iconImage": "/models/suburban/building-type-q_icon.png"
   },
   "building_type_r": {
-    "name": "Building Type R",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa média.",
     "category": "construction",
     "cost": 10,
     "url": "/models/suburban/building-type-r.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 6,
+      "pollution": 1
+    },
     "iconImage": "/models/suburban/building-type-r_icon.png"
   },
   "building_type_s": {
-    "name": "Building Type S",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa média.",
     "category": "construction",
     "cost": 10,
     "url": "/models/suburban/building-type-s.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 6,
+      "pollution": 1
+    },
     "iconImage": "/models/suburban/building-type-s_icon.png"
   },
   "building_type_t": {
-    "name": "Building Type T",
-    "description": "Descrição Placeholder.",
+    "name": "Casa",
+    "description": "Uma simples casa grande.",
     "category": "construction",
     "cost": 10,
     "url": "/models/suburban/building-type-t.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 8,
+      "pollution": 1
+    },
     "iconImage": "/models/suburban/building-type-t_icon.png"
   },
   "building_type_u": {
     "name": "Building Type U",
-    "description": "Descrição Placeholder.",
+    "description": "Uma simples casa média.",
     "category": "construction",
     "cost": 10,
     "url": "/models/suburban/building-type-u.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
+    "stats": {
+      "population": 6,
+      "pollution": 1
+    },
     "iconImage": "/models/suburban/building-type-u_icon.png"
   },
   "driveway_long": {

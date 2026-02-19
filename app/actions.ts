@@ -352,3 +352,42 @@ export async function demolishBuildingAction(buildingId: number) {
     console.error("Erro ao demolir no banco:", error);
   }
 }
+
+export async function updateCityName(studentId: string, newName: string) {
+  // 1. Validações
+  if (!newName || newName.trim().length === 0) return { error: "Nome inválido" };
+  if (newName.length > 20) return { error: "Nome muito longo" };
+
+  try {
+    // 2. Busca o aluno para pegar o JSON atual (importante para não perder o ouro!)
+    const student = await prisma.student.findUnique({
+        where: { id: studentId}, include: { resources: true } 
+    });
+
+    if (!student) return { error: "Aluno não encontrado" };
+
+    // 3. Mescla o nome novo com os recursos existentes
+    // O 'as any' é usado porque o TypeScript pode não saber que cityName existe no JSON ainda
+    const currentResources = (student.resources as any) || {};
+    
+    const newResources = {
+        ...currentResources, // Mantém o Ouro e outros dados
+        cityName: newName    // Adiciona/Atualiza o nome
+    };
+
+    // 4. Salva o JSON atualizado
+    await prisma.student.update({
+        where: { id: studentId },
+        data: {
+            resources: newResources
+        }
+    });
+
+    revalidatePath('/');
+    return { success: true };
+
+  } catch (error) {
+    console.error("Erro ao atualizar nome:", error);
+    return { error: "Erro ao salvar" };
+  }
+}

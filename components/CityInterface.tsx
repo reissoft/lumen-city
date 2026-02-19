@@ -269,64 +269,64 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
       </div>
 
 
-      {/* MENU DE SELEÇÃO */}
-      {selectedBuildingId && selectedConfig && !activeBuild && (
-          inEditMode = true,
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-30 flex flex-col items-center gap-2 animate-in fade-in zoom-in duration-200">
-              <Badge className="bg-white text-slate-900 px-4 py-1 text-sm font-bold shadow-xl border-2 border-slate-200 mb-2">
-                  {selectedConfig.name}
-              </Badge>
-              <div className="flex gap-2 pointer-events-auto">
-                  <Button onClick={handleRotate} className="h-12 w-12 rounded-full bg-blue-600 hover:bg-blue-500 shadow-xl border-2 border-white transition-transform hover:scale-110">
-                      <RotateCw className="w-6 h-6 text-white" />
-                  </Button>
-                  <Button onClick={handleDelete} className="h-12 w-12 rounded-full bg-red-600 hover:bg-red-500 shadow-xl border-2 border-white transition-transform hover:scale-110">
-                      <Trash2 className="w-5 h-5 text-white" />
-                  </Button>
-                  <Button onClick={() => {setSelectedBuildingId(null);inEditMode = false;}} className="h-12 w-12 rounded-full bg-slate-700 hover:bg-slate-600 shadow-xl border-2 border-white transition-transform hover:scale-110">
-                      <X className="w-6 h-6 text-white" />
-                  </Button>
-              </div>
-          </div>
-      )}
-
-      {/* AVISO DE CONSTRUÇÃO */}
-      {activeBuild && (
-        <div className="absolute top-24 left-1/2 -translate-x-1/2 pointer-events-none z-20 animate-bounce">
-          <Badge className="bg-indigo-600 text-white px-6 py-2 text-lg shadow-xl border-2 border-white flex items-center gap-2">
-            <MousePointer2 className="w-4 h-4" />
-            Construindo: {BUILDING_CONFIG[activeBuild as keyof typeof BUILDING_CONFIG]?.name}
-          </Badge>
-          <div className="text-center mt-2">
-            <Button variant="secondary" size="sm" className="pointer-events-auto shadow-lg opacity-90 hover:opacity-100" onClick={() => setActiveBuild(null)}>
-                <X className="w-4 h-4 mr-1" /> Cancelar
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* MENU INFERIOR */}
-      {!selectedBuildingId && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto z-20 w-full max-w-5xl px-4 flex flex-col gap-2 animate-in slide-in-from-bottom-10">
-            {/* Abas de Categoria */}
-            <div className="flex justify-center gap-2">
-            {Object.entries(CATEGORIES).map(([key, label]) => {
-                const isSelected = activeCategory === key
-                const Icon = CATEGORY_ICONS[key as BuildingCategory]
-                return (
-                <button
-                    key={key}
-                    onClick={() => setActiveCategory(key as BuildingCategory)}
-                    className={cn(
-                    "px-4 py-2 rounded-t-lg text-sm font-bold flex items-center gap-2 transition-all backdrop-blur",
-                    isSelected ? "bg-slate-900/95 text-white border-t border-x border-slate-600" : "bg-slate-900/60 text-slate-400 hover:bg-slate-800"
-                    )}
-                >
-                    <Icon size={16} /> {label}
-                </button>
-                )
-            })}
+        {/* MENU DE SELEÇÃO */}
+        {selectedBuildingId && selectedConfig && !activeBuild && (
+            inEditMode = true,
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-2 animate-in fade-in zoom-in duration-200 pointer-events-auto">
+                <Badge className="bg-white text-slate-900 px-4 py-1 text-sm font-bold shadow-xl border-2 border-slate-200 mb-2">
+                    {selectedConfig.name}
+                </Badge>
+                <div className="flex gap-2">
+                    <Button onClick={handleRotate} className="h-12 w-12 rounded-full bg-blue-600 hover:bg-blue-500 shadow-xl border-2 border-white transition-transform hover:scale-110">
+                        <RotateCw className="w-6 h-6 text-white" />
+                    </Button>
+                    <Button onClick={handleDelete} className="h-12 w-12 rounded-full bg-red-600 hover:bg-red-500 shadow-xl border-2 border-white transition-transform hover:scale-110">
+                        <Trash2 className="w-5 h-5 text-white" />
+                    </Button>
+                    <Button onClick={() => {setSelectedBuildingId(null);inEditMode = false;}} className="h-12 w-12 rounded-full bg-slate-700 hover:bg-slate-600 shadow-xl border-2 border-white transition-transform hover:scale-110">
+                        <X className="w-6 h-6 text-white" />
+                    </Button>
+                </div>
             </div>
+        )}
+
+        {/* AVISO DE CONSTRUÇÃO */}
+        {activeBuild && (
+          <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 animate-bounce pointer-events-auto">
+            <Badge className="bg-indigo-600 text-white px-6 py-2 text-lg shadow-xl border-2 border-white flex items-center gap-2">
+              <MousePointer2 className="w-4 h-4" />
+              Construindo: {BUILDING_CONFIG[activeBuild as keyof typeof BUILDING_CONFIG]?.name}
+            </Badge>
+            <div className="text-center mt-2">
+              <Button variant="secondary" size="sm" className="shadow-lg opacity-90 hover:opacity-100" onClick={() => setActiveBuild(null)}>
+                  <X className="w-4 h-4 mr-1" /> Cancelar
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* MENU INFERIOR */}
+        {!selectedBuildingId && (
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 w-full max-w-5xl px-4 flex flex-col gap-2 animate-in slide-in-from-bottom-10 pointer-events-auto">
+              {/* Abas de Categoria */}
+              <div className="flex justify-center gap-2">
+              {Object.entries(CATEGORIES).map(([key, label]) => {
+                  const isSelected = activeCategory === key
+                  const Icon = CATEGORY_ICONS[key as BuildingCategory]
+                  return (
+                  <button
+                      key={key}
+                      onClick={() => setActiveCategory(key as BuildingCategory)}
+                      className={cn(
+                      "px-4 py-2 rounded-t-lg text-sm font-bold flex items-center gap-2 transition-all backdrop-blur",
+                      isSelected ? "bg-slate-900/95 text-white border-t border-x border-slate-600" : "bg-slate-900/60 text-slate-400 hover:bg-slate-800"
+                      )}
+                  >
+                      <Icon size={16} /> {label}
+                  </button>
+                  )
+              })}
+              </div>
 
             {/* Container Principal da Lista */}
             <div className="bg-slate-900/95 backdrop-blur border border-slate-600 p-2 rounded-2xl rounded-tl-none shadow-2xl flex items-center gap-2">

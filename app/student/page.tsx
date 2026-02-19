@@ -1,12 +1,11 @@
 // app/student/page.tsx
-import { PrismaClient, Activity } from "@prisma/client"
+import { PrismaClient, Activity, ActivityAttempt } from "@prisma/client"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Play, Map, Trophy, Star, LogOut, BookOpen } from "lucide-react"
-import Image from "next/image"
+import { Play, Map as MapIcon, Trophy, Star, LogOut, BookOpen } from "lucide-react" // Renomeado para evitar conflito
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { logout } from "../auth/actions"
@@ -14,20 +13,25 @@ import { logout } from "../auth/actions"
 const prisma = new PrismaClient()
 
 async function getStudentData() {
-    const email = (await cookies()).get("lumen_session")?.value
-    if (!email) redirect("/login")
+    const email = (await cookies()).get("lumen_session")?.value;
+    if (!email) redirect("/login");
 
     const student = await prisma.student.findUnique({
         where: { email: email },
         include: { 
             resources: true,
-            classes: true
+            classes: true,
         }
     });
 
     if (!student) {
-        return { student: null, activities: [] };
+        // Agora `new Map()` refere-se ao objeto nativo do JS
+        return { student: null, activities: [], attemptsMap: new Map() };
     }
+
+    const activityAttempts = await prisma.activityAttempt.findMany({
+        where: { studentId: student.id },
+    });
 
     const studentClassIds = student.classes.map(c => c.id);
 
@@ -36,22 +40,26 @@ async function getStudentData() {
         activities = await prisma.activity.findMany({
             where: {
                 classes: {
-                    some: {
-                        id: {
-                            in: studentClassIds
-                        }
-                    }
+                    some: { id: { in: studentClassIds } }
                 }
             },
             orderBy: { createdAt: 'desc' },
         });
     }
+    
+    const attemptsMap = new Map<string, number>();
+    activityAttempts.forEach(attempt => {
+        const existingScore = attemptsMap.get(attempt.activityId) || 0;
+        if (attempt.score > existingScore) {
+            attemptsMap.set(attempt.activityId, attempt.score);
+        }
+    });
 
-    return { student, activities };
+    return { student, activities, attemptsMap };
 }
 
 export default async function StudentHub() {
-  const { student, activities } = await getStudentData()
+  const { student, activities, attemptsMap } = await getStudentData()
   
   if (!student) return <div>Erro no perfil.</div>
 
@@ -85,16 +93,18 @@ export default async function StudentHub() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Link href="/student/city" className="group"><Card className="h-full bg-gradient-to-br from-indigo-600 to-purple-700 text-white border-none hover:shadow-xl transition-all hover:scale-[1.02] cursor-pointer relative overflow-hidden"><div className="absolute top-0 right-0 p-10 opacity-10"><Map size={120} /></div><CardHeader><CardTitle className="flex items-center gap-2 text-2xl"><Map /> Minha Cidade</CardTitle></CardHeader><CardContent><p className="text-indigo-100 mb-6">Gerencie seus prédios, colete recursos e expanda seu império.</p><Button variant="secondary" className="w-full font-bold text-indigo-700">Entrar na Cidade</Button></CardContent></Card></Link>
-          <Card className="bg-white hover:shadow-md transition-shadow"><CardHeader><CardTitle className="flex items-center gap-2 text-slate-800"><Trophy className="text-yellow-500" /> Ranking da Turma</CardTitle></CardHeader><CardContent><div className="space-y-4">{[1, 2, 3].map((pos) => (
-            <div key={pos} className="flex items-center justify-between border-b pb-2 last:border-0">
-              <div className="flex items-center gap-3">
-                <span className={`font-bold w-6 ${pos === 1 ? 'text-yellow-500' : 'text-slate-400'}`}>#{pos}</span>
-                <span className="text-sm font-medium">Aluno Exemplo {pos}</span>
+          {/* // O componente do ícone foi renomeado para MapIcon */}
+          <Link href="/student/city" className="group"><Card className="h-full bg-gradient-to-br from-indigo-600 to-purple-700 text-white border-none hover:shadow-xl transition-all hover:scale-[1.02] cursor-pointer relative overflow-hidden"><div className="absolute top-0 right-0 p-10 opacity-10"><MapIcon size={120} /></div><CardHeader><CardTitle className="flex items-center gap-2 text-2xl"><MapIcon /> Minha Cidade</CardTitle></CardHeader><CardContent><p className="text-indigo-100 mb-6">Gerencie seus prédios, colete recursos e expanda seu império.</p><Button variant="secondary" className="w-full font-bold text-indigo-700">Entrar na Cidade</Button></CardContent></Card></Link>
+          <Card className="bg-white hover:shadow-md transition-shadow"><CardHeader><CardTitle className="flex items-center gap-2 text-slate-800"><Trophy className="text-yellow-500" /> Ranking da Turma</CardTitle></CardHeader><CardContent><div className="space-y-4">
+            {[1, 2, 3].map((pos) => (
+              <div key={pos} className="flex items-center justify-between border-b pb-2 last:border-0">
+                <div className="flex items-center gap-3">
+                  <span className={`font-bold w-6 ${pos === 1 ? "text-yellow-500" : "text-slate-400"}`}>#{pos}</span>
+                  <span className="text-sm font-medium">Aluno Exemplo {pos}</span>
+                </div>
+                <span className="text-xs font-bold text-slate-400">{1500 - (pos * 100)} XP</span>
               </div>
-              <span className="text-xs font-bold text-slate-400">{1500 - (pos * 100)} XP</span>
-            </div>
-          ))}
+            ))}
           </div></CardContent></Card>
         </div>
 
@@ -103,6 +113,7 @@ export default async function StudentHub() {
           <div className="grid gap-4 md:grid-cols-3">
             {activities.length > 0 ? (
               activities.map((activity) => {
+                const bestScore = attemptsMap.get(activity.id);
                 const hasReviewMaterials = activity.reviewMaterials && Array.isArray(activity.reviewMaterials) && activity.reviewMaterials.length > 0;
                 const activityPath = hasReviewMaterials ? `/student/activity/${activity.id}/review` : `/student/play/${activity.id}`;
                 const buttonText = hasReviewMaterials ? "Revisar e Jogar" : "Jogar";
@@ -111,13 +122,21 @@ export default async function StudentHub() {
                 return (
                   <Card key={activity.id} className="hover:border-indigo-300 transition-colors flex flex-col">
                     <CardHeader className="pb-2">
-                      <div className="flex justify-between"><Badge variant="outline" className="text-xs">{activity.type}</Badge><span className="text-xs text-slate-400">Dif. {activity.difficulty}</span></div>
+                      <div className="flex justify-between items-center">
+                        <Badge variant="outline" className="text-xs">{activity.type}</Badge>
+                        {bestScore !== undefined && (
+                          <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 font-semibold flex items-center gap-1">
+                            <Trophy size={12} className="text-green-600" />
+                            {bestScore}%
+                          </Badge>
+                        )}
+                      </div>
                       <CardTitle className="text-lg mt-2 line-clamp-1">{activity.title}</CardTitle>
                     </CardHeader>
                     <CardContent className="flex-grow flex flex-col">
                       <p className="text-sm text-slate-500 mb-4 line-clamp-2 h-10 flex-grow">{activity.description}</p>
                       <Link href={activityPath} className="mt-auto">
-                        <Button className={`w-full gap-2 ${hasReviewMaterials ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-900 hover:bg-slate-800'}`}>
+                        <Button className={`w-full gap-2 ${hasReviewMaterials ? "bg-blue-600 hover:bg-blue-700" : "bg-slate-900 hover:bg-slate-800"}`}>
                           <ButtonIcon size={16} /> {buttonText}
                         </Button>
                       </Link>

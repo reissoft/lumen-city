@@ -12,24 +12,16 @@ import { logout } from "../auth/actions"
 
 const prisma = new PrismaClient()
 
-// Calcula o total de XP necessário para INICIAR um determinado nível.
 const getTotalXpForLevelStart = (level: number): number => {
     if (level <= 1) return 0;
-    // Soma de uma progressão aritmética: 100 + 200 + ... + (level-1)*100
     const n = level - 1;
     const a1 = 100;
     const an = n * 100;
     return (n * (a1 + an)) / 2;
 };
 
-// **NOVO E CORRIGIDO**
-// Calcula o nível correto de um aluno com base apenas em seu XP total.
-// Esta é a função mais importante para corrigir o bug visual.
 const getCorrectLevelFromXp = (xp: number): number => {
-    if (xp < 100) return 1; // Nível 1 para XP de 0 a 99
-    
-    // Esta fórmula matemática encontra o nível com base no total de XP
-    // É a inversa de: XP_total = 50 * L^2 - 50 * L
+    if (xp < 100) return 1;
     const level = Math.floor(0.5 + 0.1 * Math.sqrt(25 + 2 * xp));
     return level;
 };
@@ -47,15 +39,29 @@ async function getStudentData() {
     });
 
     if (!student) {
-        return { student: null, activities: [], attemptsMap: new Map() };
+        return { student: null, activities: [], attemptsMap: new Map(), ranking: [] };
+    }
+
+    const studentClassIds = student.classes.map(c => c.id);
+
+    let ranking = [];
+    if (studentClassIds.length > 0) {
+        ranking = await prisma.student.findMany({
+            where: {
+                classes: {
+                    some: { id: { in: studentClassIds } },
+                },
+            },
+            orderBy: { xp: 'desc' },
+            select: { id: true, name: true, xp: true, },
+            take: 10,
+        });
     }
 
     const activityAttempts = await prisma.activityAttempt.findMany({
         where: { studentId: student.id },
     });
-
-    const studentClassIds = student.classes.map(c => c.id);
-
+    
     let activities: Activity[] = [];
     if (studentClassIds.length > 0) {
         activities = await prisma.activity.findMany({
@@ -76,26 +82,19 @@ async function getStudentData() {
         }
     });
 
-    return { student, activities, attemptsMap };
+    return { student, activities, attemptsMap, ranking };
 }
 
 export default async function StudentHub() {
-  const { student, activities, attemptsMap } = await getStudentData()
+  const { student, activities, attemptsMap, ranking } = await getStudentData()
   
   if (!student) return <div>Erro no perfil.</div>
 
-  // 1. A fonte da verdade: Calcular o nível CORRETO a partir do XP total.
   const correctLevel = getCorrectLevelFromXp(student.xp);
-  
-  // 2. Calcular os limites de XP para o nível correto.
   const xpForCurrentLevelStart = getTotalXpForLevelStart(correctLevel);
   const xpForNextLevelStart = getTotalXpForLevelStart(correctLevel + 1);
-
-  // 3. Calcular o progresso DENTRO do nível atual.
   const xpNeededForThisLevel = xpForNextLevelStart - xpForCurrentLevelStart;
   const currentLevelProgress = student.xp - xpForCurrentLevelStart;
-  
-  // 4. Calcular a porcentagem para a barra de progresso.
   const progressPercent = xpNeededForThisLevel > 0 ? (currentLevelProgress / xpNeededForThisLevel) * 100 : 100;
 
   return (
@@ -108,14 +107,12 @@ export default async function StudentHub() {
             <div>
               <h1 className="text-2xl font-bold text-slate-900">Olá, {student.name}!</h1>
               <div className="flex items-center gap-2 text-slate-500">
-                {/* Exibe o nível correto, não o do banco de dados */}
                 <Badge variant="secondary" className="bg-indigo-50 text-indigo-700">Nível {correctLevel}</Badge>
                 <span>{student.xp} XP Total</span>
               </div>
             </div>
           </div>
           <div className="w-full md:w-1/3 space-y-2">
-            {/* Exibe o progresso para o nível correto */}
             <div className="flex justify-between text-xs font-semibold text-slate-400 uppercase"><span>Progresso para Nível {correctLevel + 1}</span><span>{currentLevelProgress} / {xpNeededForThisLevel} XP</span></div>
             <Progress value={progressPercent} className="h-3" />
           </div>
@@ -127,16 +124,20 @@ export default async function StudentHub() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Link href="/student/city" className="group"><Card className="h-full bg-gradient-to-br from-indigo-600 to-purple-700 text-white border-none hover:shadow-xl transition-all hover:scale-[1.02] cursor-pointer relative overflow-hidden"><div className="absolute top-0 right-0 p-10 opacity-10"><MapIcon size={120} /></div><CardHeader><CardTitle className="flex items-center gap-2 text-2xl"><MapIcon /> Minha Cidade</CardTitle></CardHeader><CardContent><p className="text-indigo-100 mb-6">Gerencie seus prédios, colete recursos e expanda seu império.</p><Button variant="secondary" className="w-full font-bold text-indigo-700">Entrar na Cidade</Button></CardContent></Card></Link>
-          <Card className="bg-white hover:shadow-md transition-shadow"><CardHeader><CardTitle className="flex items-center gap-2 text-slate-800"><Trophy className="text-yellow-500" /> Ranking da Turma</CardTitle></CardHeader><CardContent><div className="space-y-4">
-            {[1, 2, 3].map((pos) => (
-              <div key={pos} className="flex items-center justify-between border-b pb-2 last:border-0">
-                <div className="flex items-center gap-3">
-                  <span className={`font-bold w-6 ${pos === 1 ? "text-yellow-500" : "text-slate-400"}`}>#{pos}</span>
-                  <span className="text-sm font-medium">Aluno Exemplo {pos}</span>
+          
+          {/* --- CARD DO RANKING COM ESTILO INLINE --- */}
+          <Card className="bg-white hover:shadow-md transition-shadow"><CardHeader><CardTitle className="flex items-center gap-2 text-slate-800"><Trophy className="text-yellow-500" /> Ranking da Turma</CardTitle></CardHeader><CardContent><div className="space-y-3">
+            {ranking.length > 0 ? (
+              ranking.map((rankedStudent, index) => (
+                <div key={rankedStudent.id} className={`flex items-center gap-3 text-sm border-b border-slate-100 pb-2 last:border-0 ${rankedStudent.id === student.id ? 'bg-indigo-50 p-1 -m-1 rounded-lg' : ''}`}>
+                  <span className={`w-6 text-center font-bold ${index === 0 ? "text-yellow-500" : (index === 1 ? "text-slate-400" : (index === 2 ? "text-orange-400" : "text-slate-400"))}`}>#{index + 1}</span>
+                  <span style={{ flex: '1 1 0%' }} className={`${rankedStudent.id === student.id ? 'font-bold' : ''}`}>{rankedStudent.name}</span>
+                  <span className="text-slate-500 font-semibold">{rankedStudent.xp} XP</span>
                 </div>
-                <span className="text-xs font-bold text-slate-400">{1500 - (pos * 100)} XP</span>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-sm text-slate-500">O ranking aparecerá quando outros alunos entrarem na turma.</p>
+            )}
           </div></CardContent></Card>
         </div>
 

@@ -2,7 +2,7 @@
 import { PrismaClient } from "@prisma/client";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache"; // 1. Importar o revalidatePath
+import { revalidatePath } from "next/cache";
 
 const prisma = new PrismaClient();
 
@@ -35,7 +35,37 @@ export async function submitActivity(submission: ActivitySubmission) {
     if (!student) {
         throw new Error("Estudante não encontrado.");
     }
-    
+
+    // 1. Contar quantas vezes a atividade já foi recompensada.
+    const rewardedCount = await prisma.activityAttempt.count({
+        where: {
+            studentId: student.id,
+            activityId: submission.activityId,
+            rewarded: true,
+        }
+    });
+alert(rewardedCount);
+    // 2. Se a contagem for > 0, já foi recompensado. Não dar XP.
+    if (rewardedCount > 0) {
+        await prisma.activityAttempt.create({
+            data: {
+                studentId: student.id,
+                activityId: submission.activityId,
+                score: submission.score,
+                response: {},
+                rewarded: false, // Marcar como não recompensada
+            }
+        });
+        revalidatePath('/student');
+        return {
+            xpGained: 0,
+            newLevel: student.level,
+            leveledUp: false,
+            message: "Você já ganhou XP por esta atividade."
+        };
+    }
+
+    // 3. Se a contagem for 0, prossiga com a lógica de recompensa.
     const activity = await prisma.activity.findUnique({
         where: { id: submission.activityId },
         select: { difficulty: true }
@@ -60,7 +90,7 @@ export async function submitActivity(submission: ActivitySubmission) {
                 activityId: submission.activityId,
                 score: submission.score,
                 response: {},
-                rewarded: true,
+                rewarded: true, // Marcar como recompensada
             }
         }),
         prisma.student.update({
@@ -72,7 +102,6 @@ export async function submitActivity(submission: ActivitySubmission) {
         })
     ]);
 
-    // 2. Forçar a atualização do dashboard
     revalidatePath('/student');
 
     return {

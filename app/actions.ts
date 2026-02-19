@@ -55,30 +55,14 @@ export async function generateQuiz(formData: FormData) {
     }
     Gere 5 perguntas caso não seja informado a quantidade.
     ${contextText ? 
-    `---CONTEXTO---
-    Use o seguinte texto como fonte primária e obrigatória para criar as perguntas e respostas. As perguntas devem ser diretamente baseadas neste conteúdo:
-    ${contextText}
-    ---FIM DO CONTEXTO---` 
+    `---CONTEXTO---\nUse o seguinte texto como fonte primária e obrigatória para criar as perguntas e respostas. As perguntas devem ser diretamente baseadas neste conteúdo:\n${contextText}\n---FIM DO CONTEXTO---` 
     : ''
     }
     ${additionalNotes ? 
-    `---INSTRUÇÕES ADICIONAIS---
-    Leve em consideração as seguintes instruções do professor ao gerar o quiz:
-    ${additionalNotes}
-    ---FIM DAS INSTRUÇÕES---` 
+    `---INSTRUÇÕES ADICIONAIS---\nLeve em consideração as seguintes instruções do professor ao gerar o quiz:\n${additionalNotes}\n---FIM DAS INSTRUÇÕES---` 
     : ''
     }
   `;
-
-
-  /*const systemPrompt = `
-    Você é um assistente pedagógico especializado em criar material didático gamificado.
-    Sua tarefa é gerar um Quiz sobre o tema fornecido. A saída DEVE ser estritamente um JSON válido.
-    Gere 5 perguntas caso não seja informado a quantidade.
-    O JSON deve conter uma chave "description" (string) e uma chave "questions" (array de objetos, cada um com "questionText", "options", e "correctAnswerIndex").
-    ${contextText ? `---CONTEXTO---\nUse o seguinte texto como fonte primária: ${contextText}\n---FIM DO CONTEXTO---` : ''}
-    ${additionalNotes ? `---INSTRUÇÕES ADICIONAIS---\n${additionalNotes}\n---FIM DAS INSTRUÇÕES---` : ''}
-  `;*/
 
   try {
     const completion = await groq.chat.completions.create({
@@ -99,7 +83,6 @@ export async function generateQuiz(formData: FormData) {
     const teacher = await prisma.teacher.findFirst({ where: { email: teacherEmail } })
     if (!teacher) throw new Error("Professor não encontrado.")
 
-    // VERSÃO FINAL: Operação de criação única, agora que o cliente Prisma está sincronizado.
     newActivity = await prisma.activity.create({
       data: {
         title: topic,
@@ -135,7 +118,6 @@ export async function createManualQuiz(title: string, description: string, quest
         const teacher = await prisma.teacher.findUnique({ where: { email: teacherEmail } });
         if (!teacher) throw new Error("Professor não encontrado.");
 
-        // VERSÃO FINAL: Operação de criação única, agora que o cliente Prisma está sincronizado.
         newActivity = await prisma.activity.create({
             data: {
                 title,
@@ -221,37 +203,117 @@ export async function deleteActivity(formData: FormData) {
 
 // --- STUDENT & SUBMISSIONS ---
 
+// Funções auxiliares para cálculo de XP
+const getTotalXpForLevelStart = (level: number): number => {
+    if (level <= 1) return 0;
+    const n = level - 1;
+    const a1 = 100;
+    const an = n * 100;
+    return (n * (a1 + an)) / 2;
+};
+
+const calculateXp = (score: number, difficulty: number): number => {
+    if (score < 0) return 0;
+    return Math.round(score * (1 + (difficulty - 1) * 0.5));
+};
+
 export async function submitQuizResult(activityId: string, score: number) {
-  const studentEmail = await getCurrentUser()
+    const email = await getCurrentUser();
 
-  try {
-    const student = await prisma.student.findUnique({ where: { email: studentEmail }, include: { resources: true } })
-    if (!student) throw new Error("Aluno não encontrado")
+    const student = await prisma.student.findUnique({
+        where: { email },
+        select: { id: true, xp: true, level: true, resources: true }
+    });
 
-    const passed = score >= 70
-    let rewardMessage = "Tente novamente para ganhar recursos."
-    
-    if (passed) {
-      const goldReward = 10
-      const xpReward = 50
+    if (!student) throw new Error("Estudante não encontrado.");
 
-      await prisma.$transaction([
-        prisma.activityAttempt.create({ data: { studentId: student.id, activityId: activityId, score: score, response: {}, rewarded: true } }),
-        prisma.student.update({ where: { id: student.id }, data: { xp: { increment: xpReward }, resources: { update: { gold: { increment: goldReward } } } } })
-      ])
-      
-      rewardMessage = `Parabéns! Você ganhou +${goldReward} Ouro e +${xpReward} XP!`
-    } else {
-        await prisma.activityAttempt.create({ data: { studentId: student.id, activityId: activityId, score: score, response: {}, rewarded: false } })
+    const activity = await prisma.activity.findUnique({
+        where: { id: activityId },
+        select: { difficulty: true }
+    });
+
+    if (!activity) throw new Error("Atividade não encontrada.");
+
+    const bestPreviousAttempt = await prisma.activityAttempt.findFirst({
+        where: { studentId: student.id, activityId: activityId },
+        orderBy: { score: 'desc' }
+    });
+
+    const previousBestScore = bestPreviousAttempt?.score || 0;
+
+    if (score <= previousBestScore) {
+        await prisma.activityAttempt.create({
+            data: {
+                studentId: student.id,
+                activityId: activityId,
+                score: score,
+                response: {},
+                rewarded: false,
+            }
+        });
+
+        revalidatePath('/student');
+        return {
+            success: true,
+            message: `Você conseguiu ${score}%. Sua melhor pontuação é ${previousBestScore}%. Tente de novo para ganhar mais XP!`,
+            passed: score >= 70
+        };
     }
 
-    return { success: true, message: rewardMessage, passed }
+    const xpFromNewScore = calculateXp(score, activity.difficulty);
+    const xpFromOldScore = calculateXp(previousBestScore, activity.difficulty);
+    const xpGained = xpFromNewScore - xpFromOldScore;
+    
+    const passed = score >= 70;
+    const goldReward = passed ? 10 : 0;
 
-  } catch (error) {
-    console.error("Erro ao submeter:", error)
-    return { success: false, message: "Erro ao salvar resultado." }
-  }
+    const newTotalXp = student.xp + xpGained;
+    
+    let newLevel = student.level;
+    while (newTotalXp >= getTotalXpForLevelStart(newLevel + 1)) {
+        newLevel++;
+    }
+    
+    await prisma.$transaction([
+        prisma.activityAttempt.create({
+            data: {
+                studentId: student.id,
+                activityId: activityId,
+                score: score,
+                response: {},
+                rewarded: true,
+            }
+        }),
+        prisma.student.update({
+            where: { id: student.id },
+            data: {
+                xp: newTotalXp,
+                level: newLevel,
+                resources: {
+                    update: {
+                        gold: {
+                            increment: goldReward
+                        }
+                    }
+                }
+            }
+        })
+    ]);
+
+    revalidatePath('/student');
+    
+    let rewardMessage = `Parabéns! Você superou sua pontuação e ganhou +${xpGained} XP!`;
+    if (goldReward > 0) {
+        rewardMessage += ` E também +${goldReward} de Ouro!`;
+    }
+
+    return {
+        success: true,
+        message: rewardMessage,
+        passed: passed
+    };
 }
+
 
 export async function createStudent(formData: FormData) {
   const teacherEmail = await getCurrentUser()

@@ -65,7 +65,6 @@ export default function TeacherDashboardClient({ teacherName, activities, stats 
     const baseUrl = hasReviewMaterials
       ? `/student/activity/${activity.id}/review`
       : `/student/play/${activity.id}`;
-    // Adiciona o parâmetro 'from=teacher' para sabermos a origem
     const path = `${baseUrl}?from=teacher`;
     router.push(path);
   };
@@ -87,9 +86,10 @@ export default function TeacherDashboardClient({ teacherName, activities, stats 
             <p className="text-slate-500">Bem-vindo(a), {teacherName}! Gerencie suas atividades.</p>
           </div>
           <div className="flex gap-3">
-            <Link href="/teacher/students">
+            {/* 1. ATUALIZANDO O LINK PARA A NOVA PÁGINA DE TURMAS */}
+            <Link href="/teacher/classes">
               <Button variant="outline" className="gap-2 bg-white hover:bg-slate-100 border-indigo-200 text-indigo-700">
-                <GraduationCap size={18} /> Minha Turma
+                <GraduationCap size={18} /> Minhas Turmas
               </Button>
             </Link>
             <Link href="/teacher/create-activity">

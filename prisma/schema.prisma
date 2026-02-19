@@ -9,7 +9,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// --- ESCOLAS & USUÁRIOS ---
+// --- ESCOLAS, TURMAS & USUÁRIOS ---
 
 model School {
   id        String   @id @default(uuid())
@@ -28,26 +28,32 @@ model Teacher {
   schoolId   String
   school     School     @relation(fields: [schoolId], references: [id])
   activities Activity[]
+  classes    Class[]    // RELACIONAMENTO: Um professor pode ter várias turmas
+}
+
+model Class {
+  id        String    @id @default(uuid())
+  name      String
+  teacherId String
+  teacher   Teacher   @relation(fields: [teacherId], references: [id])
+  students  Student[] // RELACIONAMENTO: Vários alunos em uma turma (N-N)
+  createdAt DateTime  @default(now())
 }
 
 model Student {
   id        String   @id @default(uuid())
   name      String
   email     String   @unique
-  password  String   // Em produção, isso será o hash
+  password  String
   schoolId  String
   school    School   @relation(fields: [schoolId], references: [id])
   
-  // Gamificação
+  classes   Class[]  // RELACIONAMENTO: Aluno pode estar em várias turmas (N-N)
+
   xp        Int      @default(0)
   level     Int      @default(1)
-  
-  // Inventário e Economia (1-to-1)
   resources StudentResources?
-  
-  // Save Game do PlayCanvas (JSON com coordenadas dos prédios)
-  cityData  Json?    
-  
+  cityData  Json?
   attempts  ActivityAttempt[]
 }
 
@@ -55,30 +61,25 @@ model StudentResources {
   id        String  @id @default(uuid())
   studentId String  @unique
   student   Student @relation(fields: [studentId], references: [id])
-  
   gold      Int     @default(100)
   wood      Int     @default(0)
   energy    Int     @default(0)
   science   Int     @default(0)
 }
 
-// --- SISTEMA PEDAGÓGICO POLIMÓRFICO ---
+// --- SISTEMA PEDAGÓGICO ---
 
 model Activity {
   id              String       @id @default(uuid())
   title           String
   description     String?
-  
   type            ActivityType
   payload         Json
-  reviewMaterials Json?        // NOVO CAMPO: Armazena links/materiais de revisão
-
+  reviewMaterials Json?
   difficulty      Int          @default(1)
-  
   teacherId       String
   teacher         Teacher      @relation(fields: [teacherId], references: [id])
   attempts        ActivityAttempt[]
-  
   createdAt       DateTime     @default(now())
 }
 
@@ -88,10 +89,9 @@ model ActivityAttempt {
   student    Student  @relation(fields: [studentId], references: [id])
   activityId String
   activity   Activity @relation(fields: [activityId], references: [id])
-  
   response   Json     
   score      Float
-  feedback   String? 
+  feedback   String?
   rewarded   Boolean  @default(false)
   createdAt  DateTime @default(now())
 }

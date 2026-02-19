@@ -1,16 +1,38 @@
 // app/student/page.tsx
-import { PrismaClient, Activity, ActivityAttempt } from "@prisma/client"
+import { PrismaClient, Activity } from "@prisma/client"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Play, Map as MapIcon, Trophy, Star, LogOut, BookOpen } from "lucide-react" // Renomeado para evitar conflito
+import { Play, Map as MapIcon, Trophy, Star, LogOut, BookOpen } from "lucide-react"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { logout } from "../auth/actions"
 
 const prisma = new PrismaClient()
+
+// Calcula o total de XP necessário para INICIAR um determinado nível.
+const getTotalXpForLevelStart = (level: number): number => {
+    if (level <= 1) return 0;
+    // Soma de uma progressão aritmética: 100 + 200 + ... + (level-1)*100
+    const n = level - 1;
+    const a1 = 100;
+    const an = n * 100;
+    return (n * (a1 + an)) / 2;
+};
+
+// **NOVO E CORRIGIDO**
+// Calcula o nível correto de um aluno com base apenas em seu XP total.
+// Esta é a função mais importante para corrigir o bug visual.
+const getCorrectLevelFromXp = (xp: number): number => {
+    if (xp < 100) return 1; // Nível 1 para XP de 0 a 99
+    
+    // Esta fórmula matemática encontra o nível com base no total de XP
+    // É a inversa de: XP_total = 50 * L^2 - 50 * L
+    const level = Math.floor(0.5 + 0.1 * Math.sqrt(25 + 2 * xp));
+    return level;
+};
 
 async function getStudentData() {
     const email = (await cookies()).get("lumen_session")?.value;
@@ -25,7 +47,6 @@ async function getStudentData() {
     });
 
     if (!student) {
-        // Agora `new Map()` refere-se ao objeto nativo do JS
         return { student: null, activities: [], attemptsMap: new Map() };
     }
 
@@ -63,9 +84,19 @@ export default async function StudentHub() {
   
   if (!student) return <div>Erro no perfil.</div>
 
-  const xpForNextLevel = 100;
-  const currentLevelProgress = (student.xp % xpForNextLevel);
-  const progressPercent = (currentLevelProgress / xpForNextLevel) * 100;
+  // 1. A fonte da verdade: Calcular o nível CORRETO a partir do XP total.
+  const correctLevel = getCorrectLevelFromXp(student.xp);
+  
+  // 2. Calcular os limites de XP para o nível correto.
+  const xpForCurrentLevelStart = getTotalXpForLevelStart(correctLevel);
+  const xpForNextLevelStart = getTotalXpForLevelStart(correctLevel + 1);
+
+  // 3. Calcular o progresso DENTRO do nível atual.
+  const xpNeededForThisLevel = xpForNextLevelStart - xpForCurrentLevelStart;
+  const currentLevelProgress = student.xp - xpForCurrentLevelStart;
+  
+  // 4. Calcular a porcentagem para a barra de progresso.
+  const progressPercent = xpNeededForThisLevel > 0 ? (currentLevelProgress / xpNeededForThisLevel) * 100 : 100;
 
   return (
     <div className="min-h-screen bg-slate-50 p-6 md:p-10">
@@ -77,13 +108,15 @@ export default async function StudentHub() {
             <div>
               <h1 className="text-2xl font-bold text-slate-900">Olá, {student.name}!</h1>
               <div className="flex items-center gap-2 text-slate-500">
-                <Badge variant="secondary" className="bg-indigo-50 text-indigo-700">Nível {student.level}</Badge>
+                {/* Exibe o nível correto, não o do banco de dados */}
+                <Badge variant="secondary" className="bg-indigo-50 text-indigo-700">Nível {correctLevel}</Badge>
                 <span>{student.xp} XP Total</span>
               </div>
             </div>
           </div>
           <div className="w-full md:w-1/3 space-y-2">
-            <div className="flex justify-between text-xs font-semibold text-slate-400 uppercase"><span>Progresso para Nível {student.level + 1}</span><span>{currentLevelProgress} / {xpForNextLevel} XP</span></div>
+            {/* Exibe o progresso para o nível correto */}
+            <div className="flex justify-between text-xs font-semibold text-slate-400 uppercase"><span>Progresso para Nível {correctLevel + 1}</span><span>{currentLevelProgress} / {xpNeededForThisLevel} XP</span></div>
             <Progress value={progressPercent} className="h-3" />
           </div>
         </div>
@@ -93,7 +126,6 @@ export default async function StudentHub() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* // O componente do ícone foi renomeado para MapIcon */}
           <Link href="/student/city" className="group"><Card className="h-full bg-gradient-to-br from-indigo-600 to-purple-700 text-white border-none hover:shadow-xl transition-all hover:scale-[1.02] cursor-pointer relative overflow-hidden"><div className="absolute top-0 right-0 p-10 opacity-10"><MapIcon size={120} /></div><CardHeader><CardTitle className="flex items-center gap-2 text-2xl"><MapIcon /> Minha Cidade</CardTitle></CardHeader><CardContent><p className="text-indigo-100 mb-6">Gerencie seus prédios, colete recursos e expanda seu império.</p><Button variant="secondary" className="w-full font-bold text-indigo-700">Entrar na Cidade</Button></CardContent></Card></Link>
           <Card className="bg-white hover:shadow-md transition-shadow"><CardHeader><CardTitle className="flex items-center gap-2 text-slate-800"><Trophy className="text-yellow-500" /> Ranking da Turma</CardTitle></CardHeader><CardContent><div className="space-y-4">
             {[1, 2, 3].map((pos) => (

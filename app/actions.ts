@@ -8,81 +8,89 @@ import { redirect } from 'next/navigation'
 import { cookies } from "next/headers"
 import { BUILDING_CONFIG, BuildingType } from '@/app/config/buildings'
 
-
 const prisma = new PrismaClient()
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
+
 export async function generateQuiz(formData: FormData) {
   const topic = formData.get('topic') as string
+  // O texto virá diretamente do formulário, não mais o arquivo
+  const contextText = formData.get('contextText') as string
   const teacherEmail = await getCurrentUser()
   let newActivity: Activity;
 
-  if (!topic) return
+  if (!topic) {
+      throw new Error("O tema do quiz é obrigatório.");
+  }
+
+  // O prompt continua o mesmo, usando o contextText recebido
+  const systemPrompt = `
+    Você é um assistente pedagógico especializado em criar material didático gamificado.
+    Sua tarefa é gerar um Quiz sobre o tema fornecido. A saída DEVE ser estritamente um JSON válido seguindo esta estrutura, sem texto adicional antes ou depois:
+    {
+        "title": "Título Criativo sobre o Tema",
+        "description": "Uma descrição curta e engajadora do quiz",
+        "questions": [
+            {
+                "text": "O enunciado da pergunta 1",
+                "options": ["Alternativa A", "Alternativa B", "Alternativa C", "Alternativa D"],
+                "correct": 0 // Índice da alternativa correta
+            },
+            {
+                "text": "O enunciado da pergunta 2",
+                "options": ["Alternativa A", "Alternativa B", "Alternativa C", "Alternativa D"],
+                "correct": 1
+            }
+        ]
+    }
+    Gere 3 perguntas.
+
+    ${contextText ? 
+    `---CONTEXTO---
+    Use o seguinte texto como fonte primária e obrigatória para criar as perguntas e respostas. As perguntas devem ser diretamente baseadas neste conteúdo:
+    ${contextText}
+    ---FIM DO CONTEXTO---` 
+    : ''
+    }
+  `;
 
   try {
     const completion = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile",
       messages: [
-        {
-          role: "system",
-          content: `Você é um assistente pedagógico especializado em criar material didático gamificado. Sua tarefa é gerar um Quiz sobre o tema fornecido. A saída DEVE ser estritamente um JSON válido seguindo exatamente esta estrutura, sem texto adicional antes ou depois:
-          
-          {
-            "title": "Título Criativo e Curto",
-            "description": "Uma descrição engajadora de 1 frase",
-            "questions": [
-              {
-                "text": "O enunciado da pergunta",
-                "options": ["Alternativa A", "Alternativa B", "Alternativa C", "Alternativa D"],
-                "correct": 0
-              }
-            ]
-          }
-          
-          Gere 3 perguntas.`
-        },
-        { 
-          role: "user", 
-          content: `Gere um quiz sobre o tema: ${topic}` 
-        }
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Gere um quiz sobre o tema: ${topic}` }
       ],
       temperature: 0.5,
       response_format: { type: "json_object" } 
     });
 
     const content = completion.choices[0]?.message?.content
-    if (!content) throw new Error("Sem resposta da Groq")
+    if (!content) throw new Error("Sem resposta da IA.")
 
     const quizData = JSON.parse(content)
 
-    const teacher = await prisma.teacher.findFirst({
-      where: { email: teacherEmail }
-    })
-
-    if (!teacher) {
-      throw new Error("Professor não encontrado.")
-    }
+    const teacher = await prisma.teacher.findFirst({ where: { email: teacherEmail } })
+    if (!teacher) throw new Error("Professor não encontrado.")
 
     newActivity = await prisma.activity.create({
       data: {
         title: quizData.title,
         description: quizData.description,
         type: 'QUIZ',
-        difficulty: 1,
+        difficulty: 1, // Pode ser ajustado no futuro
         teacherId: teacher.id,
-        payload: { 
-            questions: quizData.questions 
-        } 
+        payload: { questions: quizData.questions } 
       }
     })
     
   } catch (error) {
-    console.error("Erro na geração:", error)
+    console.error("Erro na geração com IA:", error)
     throw new Error("Falha ao gerar o quiz com IA.");
   }
 
   revalidatePath('/teacher')
-  redirect(`/teacher/activity/${newActivity.id}/edit`)
+  redirect(`/teacher/activity/${newActivity.id}/edit?created=true`)
 }
 
 export async function createManualQuiz(title: string, description: string, questions: any[]) {

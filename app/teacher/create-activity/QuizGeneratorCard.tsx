@@ -1,193 +1,149 @@
+// app/teacher/create-activity/QuizGeneratorCard.tsx
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+import { 
+    Card, 
+    CardContent, 
+    CardDescription, 
+    CardFooter, 
+    CardHeader, 
+    CardTitle 
 } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea" // Importar Textarea
-import { Wand2, Loader2, UploadCloud, File, X, AlertTriangle } from "lucide-react"
-import mammoth from "mammoth"
-
-// Importações da react-pdf
-import { Document, pdfjs } from 'react-pdf';
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-import 'react-pdf/dist/esm/Page/TextLayer.css';
-
-// Configuração do worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+import { Textarea } from "@/components/ui/textarea"
+import { FileUp, Bot, Loader2 } from "lucide-react"
+import { useDropzone } from "react-dropzone"
+import { toast } from "sonner"
 
 interface QuizGeneratorCardProps {
-  topic: string;
-  isGenerating: boolean;
-  handleGeneration: (contextText: string, additionalNotes: string) => void; // Atualizado
+    topic: string;
+    isGenerating: boolean;
+    handleGeneration: (contextText: string, additionalNotes: string) => void;
+}
+
+async function parsePdf(file: File): Promise<string> {
+    const pdfjs = await import('pdfjs-dist/build/pdf');
+    const pdfjsWorker = await import('pdfjs-dist/build/pdf.worker.entry');
+    pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjs.getDocument(arrayBuffer).promise;
+    let textContent = '';
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const text = await page.getTextContent();
+        // CORREÇÃO: Adicionado o tipo 'any' ao parâmetro 'item' do map.
+        textContent += text.items.map((item: any) => item.str).join(' ') + '\n';
+    }
+
+    return textContent;
+}
+
+async function parseTxt(file: File): Promise<string> {
+    return file.text();
 }
 
 export default function QuizGeneratorCard({ topic, isGenerating, handleGeneration }: QuizGeneratorCardProps) {
-  const [file, setFile] = useState<File | null>(null)
-  const [contextText, setContextText] = useState("")
-  const [additionalNotes, setAdditionalNotes] = useState("") // Novo estado
-  const [fileError, setFileError] = useState<string | null>(null)
-  const [isParsingFile, setIsParsingFile] = useState(false)
-  const [isDraggingOver, setIsDraggingOver] = useState(false)
+    const [contextText, setContextText] = useState("");
+    const [additionalNotes, setAdditionalNotes] = useState("");
+    const [isParsingFile, setIsParsingFile] = useState(false);
 
-  const onDocumentLoadSuccess = useCallback(async (pdf: any) => {
-    setIsParsingFile(true);
-    let fullText = '';
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const textContent = await page.getTextContent();
-      fullText += textContent.items.map((item: any) => item.str).join(' ') + '\n';
-    }
-    setContextText(fullText);
-    setIsParsingFile(false);
-  }, []);
+    const onDrop = useCallback(async (acceptedFiles: File[]) => {
+        const file = acceptedFiles[0];
+        if (!file) return;
 
-  useEffect(() => {
-    if (!file) return;
+        setIsParsingFile(true);
+        toast.info(`Processando o arquivo: ${file.name}`);
 
-    setIsParsingFile(true);
-    setFileError(null);
-    setContextText('');
-    const reader = new FileReader();
-
-    if (file.type === 'text/plain') {
-      reader.onload = (e) => {
-        setContextText(e.target?.result as string);
-        setIsParsingFile(false);
-      };
-      reader.readAsText(file);
-    } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-      reader.onload = async (e) => {
         try {
-          const result = await mammoth.extractRawText({ arrayBuffer: e.target?.result as ArrayBuffer });
-          setContextText(result.value);
-        } catch (err) {
-          setFileError("DOCX corrompido ou inválido.");
+            let text = "";
+            if (file.type === "application/pdf") {
+                text = await parsePdf(file);
+            } else if (file.type === "text/plain") {
+                text = await parseTxt(file);
+            } else {
+                toast.error("Formato de arquivo não suportado. Use PDF ou TXT.");
+                return;
+            }
+            setContextText(text);
+            toast.success("Arquivo processado com sucesso!");
+        } catch (error) {
+            console.error("Erro ao processar arquivo:", error);
+            toast.error("Falha ao processar o arquivo.");
         } finally {
-          setIsParsingFile(false);
+            setIsParsingFile(false);
         }
-      };
-      reader.readAsArrayBuffer(file);
-    } else if (file.type !== 'application/pdf') {
-      setFileError("Formato de arquivo não suportado.");
-      setIsParsingFile(false);
-    }
-  }, [file]);
+    }, []);
 
-  const processFile = (selectedFile: File) => {
-    const acceptedTypes = ['application/pdf', 'text/plain', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    if (acceptedTypes.includes(selectedFile.type)) {
-        setFile(selectedFile);
-    } else {
-        setFileError("Formato de arquivo não suportado.");
-    }
-  }
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+        onDrop,
+        accept: {
+            'application/pdf': ['.pdf'],
+            'text/plain': ['.txt'],
+        },
+        maxFiles: 1,
+    });
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files?.[0]) {
-      processFile(event.target.files[0]);
-    }
-    event.target.value = '';
-  };
+    const isDisabled = isGenerating || isParsingFile;
 
-  const handleRemoveFile = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setFile(null);
-    setContextText("");
-    setFileError(null);
-  };
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      if (!isDisabled) setIsDraggingOver(true);
-  }
-
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      setIsDraggingOver(false);
-  }
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      setIsDraggingOver(false);
-      if (isDisabled || !e.dataTransfer.files?.[0]) return;
-      processFile(e.dataTransfer.files[0]);
-  }
-  
-  const isDisabled = isGenerating || isParsingFile;
-
-  return (
-    <>
-      {file && file.type === 'application/pdf' && (
-        <div style={{ display: 'none' }}>
-          <Document
-            file={file}
-            onLoadSuccess={onDocumentLoadSuccess}
-            onLoadError={() => setFileError("PDF corrompido, protegido por senha ou inválido.")}
-            loading="">
-          </Document>
-        </div>
-      )}
-
-      <Card className={`hover:border-indigo-500/50 transition-all ${isDisabled ? 'opacity-50' : ''}`}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-3"><Wand2 className="text-indigo-600" />Gerar Quiz com IA</CardTitle>
-          <CardDescription>Defina um tema, envie um arquivo e adicione notas para a IA criar a atividade.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-3">
-              <Label>Baseado em Arquivo (Opcional)</Label>
+    return (
+        <>
+          <Card className={`hover:border-indigo-500/50 transition-all ${isDisabled ? 'opacity-50' : ''}`}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3">
+                <Bot className="text-indigo-600" />
+                Gerar Quiz com IA
+              </CardTitle>
+              <CardDescription>
+                Use o tema definido acima e gere um quiz automaticamente.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm font-medium">Adicionar Contexto (Opcional)</p>
+              
               <div 
-                  className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-all ${isDraggingOver ? 'border-indigo-600 bg-indigo-50/50' : 'border-slate-300'} ${!isDisabled ? 'cursor-pointer hover:border-indigo-400' : ''}`}
-                  onClick={() => !isDisabled && document.getElementById('file-upload')?.click()}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-              >
-                  <input id="file-upload" type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.txt,.docx" disabled={isDisabled} />
-                  {isParsingFile ? (
-                      <div className="flex flex-col items-center gap-2 text-slate-700"><Loader2 className="w-8 h-8 animate-spin" /><span>Processando...</span></div>
-                  ) : file ? (
-                      <div className="flex flex-col items-center gap-2 text-slate-700">
-                          <File className="w-8 h-8" />
-                          <span className="text-sm font-medium">{file.name}</span>
-                          <Button variant="ghost" size="sm" className="absolute top-2 right-2 text-slate-500 hover:text-red-500" onClick={handleRemoveFile}><X size={16}/></Button>
-                      </div>
-                  ) : (
-                      <div className="flex flex-col items-center gap-2 text-slate-500">
-                          <UploadCloud className="w-8 h-8" />
-                          <span className="font-semibold">Clique ou arraste um arquivo</span>
-                          <span className="text-xs">PDF, TXT, DOCX</span>
-                      </div>
-                  )}
+                {...getRootProps()} 
+                className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer ${isDragActive ? 'border-indigo-600 bg-indigo-50' : 'border-slate-300'}`}>
+                <input {...getInputProps()} />
+                <FileUp className="mx-auto h-8 w-8 text-slate-400 mb-2" />
+                {isDragActive ?
+                    <p>Solte o arquivo aqui...</p> :
+                    <p>Arraste e solte um arquivo <span className="font-semibold">.PDF</span> ou <span className="font-semibold">.TXT</span> aqui, ou clique para selecionar.</p>
+                }
+                </div>
+
+                {contextText && (
+                    <div className="mt-4">
+                        <Label>Texto Extraído do Arquivo</Label>
+                        <Textarea 
+                            value={contextText} 
+                            readOnly 
+                            rows={5} 
+                            className="bg-slate-50 text-xs" 
+                        />
+                    </div>
+                )}
+
+              <div className="space-y-2">
+                <Label htmlFor="additional-notes">Instruções Adicionais (Opcional)</Label>
+                <Textarea
+                  id="additional-notes"
+                  placeholder="Ex: Crie perguntas mais difíceis, foque no sub-tópico X..."
+                  value={additionalNotes}
+                  onChange={(e) => setAdditionalNotes(e.target.value)}
+                  rows={3}
+                />
               </div>
-              {fileError && <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-2 rounded-md"><AlertTriangle size={16} /><span>{fileError}</span></div>}
-          </div>
-          <div className="space-y-3">
-            <Label htmlFor="additional-notes">Instruções Adicionais para a IA (Opcional)</Label>
-            <Textarea 
-              id="additional-notes"
-              placeholder="Ex: Crie questões mais difíceis, foque no capítulo 3, use um tom mais informal..."
-              value={additionalNotes}
-              onChange={(e) => setAdditionalNotes(e.target.value)}
-              disabled={isDisabled}
-              className="resize-none"
-            />
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Button onClick={() => handleGeneration(contextText, additionalNotes)} className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={isDisabled || !topic}>
-            {isGenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Gerando...</> : isParsingFile ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Processando...</> : 'Gerar Mágica ✨'}
-          </Button>
-        </CardFooter>
-      </Card>
-    </>
-  );
-}
+            </CardContent>
+            <CardFooter>
+              <Button onClick={() => handleGeneration(contextText, additionalNotes)} className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={isDisabled || !topic}>
+                {isGenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Gerando...</> : isParsingFile ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Processando...</> : 'Gerar Mágica ✨'}
+              </Button>
+            </CardFooter>
+          </Card>
+        </>
+      );
+    }

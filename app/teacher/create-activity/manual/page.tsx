@@ -24,6 +24,7 @@ function ManualQuizCreatorContent() {
   
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
+  const [classIds, setClassIds] = useState<string[]>([]) // Estado para os IDs das turmas
   const [questions, setQuestions] = useState<Question[]>([
     {
       id: Date.now(),
@@ -34,9 +35,21 @@ function ManualQuizCreatorContent() {
   ])
   const [isSaving, startTransition] = useTransition()
 
+  // Efeito para buscar parâmetros da URL
   useEffect(() => {
     setTitle(searchParams.get("title") || "")
-    setDescription(searchParams.get("description") || "")
+    const idsParam = searchParams.get("classIds");
+    if (idsParam) {
+      try {
+        const parsedIds = JSON.parse(idsParam);
+        if(Array.isArray(parsedIds)) {
+          setClassIds(parsedIds);
+        }
+      } catch (error) {
+        console.error("Erro ao processar os IDs das turmas da URL:", error);
+        // Opcional: redirecionar ou mostrar um erro se os IDs forem cruciais
+      }
+    }
   }, [searchParams])
 
   const addQuestion = () => {
@@ -88,12 +101,16 @@ function ManualQuizCreatorContent() {
   
   const handleSubmit = () => {
     if (!title.trim()) {
-      alert("O título do quiz é obrigatório.")
-      return
+      alert("O título do quiz é obrigatório.");
+      return;
     }
     if (questions.some(q => !q.text.trim() || q.options.some(opt => !opt.text.trim()))) {
-      alert("Todas as perguntas e opções devem ser preenchidas.")
-      return
+      alert("Todas as perguntas e opções devem ser preenchidas.");
+      return;
+    }
+    if (classIds.length === 0) {
+        alert("Erro: Nenhuma turma selecionada. Por favor, volte e selecione ao menos uma turma.");
+        return;
     }
 
     const formattedQuestions = questions.map(q => ({
@@ -103,9 +120,8 @@ function ManualQuizCreatorContent() {
     }));
 
     startTransition(() => {
-      // Chamada da ação do servidor. O redirect é tratado pelo Next.js.
-      // Qualquer .catch ou try/catch aqui vai interceptar o redirect e impedi-lo.
-      createManualQuiz(title, description, formattedQuestions);
+      // Passa os classIds para a server action
+      createManualQuiz(title, description, formattedQuestions, classIds);
     });
   }
 
@@ -131,6 +147,7 @@ function ManualQuizCreatorContent() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Dê um nome para a sua atividade"
+                  readOnly // O título vem da página anterior
                 />
             </div>
             <div>
@@ -194,7 +211,7 @@ function ManualQuizCreatorContent() {
                 <Plus size={16} />
                 Adicionar Questão
             </Button>
-            <Button onClick={handleSubmit} className="gap-2 bg-blue-600 hover:bg-blue-700" disabled={isSaving}>
+            <Button onClick={handleSubmit} className="gap-2 bg-blue-600 hover:bg-blue-700" disabled={isSaving || classIds.length === 0}>
                 {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</> : <><Save size={16} /> Salvar Quiz</>}
             </Button>
         </div>
@@ -203,8 +220,6 @@ function ManualQuizCreatorContent() {
   )
 }
 
-// A Suspense boundary is needed because useSearchParams is a Client Component hook
-// that requires a Suspense boundary to be rendered on the server.
 export default function ManualQuizCreator() {
     return (
         <Suspense fallback={<div>Carregando...</div>}>

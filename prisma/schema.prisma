@@ -28,16 +28,17 @@ model Teacher {
   schoolId   String
   school     School     @relation(fields: [schoolId], references: [id])
   activities Activity[]
-  classes    Class[]    // RELACIONAMENTO: Um professor pode ter várias turmas
+  classes    Class[]
 }
 
 model Class {
-  id        String    @id @default(uuid())
+  id        String     @id @default(uuid())
   name      String
   teacherId String
-  teacher   Teacher   @relation(fields: [teacherId], references: [id])
-  students  Student[] // RELACIONAMENTO: Vários alunos em uma turma (N-N)
-  createdAt DateTime  @default(now())
+  teacher   Teacher    @relation(fields: [teacherId], references: [id])
+  students  Student[]
+  activities Activity[] // RELACIONAMENTO: Uma turma pode ter várias atividades (N-N)
+  createdAt DateTime   @default(now())
 }
 
 model Student {
@@ -48,7 +49,7 @@ model Student {
   schoolId  String
   school    School   @relation(fields: [schoolId], references: [id])
   
-  classes   Class[]  // RELACIONAMENTO: Aluno pode estar em várias turmas (N-N)
+  classes   Class[]
 
   xp        Int      @default(0)
   level     Int      @default(1)
@@ -79,6 +80,7 @@ model Activity {
   difficulty      Int          @default(1)
   teacherId       String
   teacher         Teacher      @relation(fields: [teacherId], references: [id])
+  classes         Class[]      // RELACIONAMENTO: Uma atividade pode ser para várias turmas (N-N)
   attempts        ActivityAttempt[]
   createdAt       DateTime     @default(now())
 }
@@ -105,10 +107,8 @@ enum PlanType {
 }
 
 enum ActivityType {
+  REVISION
   QUIZ
+  CONCEPT_MAP
   ESSAY
-  FLASHCARD
-  VIDEO_QUEST
-  ORDERING
-  AUDIO_REPLY
 }

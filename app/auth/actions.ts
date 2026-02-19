@@ -23,9 +23,15 @@ export async function login(formData: FormData) {
         // CORREÇÃO: Redireciona em vez de retornar objeto
         redirect("/login?error=senha_incorreta") 
     }
-    
-    cookieStore.set("lumen_session", teacher.email, { expires, httpOnly: true })
-    cookieStore.set("lumen_role", 'teacher', { expires, httpOnly: true })
+    const cookieOptions = { 
+      expires, 
+      httpOnly: true, 
+      path: '/',
+      secure: true,             // Obrigatório para o IDX
+      sameSite: 'none' as const // A mágica que permite o cookie no Iframe do IDX!
+  };
+    cookieStore.set("lumen_session", teacher.email, cookieOptions)
+    cookieStore.set("lumen_role", 'teacher', cookieOptions)
     
     redirect("/teacher")
   }
@@ -38,9 +44,15 @@ export async function login(formData: FormData) {
         // CORREÇÃO: Redireciona em vez de retornar objeto
         redirect("/login?error=senha_incorreta")
     }
-    
-    cookieStore.set("lumen_session", student.email, { expires, httpOnly: true })
-    cookieStore.set("lumen_role", 'student', { expires, httpOnly: true })
+    const cookieOptions = { 
+      expires, 
+      httpOnly: true, 
+      path: '/',
+      secure: true,             // Obrigatório para o IDX
+      sameSite: 'none' as const // A mágica que permite o cookie no Iframe do IDX!
+  };
+    cookieStore.set("lumen_session", student.email, cookieOptions)
+    cookieStore.set("lumen_role", 'student', cookieOptions)
     
     redirect("/student")
   }

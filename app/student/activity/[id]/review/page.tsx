@@ -2,7 +2,7 @@
 "use client"
 
 import { useEffect, useState, Suspense } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation'; // 1. Importar useSearchParams
 import { getActivityById } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +19,6 @@ interface Activity {
   reviewMaterials?: ReviewMaterial[];
 }
 
-// Componente para renderizar o vídeo do YouTube
 function YouTubeEmbed({ url }: { url: string }) {
     const getYouTubeId = (url: string) => {
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -31,19 +30,11 @@ function YouTubeEmbed({ url }: { url: string }) {
     
     return (
         <div className="w-full aspect-video">
-            <iframe
-                src={`https://www.youtube.com/embed/${videoId}`}
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="w-full h-full rounded-lg shadow-lg"
-                title="YouTube video player"
-            ></iframe>
+            <iframe src={`https://www.youtube.com/embed/${videoId}`} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen className="w-full h-full rounded-lg shadow-lg" title="YouTube video player"></iframe>
         </div>
     );
 }
 
-// Componente para renderizar um PDF
 function PDFEmbed({ url }: { url: string }) {
     return (
         <div className="w-full h-[700px] border rounded-lg shadow-lg overflow-hidden">
@@ -52,23 +43,18 @@ function PDFEmbed({ url }: { url: string }) {
     )
 }
 
-// Componente para renderizar uma Imagem
 function ImageEmbed({ url }: { url: string }) {
     return (
         <div className="w-full flex justify-center bg-gray-100 p-2 rounded-lg">
-            <img 
-                src={url} 
-                alt="Material de revisão" 
-                className="max-w-full h-auto rounded-md shadow-md" 
-            />
+            <img src={url} alt="Material de revisão" className="max-w-full h-auto rounded-md shadow-md" />
         </div>
     );
 }
 
-
 function ReviewPageContent() {
     const params = useParams();
     const router = useRouter();
+    const searchParams = useSearchParams(); // 2. Pegar os search params
     const id = params.id as string;
 
     const [activity, setActivity] = useState<Activity | null>(null);
@@ -80,16 +66,10 @@ function ReviewPageContent() {
             .then(data => {
                 const materials = (data.reviewMaterials as any[] || []).map(m => {
                     const lowerUrl = m.url.toLowerCase();
-                    let type: ReviewMaterial['type'] = 'link'; // Tipo padrão
-
-                    if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) {
-                        type = 'youtube';
-                    } else if (lowerUrl.endsWith('.pdf')) {
-                        type = 'pdf';
-                    } else if (lowerUrl.endsWith('.png') || lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.gif') || lowerUrl.endsWith('.webp')) {
-                        type = 'image';
-                    }
-
+                    let type: ReviewMaterial['type'] = 'link';
+                    if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) { type = 'youtube'; }
+                    else if (lowerUrl.endsWith('.pdf')) { type = 'pdf'; }
+                    else if (lowerUrl.endsWith('.png') || lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.gif') || lowerUrl.endsWith('.webp')) { type = 'image'; }
                     return { ...m, type };
                 });
                 setActivity({ ...data, reviewMaterials: materials });
@@ -99,7 +79,10 @@ function ReviewPageContent() {
     }, [id]);
 
     const startQuiz = () => {
-        router.push(`/student/play/${id}`);
+        const from = searchParams.get('from'); // 3. Ler o parâmetro 'from'
+        const baseUrl = `/student/play/${id}`;
+        const finalUrl = from ? `${baseUrl}?from=${from}` : baseUrl; // 4. Montar a URL final
+        router.push(finalUrl);
     };
 
     if (loading) {
@@ -118,7 +101,6 @@ function ReviewPageContent() {
                 </CardHeader>
                 <CardContent className="space-y-8">
                     <p className="text-center text-gray-600">Estude os materiais abaixo antes de começar o quiz.</p>
-                    
                     {activity.reviewMaterials && activity.reviewMaterials.length > 0 ? (
                         <div className="space-y-8">
                             {activity.reviewMaterials.map((material, index) => (
@@ -138,11 +120,9 @@ function ReviewPageContent() {
                     ) : (
                         <p className="text-center text-gray-500 py-8">Não há materiais de revisão para esta atividade.</p>
                     )}
-
                     <div className="text-center pt-6">
                         <Button onClick={startQuiz} size="lg" className="gap-2">
-                            Estou Pronto! Começar o Quiz
-                            <ArrowRight className="h-5 w-5" />
+                            Estou Pronto! Começar o Quiz <ArrowRight className="h-5 w-5" />
                         </Button>
                     </div>
                 </CardContent>

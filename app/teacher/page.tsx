@@ -22,28 +22,28 @@ async function getTeacherData() {
     return teacher;
 }
 
+// 1. ATUALIZAMOS A FUNÇÃO PARA INCLUIR reviewMaterials
 async function getActivities(teacherId: string) {
   return await prisma.activity.findMany({
     where: { teacherId: teacherId }, 
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
+    // Incluindo o campo necessário
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      type: true,
+      difficulty: true,
+      reviewMaterials: true, 
+    }
   });
 }
 
-// A página principal continua sendo um Server Component que busca dados
 export default async function TeacherDashboard() {
   const teacher = await getTeacherData();
-  const rawActivities = await getActivities(teacher.id);
+  // Os dados agora incluem reviewMaterials
+  const activities = await getActivities(teacher.id);
 
-  // Mapeamos os dados das atividades para garantir que são serializáveis (sem Date objects)
-  const activities = rawActivities.map(activity => ({
-    id: activity.id,
-    title: activity.title,
-    description: activity.description,
-    type: activity.type,
-    difficulty: activity.difficulty,
-  }));
-
-  // **A CORREÇÃO FINAL:** Passamos o nome do ícone como string, não o componente.
   const stats = [
     { title: "Total de Alunos", value: "32", icon: "Users", color: "text-blue-600" },
     { title: "Quizzes Realizados", value: "145", icon: "CheckCircle2", color: "text-green-600" },
@@ -52,10 +52,11 @@ export default async function TeacherDashboard() {
 
   return (
     <Suspense fallback={<div>Carregando Painel...</div>}>
+      {/* 2. PASSAMOS AS ATIVIDADES COMPLETAS PARA O CLIENTE */}
       <TeacherDashboardClient 
         teacherName={teacher.name || 'Professor(a)'} 
         activities={activities} 
-        stats={stats} // Agora os stats são 100% serializáveis
+        stats={stats}
       />
     </Suspense>
   );

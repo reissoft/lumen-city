@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { toast } from "sonner";
-import { LogOut, Users, CheckCircle2, TrendingUp, GraduationCap, Trash2 } from "lucide-react";
+import { LogOut, Users, CheckCircle2, TrendingUp, GraduationCap, Trash2, Play } from "lucide-react";
 import { logout } from "../auth/actions";
 import { deleteActivity } from "../actions";
 
@@ -18,7 +18,16 @@ const iconComponents: { [key: string]: React.ElementType } = {
   TrendingUp,
 };
 
-export default function TeacherDashboardClient({ teacherName, activities, stats }: { teacherName: string, activities: any[], stats: any[] }) {
+interface Activity {
+  id: string;
+  title: string;
+  description: string | null;
+  type: string;
+  difficulty: number;
+  reviewMaterials?: any[] | null; 
+}
+
+export default function TeacherDashboardClient({ teacherName, activities, stats }: { teacherName: string, activities: Activity[], stats: any[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isDeleting, startDeleteTransition] = useTransition();
@@ -49,6 +58,16 @@ export default function TeacherDashboardClient({ teacherName, activities, stats 
             onClick: () => {} 
         }
     });
+  };
+
+  const handleTest = (activity: Activity) => {
+    const hasReviewMaterials = activity.reviewMaterials && Array.isArray(activity.reviewMaterials) && activity.reviewMaterials.length > 0;
+    const baseUrl = hasReviewMaterials
+      ? `/student/activity/${activity.id}/review`
+      : `/student/play/${activity.id}`;
+    // Adiciona o parâmetro 'from=teacher' para sabermos a origem
+    const path = `${baseUrl}?from=teacher`;
+    router.push(path);
   };
 
   return (
@@ -111,8 +130,15 @@ export default function TeacherDashboardClient({ teacherName, activities, stats 
                 <CardDescription className="line-clamp-2">{activity.description}</CardDescription>
               </CardHeader>
               <CardContent className="mt-auto">
-                <div className="flex gap-2">
-                    <Link href={`/teacher/activity/${activity.id}/edit`} className="flex-1">
+                <div className="flex gap-2 mt-4">
+                    <Button 
+                        variant="outline"
+                        className="flex-1 gap-2 bg-slate-800 text-white hover:bg-slate-700"
+                        onClick={() => handleTest(activity)}
+                    >
+                        <Play size={16} /> Testar
+                    </Button>
+                    <Link href={`/teacher/activity/${activity.id}/edit`}>
                        <Button variant="secondary" className="w-full">Editar</Button>
                     </Link>
                     <Button 

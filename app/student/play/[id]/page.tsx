@@ -2,6 +2,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation' // 1. Importar useSearchParams
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -23,6 +24,7 @@ interface QuizData {
 
 export default function PlayQuizPage({ params }: { params: { id: string } }) {
   const { id } = params;
+  const searchParams = useSearchParams(); // 2. Inicializar o hook
 
   const [quizData, setQuizData] = useState<QuizData | null>(null);
   const [currentQ, setCurrentQ] = useState(0);
@@ -75,11 +77,17 @@ export default function PlayQuizPage({ params }: { params: { id: string } }) {
         setIsChecked(false);
     } else {
         setLoading(true);
-        // A pontuação já foi atualizada no handleCheck da última questão
         const finalScore = Math.round((score / quizData.questions.length) * 100);
         
-        const result = await submitQuizResult(id, finalScore);
-        setResultMessage(result.message);
+        // Apenas submeter o resultado se não for um teste do professor
+        const from = searchParams.get('from');
+        if (from !== 'teacher') {
+            const result = await submitQuizResult(id, finalScore);
+            setResultMessage(result.message);
+        } else {
+            setResultMessage(`Você completou o teste! Sua pontuação final foi ${finalScore}%. Esta nota não foi salva.`);
+        }
+
         setGameOver(true);
         setLoading(false);
     }
@@ -95,20 +103,23 @@ export default function PlayQuizPage({ params }: { params: { id: string } }) {
             <AlertTriangle className="w-16 h-16 mb-4" />
             <h1 className="text-2xl font-bold mb-2">Ocorreu um Erro</h1>
             <p className="text-slate-600 mb-8 text-center">{error}</p>
-            <Link href="/student/city">
-                <Button variant="secondary">Voltar para a Cidade</Button>
+            <Link href="/teacher">
+                <Button variant="secondary">Voltar ao Painel</Button>
             </Link>
         </div>
     );
   }
   
   if (gameOver) {
+    // 3. Determinar o caminho de volta com base no parâmetro 'from'
+    const returnPath = searchParams.get('from') === 'teacher' ? '/teacher' : '/student';
+
     return (
         <div className="h-screen bg-slate-900 flex flex-col items-center justify-center text-white p-4">
             <Trophy className="w-24 h-24 text-yellow-400 mb-6 animate-bounce" />
             <h1 className="text-4xl font-bold mb-2">Quiz Finalizado!</h1>
             <p className="text-xl text-slate-300 mb-8 text-center max-w-md">{resultMessage}</p>
-            <Link href="/student">
+            <Link href={returnPath}>
                 <Button className="bg-indigo-600 hover:bg-indigo-500 text-lg px-8 py-6">
                     Voltar
                 </Button>
@@ -117,7 +128,7 @@ export default function PlayQuizPage({ params }: { params: { id: string } }) {
     )
   }
   
-  if (!quizData) return null; // Não deve acontecer se o loading/error for tratado
+  if (!quizData) return null;
 
   const progress = ((currentQ) / quizData.questions.length) * 100;
   const question = quizData.questions[currentQ];

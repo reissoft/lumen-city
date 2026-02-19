@@ -2,19 +2,14 @@
 import { PrismaClient } from "@prisma/client";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache"; // 1. Importar o revalidatePath
 
 const prisma = new PrismaClient();
 
-// Helper para calcular o total de XP necessário para INICIAR um determinado nível.
-// Nível 1: 0 XP
-// Nível 2: 100 XP (para completar o L1)
-// Nível 3: 300 XP (100 para o L1 + 200 para o L2)
-// Nível 4: 600 XP (300 + 300 para o L3)
 const getTotalXpForLevelStart = (level: number): number => {
     if (level <= 1) {
         return 0;
     }
-    // Soma de uma progressão aritmética: 100 + 200 + ... + (level-1)*100
     const n = level - 1;
     const a1 = 100;
     const an = n * 100;
@@ -54,8 +49,6 @@ export async function submitActivity(submission: ActivitySubmission) {
     const newTotalXp = student.xp + xpGained;
     
     let newLevel = student.level;
-    // Lógica de "level up" corrigida e mais robusta
-    // Verifica se o XP total do aluno ultrapassou o necessário para o próximo nível
     while (newTotalXp >= getTotalXpForLevelStart(newLevel + 1)) {
         newLevel++;
     }
@@ -66,8 +59,8 @@ export async function submitActivity(submission: ActivitySubmission) {
                 studentId: student.id,
                 activityId: submission.activityId,
                 score: submission.score,
-                response: {}, // Campo obrigatório
-                rewarded: true, // Campo obrigatório
+                response: {},
+                rewarded: true,
             }
         }),
         prisma.student.update({
@@ -78,6 +71,9 @@ export async function submitActivity(submission: ActivitySubmission) {
             }
         })
     ]);
+
+    // 2. Forçar a atualização do dashboard
+    revalidatePath('/student');
 
     return {
         xpGained,

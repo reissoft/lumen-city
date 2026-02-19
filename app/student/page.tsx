@@ -19,14 +19,33 @@ async function getStudentData() {
 
     const student = await prisma.student.findUnique({
         where: { email: email },
-        include: { resources: true }
+        include: { 
+            resources: true,
+            classes: true
+        }
     });
 
-    // Usamos o tipo 'Activity' padrão do Prisma, que já é correto.
-    const activities: Activity[] = await prisma.activity.findMany({
-        orderBy: { createdAt: 'desc' },
-        take: 5
-    });
+    if (!student) {
+        return { student: null, activities: [] };
+    }
+
+    const studentClassIds = student.classes.map(c => c.id);
+
+    let activities: Activity[] = [];
+    if (studentClassIds.length > 0) {
+        activities = await prisma.activity.findMany({
+            where: {
+                classes: {
+                    some: {
+                        id: {
+                            in: studentClassIds
+                        }
+                    }
+                }
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+    }
 
     return { student, activities };
 }
@@ -67,37 +86,51 @@ export default async function StudentHub() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Link href="/student/city" className="group"><Card className="h-full bg-gradient-to-br from-indigo-600 to-purple-700 text-white border-none hover:shadow-xl transition-all hover:scale-[1.02] cursor-pointer relative overflow-hidden"><div className="absolute top-0 right-0 p-10 opacity-10"><Map size={120} /></div><CardHeader><CardTitle className="flex items-center gap-2 text-2xl"><Map /> Minha Cidade</CardTitle></CardHeader><CardContent><p className="text-indigo-100 mb-6">Gerencie seus prédios, colete recursos e expanda seu império.</p><Button variant="secondary" className="w-full font-bold text-indigo-700">Entrar na Cidade</Button></CardContent></Card></Link>
-          <Card className="bg-white hover:shadow-md transition-shadow"><CardHeader><CardTitle className="flex items-center gap-2 text-slate-800"><Trophy className="text-yellow-500" /> Ranking da Turma</CardTitle></CardHeader><CardContent><div className="space-y-4">{[1, 2, 3].map((pos) => (<div key={pos} className="flex items-center justify-between border-b pb-2 last:border-0"><div className="flex items-center gap-3"><span className={`font-bold w-6 ${pos === 1 ? 'text-yellow-500' : 'text-slate-400'}`}>#{pos}</span><span className="text-sm font-medium">Aluno Exemplo {pos}</span></div><span className="text-xs font-bold text-slate-400">{1500 - (pos * 100)} XP</span></div>))}
-              </div></CardContent></Card>
+          <Card className="bg-white hover:shadow-md transition-shadow"><CardHeader><CardTitle className="flex items-center gap-2 text-slate-800"><Trophy className="text-yellow-500" /> Ranking da Turma</CardTitle></CardHeader><CardContent><div className="space-y-4">{[1, 2, 3].map((pos) => (
+            <div key={pos} className="flex items-center justify-between border-b pb-2 last:border-0">
+              <div className="flex items-center gap-3">
+                <span className={`font-bold w-6 ${pos === 1 ? 'text-yellow-500' : 'text-slate-400'}`}>#{pos}</span>
+                <span className="text-sm font-medium">Aluno Exemplo {pos}</span>
+              </div>
+              <span className="text-xs font-bold text-slate-400">{1500 - (pos * 100)} XP</span>
+            </div>
+          ))}
+          </div></CardContent></Card>
         </div>
 
         <div>
           <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"><Star className="text-orange-500" fill="currentColor" /> Missões Disponíveis</h2>
           <div className="grid gap-4 md:grid-cols-3">
-            {activities.map((activity) => {
-              // A verificação abaixo é segura, pois `reviewMaterials` é do tipo `JsonValue`.
-              const hasReviewMaterials = activity.reviewMaterials && Array.isArray(activity.reviewMaterials) && activity.reviewMaterials.length > 0;
-              const activityPath = hasReviewMaterials ? `/student/activity/${activity.id}/review` : `/student/play/${activity.id}`;
-              const buttonText = hasReviewMaterials ? "Revisar e Jogar" : "Jogar";
-              const ButtonIcon = hasReviewMaterials ? BookOpen : Play;
+            {activities.length > 0 ? (
+              activities.map((activity) => {
+                const hasReviewMaterials = activity.reviewMaterials && Array.isArray(activity.reviewMaterials) && activity.reviewMaterials.length > 0;
+                const activityPath = hasReviewMaterials ? `/student/activity/${activity.id}/review` : `/student/play/${activity.id}`;
+                const buttonText = hasReviewMaterials ? "Revisar e Jogar" : "Jogar";
+                const ButtonIcon = hasReviewMaterials ? BookOpen : Play;
 
-              return (
-                <Card key={activity.id} className="hover:border-indigo-300 transition-colors flex flex-col">
-                  <CardHeader className="pb-2">
-                    <div className="flex justify-between"><Badge variant="outline" className="text-xs">{activity.type}</Badge><span className="text-xs text-slate-400">Dif. {activity.difficulty}</span></div>
-                    <CardTitle className="text-lg mt-2 line-clamp-1">{activity.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-grow flex flex-col">
-                    <p className="text-sm text-slate-500 mb-4 line-clamp-2 h-10 flex-grow">{activity.description}</p>
-                    <Link href={activityPath} className="mt-auto">
-                      <Button className={`w-full gap-2 ${hasReviewMaterials ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-900 hover:bg-slate-800'}`}>
-                        <ButtonIcon size={16} /> {buttonText}
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                return (
+                  <Card key={activity.id} className="hover:border-indigo-300 transition-colors flex flex-col">
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between"><Badge variant="outline" className="text-xs">{activity.type}</Badge><span className="text-xs text-slate-400">Dif. {activity.difficulty}</span></div>
+                      <CardTitle className="text-lg mt-2 line-clamp-1">{activity.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex-grow flex flex-col">
+                      <p className="text-sm text-slate-500 mb-4 line-clamp-2 h-10 flex-grow">{activity.description}</p>
+                      <Link href={activityPath} className="mt-auto">
+                        <Button className={`w-full gap-2 ${hasReviewMaterials ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-900 hover:bg-slate-800'}`}>
+                          <ButtonIcon size={16} /> {buttonText}
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            ) : (
+              <div className="col-span-3 bg-white p-8 rounded-xl text-center text-slate-500 shadow-sm border border-slate-100">
+                <p>Nenhuma atividade disponível para suas turmas no momento.</p>
+                <p className="text-sm mt-2">Fale com seu professor para mais informações!</p>
+              </div>
+            )}
           </div>
         </div>
 

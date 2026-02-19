@@ -2,7 +2,7 @@
 'use server'
 
 import Groq from 'groq-sdk'
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, Activity } from '@prisma/client'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { cookies } from "next/headers"
@@ -14,27 +14,18 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
 export async function generateQuiz(formData: FormData) {
   const topic = formData.get('topic') as string
-  const difficulty = "médio" // Poderíamos pegar do form também
-  
-  // Hardcoded para teste (no futuro pegaremos da sessão do usuário logado)
-  const teacherEmail = await getCurrentUser();
+  const teacherEmail = await getCurrentUser()
+  let newActivity: Activity;
 
   if (!topic) return
 
   try {
-    console.log(`⚡ Groq gerando quiz sobre: ${topic}...`)
-
-    // 1. Pedir para a Groq gerar o JSON
     const completion = await groq.chat.completions.create({
-      // Usando Llama 3 70B (Rápido e Inteligente)
-      model: "llama-3.3-70b-versatile", 
+      model: "llama-3.3-70b-versatile",
       messages: [
         {
           role: "system",
-          content: `Você é um assistente pedagógico especializado em criar material didático gamificado.
-          
-          Sua tarefa é gerar um Quiz sobre o tema fornecido.
-          A saída DEVE ser estritamente um JSON válido seguindo exatamente esta estrutura, sem texto adicional antes ou depois:
+          content: `Você é um assistente pedagógico especializado em criar material didático gamificado. Sua tarefa é gerar um Quiz sobre o tema fornecido. A saída DEVE ser estritamente um JSON válido seguindo exatamente esta estrutura, sem texto adicional antes ou depois:
           
           {
             "title": "Título Criativo e Curto",
@@ -43,12 +34,12 @@ export async function generateQuiz(formData: FormData) {
               {
                 "text": "O enunciado da pergunta",
                 "options": ["Alternativa A", "Alternativa B", "Alternativa C", "Alternativa D"],
-                "correct": 0 // Índice da resposta correta (0 a 3, number)
+                "correct": 0
               }
             ]
           }
           
-          Gere 3 perguntas de dificuldade ${difficulty}.`
+          Gere 3 perguntas.`
         },
         { 
           role: "user", 
@@ -56,53 +47,82 @@ export async function generateQuiz(formData: FormData) {
         }
       ],
       temperature: 0.5,
-      // Importante: Força a resposta em JSON para evitar erros de parse
       response_format: { type: "json_object" } 
-    })
+    });
 
     const content = completion.choices[0]?.message?.content
     if (!content) throw new Error("Sem resposta da Groq")
 
-    console.log("Resposta bruta da Groq:", content.substring(0, 100) + "...")
-
-    // 2. Parsear o JSON
     const quizData = JSON.parse(content)
 
-    // 3. Buscar ID do Professor
     const teacher = await prisma.teacher.findFirst({
       where: { email: teacherEmail }
     })
 
     if (!teacher) {
-      // Se não achar o professor (caso o banco tenha resetado), cria um fallback ou lança erro
-      throw new Error("Professor admin@reissoft.com não encontrado. Rode o seed novamente.")
+      throw new Error("Professor não encontrado.")
     }
 
-    // 4. Salvar no Banco
-    await prisma.activity.create({
+    newActivity = await prisma.activity.create({
       data: {
         title: quizData.title,
         description: quizData.description,
         type: 'QUIZ',
         difficulty: 1,
         teacherId: teacher.id,
-        // O Prisma aceita JSON direto se o tipo no schema for Json
         payload: { 
             questions: quizData.questions 
         } 
       }
     })
-
-    // 5. Atualizar a tela
-    revalidatePath('/teacher')
-    console.log("✅ Quiz gerado e salvo via Groq!")
     
   } catch (error) {
     console.error("Erro na geração:", error)
-    // Em produção, retornaria o erro para exibir um Toast no front
+    throw new Error("Falha ao gerar o quiz com IA.");
   }
 
-  
+  revalidatePath('/teacher')
+  redirect(`/teacher/activity/${newActivity.id}/edit`)
+}
+
+export async function createManualQuiz(title: string, description: string, questions: any[]) {
+    const teacherEmail = await getCurrentUser();
+    let newActivity: Activity;
+
+    if (!title || questions.length === 0) {
+        throw new Error("Título e ao menos uma questão são obrigatórios.");
+    }
+
+    try {
+        const teacher = await prisma.teacher.findUnique({
+            where: { email: teacherEmail },
+        });
+
+        if (!teacher) {
+            throw new Error("Professor não encontrado.");
+        }
+
+        newActivity = await prisma.activity.create({
+            data: {
+                title,
+                description: description || "Quiz criado manualmente", 
+                type: 'QUIZ',
+                difficulty: 1, // Padrão
+                teacherId: teacher.id,
+                payload: { questions },
+            },
+        });
+
+    } catch (error) {
+        console.error("Erro ao criar quiz manual:", error);
+        if (error instanceof Error) {
+            throw new Error(`Não foi possível salvar a atividade: ${error.message}`);
+        }
+        throw new Error("Não foi possível salvar a atividade devido a um erro desconhecido.");
+    }
+
+    revalidatePath('/teacher');
+    redirect(`/teacher/activity/${newActivity.id}/edit?created=true`);
 }
 
 
@@ -116,22 +136,13 @@ export async function deleteActivity(formData: FormData) {
       where: { id }
     })
     
-    // Redireciona de volta para o painel após deletar
     revalidatePath('/teacher')
-    // Em Server Actions, para redirecionar, importamos 'redirect' de 'next/navigation'
-    // Mas como o form está na página interna, o revalidate pode não ser suficiente visualmente se não sair da página.
-    // O ideal aqui seria usar redirect('/teacher')
   } catch (error) {
     console.error("Erro ao deletar:", error)
   }
 }
 
-// app/actions.ts
-
-// ... (imports anteriores e funções generateQuiz/deleteActivity mantêm-se iguais)
-
 export async function submitQuizResult(activityId: string, score: number) {
-  // Hardcoded para teste (na vida real viria da sessão)
   const studentEmail = await getCurrentUser()
 
   try {
@@ -142,29 +153,23 @@ export async function submitQuizResult(activityId: string, score: number) {
 
     if (!student) throw new Error("Aluno não encontrado")
 
-    // Lógica de Gamificação:
-    // Se tirou mais que 70, ganha recompensas.
     const passed = score >= 70
     let rewardMessage = "Tente novamente para ganhar recursos."
     
     if (passed) {
-      // Cálculo da Recompensa (Ex: 10 de Ouro e 50 XP fixo)
       const goldReward = 10
       const xpReward = 50
 
-      // Atualiza o Aluno (Transação Atômica)
       await prisma.$transaction([
-        // 1. Registra a tentativa
         prisma.activityAttempt.create({
           data: {
             studentId: student.id,
             activityId: activityId,
             score: score,
-            response: {}, // Poderíamos salvar as respostas exatas aqui
+            response: {},
             rewarded: true
           }
         }),
-        // 2. Deposita o Ouro e XP
         prisma.student.update({
           where: { id: student.id },
           data: {
@@ -180,7 +185,6 @@ export async function submitQuizResult(activityId: string, score: number) {
       
       rewardMessage = `Parabéns! Você ganhou +${goldReward} Ouro e +${xpReward} XP!`
     } else {
-        // Apenas registra a tentativa falha
         await prisma.activityAttempt.create({
             data: {
               studentId: student.id,
@@ -200,11 +204,6 @@ export async function submitQuizResult(activityId: string, score: number) {
   }
 }
 
-// app/actions.ts
-
-// ... (códigos anteriores)
-
-// Definição dos Prédios Disponíveis (Hardcoded por enquanto)
 const BUILDINGS = BUILDING_CONFIG;
 
 export async function buyBuilding(type: string, x: number, y: number) {
@@ -216,21 +215,15 @@ export async function buyBuilding(type: string, x: number, y: number) {
       include: { resources: true }
     })
 
-    if (!student || !student.resources) return // Apenas return vazio
+    if (!student || !student.resources) return
 
     const buildingInfo = BUILDINGS[type as keyof typeof BUILDINGS]
     
-    // Se não tiver ouro, apenas para a execução (sem retornar objeto de erro por enquanto)
-    /*if (student.resources.gold < buildingInfo.cost) {
-      return 
-    }*/
-
     const currentCity = (student.cityData as any) || { buildings: [] }
     const isOccupied = currentCity.buildings.find((b: any) => b.x === x && b.y === y)
     
     if (isOccupied) return 
 
-    // Adiciona o prédio
     const newBuilding = { id: Date.now(), type, x, y }
     currentCity.buildings.push(newBuilding)
 
@@ -244,12 +237,8 @@ export async function buyBuilding(type: string, x: number, y: number) {
       }
     })
 
-    // Atualiza a tela
     revalidatePath('/student/city')
     
-    // REMOVA o "return { success: true ... }"
-    // Ao não retornar nada, a função vira Promise<void>, e o erro do formulário somem.
-
   } catch (error) {
     console.error(error)
   }
@@ -257,34 +246,31 @@ export async function buyBuilding(type: string, x: number, y: number) {
 
 async function getCurrentUser() {
   const email = (await cookies()).get("lumen_session")?.value
-  if (!email) redirect("/login") // Se não tiver cookie, manda pro login
+  if (!email) redirect("/login")
   return email
 }
 
-// app/actions.ts (adicione ao final)
-
 export async function createStudent(formData: FormData) {
-  const teacherEmail = await getCurrentUser() // Garante que é um prof logado
+  const teacherEmail = await getCurrentUser()
   
-  // Buscar a escola do professor
   const teacher = await prisma.teacher.findUnique({ where: { email: teacherEmail } })
   if (!teacher) return { error: "Erro de permissão" }
 
   const name = formData.get("name") as string
   const email = formData.get("email") as string
-  const password = "123" // Senha padrão inicial (pode mudar depois)
+  const password = "123"
 
   try {
     await prisma.student.create({
       data: {
         name,
         email,
-        password, // Em prod, usaríamos bcrypt para hashear
+        password,
         schoolId: teacher.schoolId,
         resources: {
-           create: { gold: 100, wood: 0, energy: 100 } // Kit inicial
+           create: { gold: 100, wood: 0, energy: 100 }
         },
-        cityData: { buildings: [] } // Cidade vazia
+        cityData: { buildings: [] }
       }
     })
     
@@ -294,10 +280,6 @@ export async function createStudent(formData: FormData) {
     return { error: "Erro ao criar aluno (Email já existe?)" }
   }
 }
-
-// app/actions.ts
-
-// ... (suas outras funções: buyBuilding, generateQuiz, etc)
 
 export async function rotateBuildingAction(buildingId: number, newRotation: number) {
   const studentEmail = await getCurrentUser();
@@ -311,7 +293,6 @@ export async function rotateBuildingAction(buildingId: number, newRotation: numb
 
     const cityData = (student.cityData as any) || { buildings: [] };
     
-    // Localiza e atualiza a rotação do prédio específico
     cityData.buildings = cityData.buildings.map((b: any) => 
       b.id === buildingId ? { ...b, rotation: newRotation } : b
     );
@@ -339,7 +320,6 @@ export async function demolishBuildingAction(buildingId: number) {
 
     const cityData = (student.cityData as any) || { buildings: [] };
     
-    // Remove o prédio da lista
     cityData.buildings = cityData.buildings.filter((b: any) => b.id !== buildingId);
 
     await prisma.student.update({
@@ -354,28 +334,23 @@ export async function demolishBuildingAction(buildingId: number) {
 }
 
 export async function updateCityName(studentId: string, newName: string) {
-  // 1. Validações
   if (!newName || newName.trim().length === 0) return { error: "Nome inválido" };
   if (newName.length > 20) return { error: "Nome muito longo" };
 
   try {
-    // 2. Busca o aluno para pegar o JSON atual (importante para não perder o ouro!)
     const student = await prisma.student.findUnique({
         where: { id: studentId}, include: { resources: true } 
     });
 
     if (!student) return { error: "Aluno não encontrado" };
 
-    // 3. Mescla o nome novo com os recursos existentes
-    // O 'as any' é usado porque o TypeScript pode não saber que cityName existe no JSON ainda
     const currentResources = (student.resources as any) || {};
     
     const newResources = {
-        ...currentResources, // Mantém o Ouro e outros dados
-        cityName: newName    // Adiciona/Atualiza o nome
+        ...currentResources,
+        cityName: newName
     };
 
-    // 4. Salva o JSON atualizado
     await prisma.student.update({
         where: { id: studentId },
         data: {
@@ -390,4 +365,39 @@ export async function updateCityName(studentId: string, newName: string) {
     console.error("Erro ao atualizar nome:", error);
     return { error: "Erro ao salvar" };
   }
+}
+
+// Ação para buscar dados de uma atividade específica
+export async function getActivityById(id: string) {
+  const activity = await prisma.activity.findUnique({
+    where: { id },
+  });
+  if (!activity) throw new Error("Atividade não encontrada");
+  return activity;
+}
+
+// Ação para atualizar um quiz
+export async function updateQuiz(id: string, title: string, description: string, questions: any[]) {
+    if (!id || !title || questions.length === 0) {
+        throw new Error("Dados inválidos para atualização.");
+    }
+
+    try {
+        await prisma.activity.update({
+            where: { id },
+            data: {
+                title,
+                description,
+                payload: { questions },
+            },
+        });
+
+        // Apenas revalida o painel para onde estamos indo.
+        revalidatePath('/teacher');
+    } catch (error) {
+        console.error("Erro ao atualizar quiz:", error);
+        throw new Error("Falha ao salvar as alterações.");
+    }
+
+    redirect('/teacher?updated=true');
 }

@@ -10,6 +10,13 @@ import {
   OFFSET,
 } from '../constants';
 
+// Adiciona a flag ao objeto Window para evitar erros de TypeScript
+declare global {
+  interface Window {
+    isPointerOverUI: boolean;
+  }
+}
+
 export class CameraManager {
   private app: pc.Application;
   private pivot: pc.Entity;
@@ -49,6 +56,9 @@ export class CameraManager {
     this.onSelectTile = callbacks?.onSelectTile;
     this.onCancelBuild = callbacks?.onCancelBuild;
     this.getActiveBuild = callbacks?.getActiveBuild;
+
+    // Inicializa a flag
+    window.isPointerOverUI = false;
 
     // Criar entidades
     this.pivot = this.createPivot();
@@ -111,12 +121,15 @@ export class CameraManager {
 
     // Zoom
     this.app.mouse.on(pc.EVENT_MOUSEWHEEL, (event: any) => {
-      this.targetZoom -= event.wheel * 5;
-      this.targetZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, this.targetZoom));
+        if (window.isPointerOverUI) return;
+        this.targetZoom -= event.wheel * 5;
+        this.targetZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, this.targetZoom));
     });
 
     // Mouse down
     this.app.mouse.on(pc.EVENT_MOUSEDOWN, (event: any) => {
+      if (window.isPointerOverUI) return; // <-- VERIFICAÇÃO ADICIONADA
+
       if (event.button === pc.MOUSEBUTTON_LEFT) {
         this.isPanning = true;
         this.clickStartX = event.x;
@@ -131,45 +144,21 @@ export class CameraManager {
       }
     });
 
-    // Mouse up - VERSÃO CORRIGIDA
+    // Mouse up
     this.app.mouse.on(pc.EVENT_MOUSEUP, (event: any) => {
+      if (window.isPointerOverUI) return; // <-- VERIFICAÇÃO ADICIONADA
+
       if (event.button === pc.MOUSEBUTTON_LEFT) {
         this.isPanning = false;
         const dist = Math.hypot(event.x - this.clickStartX, event.y - this.clickStartY);
         
-        // DIAGNÓSTICO DETALHADO
+        if (dist >= 5) return;
+        if (!this.cursor.enabled) return;
+        if (!this.onSelectTile) return;
+        
         const cursorPos = this.cursor.getPosition();
         const gridX = (cursorPos.x + OFFSET) / 2;
         const gridY = (cursorPos.z + OFFSET) / 2;
-        
-        console.log('🖱️ Mouse up - Diagnóstico completo:', { 
-          dist,
-          distOk: dist < 5,
-          cursorEnabled: this.cursor.enabled,
-          cursorPosition: { x: cursorPos.x, y: cursorPos.y, z: cursorPos.z },
-          gridPosition: { x: gridX, y: gridY },
-          hasCallback: !!this.onSelectTile,
-          callbackType: typeof this.onSelectTile
-        });
-        
-        // CONDIÇÕES SEPARADAS PARA DEBUG
-        if (dist >= 5) {
-          console.log('❌ Falhou: Distância muito grande (arrastou o mouse)', { dist });
-          return;
-        }
-        
-        if (!this.cursor.enabled) {
-          console.log('❌ Falhou: Cursor desabilitado (fora do mapa)');
-          return;
-        }
-        
-        if (!this.onSelectTile) {
-          console.log('❌ PROBLEMA CRÍTICO: onSelectTile não está definido!');
-          return;
-        }
-        
-        // Se chegou aqui, tudo está OK!
-        console.log('✅ SUCESSO! Chamando onSelectTile:', { gridX, gridY });
         this.onSelectTile(gridX, gridY);
         
       } else if (event.button === pc.MOUSEBUTTON_RIGHT) {
@@ -179,6 +168,7 @@ export class CameraManager {
 
     // Mouse move
     this.app.mouse.on(pc.EVENT_MOUSEMOVE, (event: any) => {
+      // Não verificar a flag aqui para permitir o movimento da câmera mesmo começando sobre a UI
       if (this.isRotating) {
         this.currentPitch -= event.dy * 0.3;
         this.currentYaw -= event.dx * 0.3;
@@ -242,9 +232,6 @@ export class CameraManager {
     }
   }
 
-  /**
-   * Atualiza a câmera (chamado no loop de update)
-   */
   update(dt: number): void {
     if (this.camera.camera) {
       this.camera.camera.orthoHeight = pc.math.lerp(
@@ -255,16 +242,10 @@ export class CameraManager {
     }
   }
 
-  /**
-   * Retorna a entidade do cursor
-   */
   getCursor(): pc.Entity {
     return this.cursor;
   }
 
-  /**
-   * Retorna a entidade da câmera
-   */
   getCamera(): pc.Entity {
     return this.camera;
   }

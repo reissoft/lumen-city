@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label"
 import { Wand2, Loader2, UploadCloud, File, X, AlertTriangle } from "lucide-react"
 import mammoth from "mammoth"
 
-// Importações da nova biblioteca react-pdf
+// Importações da react-pdf
 import { Document, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
@@ -33,8 +33,8 @@ export default function QuizGeneratorCard({ topic, isGenerating, handleGeneratio
   const [contextText, setContextText] = useState("")
   const [fileError, setFileError] = useState<string | null>(null)
   const [isParsingFile, setIsParsingFile] = useState(false)
+  const [isDraggingOver, setIsDraggingOver] = useState(false) // Novo estado para o drag-and-drop
 
-  // Função para lidar com o sucesso do carregamento do PDF
   const onDocumentLoadSuccess = useCallback(async (pdf: any) => {
     setIsParsingFile(true);
     let fullText = '';
@@ -47,7 +47,6 @@ export default function QuizGeneratorCard({ topic, isGenerating, handleGeneratio
     setIsParsingFile(false);
   }, []);
 
-  // Efeito que processa o arquivo quando ele muda
   useEffect(() => {
     if (!file) return;
 
@@ -78,13 +77,20 @@ export default function QuizGeneratorCard({ topic, isGenerating, handleGeneratio
       setFileError("Formato de arquivo não suportado.");
       setIsParsingFile(false);
     }
-    // O processamento de PDF é tratado declarativamente pelo componente <Document>
-
   }, [file]);
+
+  const processFile = (selectedFile: File) => {
+    const acceptedTypes = ['application/pdf', 'text/plain', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (acceptedTypes.includes(selectedFile.type)) {
+        setFile(selectedFile);
+    } else {
+        setFileError("Formato de arquivo não suportado.");
+    }
+  }
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files?.[0]) {
-      setFile(event.target.files[0]);
+      processFile(event.target.files[0]);
     }
     event.target.value = '';
   };
@@ -95,12 +101,29 @@ export default function QuizGeneratorCard({ topic, isGenerating, handleGeneratio
     setContextText("");
     setFileError(null);
   };
+
+  // Funções para Drag and Drop
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      if (!isDisabled) setIsDraggingOver(true);
+  }
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setIsDraggingOver(false);
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setIsDraggingOver(false);
+      if (isDisabled || !e.dataTransfer.files?.[0]) return;
+      processFile(e.dataTransfer.files[0]);
+  }
   
   const isDisabled = isGenerating || isParsingFile;
 
   return (
     <>
-      {/* O componente Document processa o PDF em segundo plano */}
       {file && file.type === 'application/pdf' && (
         <div style={{ display: 'none' }}>
           <Document
@@ -120,8 +143,13 @@ export default function QuizGeneratorCard({ topic, isGenerating, handleGeneratio
         <CardContent className="space-y-3">
           <div className="space-y-3">
               <Label>Baseado em Arquivo (Opcional)</Label>
-              <div className="relative border-2 border-dashed border-slate-300 rounded-lg p-6 text-center cursor-pointer hover:border-indigo-400"
-                  onClick={() => !isDisabled && document.getElementById('file-upload')?.click()}>
+              <div 
+                  className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-all ${isDraggingOver ? 'border-indigo-600 bg-indigo-50/50' : 'border-slate-300'} ${!isDisabled ? 'cursor-pointer hover:border-indigo-400' : ''}`}
+                  onClick={() => !isDisabled && document.getElementById('file-upload')?.click()}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+              >
                   <input id="file-upload" type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.txt,.docx" disabled={isDisabled} />
                   {isParsingFile ? (
                       <div className="flex flex-col items-center gap-2 text-slate-700"><Loader2 className="w-8 h-8 animate-spin" /><span>Processando...</span></div>

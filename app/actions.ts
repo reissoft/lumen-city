@@ -15,7 +15,7 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 export async function generateQuiz(formData: FormData) {
   const topic = formData.get('topic') as string
   const contextText = formData.get('contextText') as string
-  const additionalNotes = formData.get('additionalNotes') as string // Novo
+  const additionalNotes = formData.get('additionalNotes') as string
   const teacherEmail = await getCurrentUser()
   let newActivity: Activity;
 
@@ -23,7 +23,6 @@ export async function generateQuiz(formData: FormData) {
       throw new Error("O tema do quiz é obrigatório.");
   }
 
-  // Prompt atualizado para incluir instruções adicionais
   const systemPrompt = `
     Você é um assistente pedagógico especializado em criar material didático gamificado.
     Sua tarefa é gerar um Quiz sobre o tema fornecido. A saída DEVE ser estritamente um JSON válido seguindo esta estrutura, sem texto adicional antes ou depois:
@@ -34,7 +33,7 @@ export async function generateQuiz(formData: FormData) {
             {
                 "text": "O enunciado da pergunta 1",
                 "options": ["Alternativa A", "Alternativa B", "Alternativa C", "Alternativa D"],
-                "correct": 0 // Índice da alternativa correta
+                "correct": 0
             },
             {
                 "text": "O enunciado da pergunta 2",
@@ -43,7 +42,7 @@ export async function generateQuiz(formData: FormData) {
             }
         ]
     }
-    Gere 5 perguntas caso não seja informado a quantidade no contexto.
+    Gere 5 perguntas caso não seja informado a quantidade.
 
     ${contextText ? 
     `---CONTEXTO---
@@ -86,7 +85,7 @@ export async function generateQuiz(formData: FormData) {
         title: quizData.title,
         description: quizData.description,
         type: 'QUIZ',
-        difficulty: 1, // Pode ser ajustado no futuro
+        difficulty: 1, 
         teacherId: teacher.id,
         payload: { questions: quizData.questions } 
       }
@@ -110,20 +109,15 @@ export async function createManualQuiz(title: string, description: string, quest
     }
 
     try {
-        const teacher = await prisma.teacher.findUnique({
-            where: { email: teacherEmail },
-        });
-
-        if (!teacher) {
-            throw new Error("Professor não encontrado.");
-        }
+        const teacher = await prisma.teacher.findUnique({ where: { email: teacherEmail } });
+        if (!teacher) throw new Error("Professor não encontrado.");
 
         newActivity = await prisma.activity.create({
             data: {
                 title,
                 description: description || "Quiz criado manualmente", 
                 type: 'QUIZ',
-                difficulty: 1, // Padrão
+                difficulty: 1,
                 teacherId: teacher.id,
                 payload: { questions },
             },
@@ -144,14 +138,9 @@ export async function createManualQuiz(title: string, description: string, quest
 
 export async function deleteActivity(formData: FormData) {
   const id = formData.get('id') as string
-  
   if (!id) return
-
   try {
-    await prisma.activity.delete({
-      where: { id }
-    })
-    
+    await prisma.activity.delete({ where: { id } })
     revalidatePath('/teacher')
   } catch (error) {
     console.error("Erro ao deletar:", error)
@@ -162,11 +151,7 @@ export async function submitQuizResult(activityId: string, score: number) {
   const studentEmail = await getCurrentUser()
 
   try {
-    const student = await prisma.student.findUnique({
-      where: { email: studentEmail },
-      include: { resources: true }
-    })
-
+    const student = await prisma.student.findUnique({ where: { email: studentEmail }, include: { resources: true } })
     if (!student) throw new Error("Aluno não encontrado")
 
     const passed = score >= 70
@@ -177,39 +162,13 @@ export async function submitQuizResult(activityId: string, score: number) {
       const xpReward = 50
 
       await prisma.$transaction([
-        prisma.activityAttempt.create({
-          data: {
-            studentId: student.id,
-            activityId: activityId,
-            score: score,
-            response: {},
-            rewarded: true
-          }
-        }),
-        prisma.student.update({
-          where: { id: student.id },
-          data: {
-            xp: { increment: xpReward },
-            resources: {
-              update: {
-                gold: { increment: goldReward }
-              }
-            }
-          }
-        })
+        prisma.activityAttempt.create({ data: { studentId: student.id, activityId: activityId, score: score, response: {}, rewarded: true } }),
+        prisma.student.update({ where: { id: student.id }, data: { xp: { increment: xpReward }, resources: { update: { gold: { increment: goldReward } } } } })
       ])
       
       rewardMessage = `Parabéns! Você ganhou +${goldReward} Ouro e +${xpReward} XP!`
     } else {
-        await prisma.activityAttempt.create({
-            data: {
-              studentId: student.id,
-              activityId: activityId,
-              score: score,
-              response: {},
-              rewarded: false
-            }
-          })
+        await prisma.activityAttempt.create({ data: { studentId: student.id, activityId: activityId, score: score, response: {}, rewarded: false } })
     }
 
     return { success: true, message: rewardMessage, passed }
@@ -226,15 +185,10 @@ export async function buyBuilding(type: string, x: number, y: number) {
   const studentEmail = await getCurrentUser()
 
   try {
-    const student = await prisma.student.findUnique({
-      where: { email: studentEmail },
-      include: { resources: true }
-    })
-
+    const student = await prisma.student.findUnique({ where: { email: studentEmail }, include: { resources: true } })
     if (!student || !student.resources) return
 
     const buildingInfo = BUILDINGS[type as keyof typeof BUILDINGS]
-    
     const currentCity = (student.cityData as any) || { buildings: [] }
     const isOccupied = currentCity.buildings.find((b: any) => b.x === x && b.y === y)
     
@@ -246,9 +200,7 @@ export async function buyBuilding(type: string, x: number, y: number) {
     await prisma.student.update({
       where: { id: student.id },
       data: {
-        resources: {
-          update: { gold: { decrement: buildingInfo.cost } }
-        },
+        resources: { update: { gold: { decrement: buildingInfo.cost } } },
         cityData: currentCity
       }
     })
@@ -268,7 +220,6 @@ async function getCurrentUser() {
 
 export async function createStudent(formData: FormData) {
   const teacherEmail = await getCurrentUser()
-  
   const teacher = await prisma.teacher.findUnique({ where: { email: teacherEmail } })
   if (!teacher) return { error: "Erro de permissão" }
 
@@ -283,9 +234,7 @@ export async function createStudent(formData: FormData) {
         email,
         password,
         schoolId: teacher.schoolId,
-        resources: {
-           create: { gold: 100, wood: 0, energy: 100 }
-        },
+        resources: { create: { gold: 100, wood: 0, energy: 100 } },
         cityData: { buildings: [] }
       }
     })
@@ -297,103 +246,14 @@ export async function createStudent(formData: FormData) {
   }
 }
 
-export async function rotateBuildingAction(buildingId: number, newRotation: number) {
-  const studentEmail = await getCurrentUser();
-
-  try {
-    const student = await prisma.student.findUnique({
-      where: { email: studentEmail }
-    });
-
-    if (!student) return;
-
-    const cityData = (student.cityData as any) || { buildings: [] };
-    
-    cityData.buildings = cityData.buildings.map((b: any) => 
-      b.id === buildingId ? { ...b, rotation: newRotation } : b
-    );
-
-    await prisma.student.update({
-      where: { id: student.id },
-      data: { cityData }
-    });
-
-    revalidatePath('/student/city');
-  } catch (error) {
-    console.error("Erro ao rotacionar no banco:", error);
-  }
-}
-
-export async function demolishBuildingAction(buildingId: number) {
-  const studentEmail = await getCurrentUser();
-
-  try {
-    const student = await prisma.student.findUnique({
-      where: { email: studentEmail }
-    });
-
-    if (!student) return;
-
-    const cityData = (student.cityData as any) || { buildings: [] };
-    
-    cityData.buildings = cityData.buildings.filter((b: any) => b.id !== buildingId);
-
-    await prisma.student.update({
-      where: { id: student.id },
-      data: { cityData }
-    });
-
-    revalidatePath('/student/city');
-  } catch (error) {
-    console.error("Erro ao demolir no banco:", error);
-  }
-}
-
-export async function updateCityName(studentId: string, newName: string) {
-  if (!newName || newName.trim().length === 0) return { error: "Nome inválido" };
-  if (newName.length > 20) return { error: "Nome muito longo" };
-
-  try {
-    const student = await prisma.student.findUnique({
-        where: { id: studentId}, include: { resources: true } 
-    });
-
-    if (!student) return { error: "Aluno não encontrado" };
-
-    const currentResources = (student.resources as any) || {};
-    
-    const newResources = {
-        ...currentResources,
-        cityName: newName
-    };
-
-    await prisma.student.update({
-        where: { id: studentId },
-        data: {
-            resources: newResources
-        }
-    });
-
-    revalidatePath('/');
-    return { success: true };
-
-  } catch (error) {
-    console.error("Erro ao atualizar nome:", error);
-    return { error: "Erro ao salvar" };
-  }
-}
-
-// Ação para buscar dados de uma atividade específica
 export async function getActivityById(id: string) {
-  const activity = await prisma.activity.findUnique({
-    where: { id },
-  });
+  const activity = await prisma.activity.findUnique({ where: { id } });
   if (!activity) throw new Error("Atividade não encontrada");
   return activity;
 }
 
-// Ação para atualizar um quiz
-export async function updateQuiz(id: string, title: string, description: string, questions: any[]) {
+// Ação para atualizar um quiz - AGORA COM REVIEW MATERIALS
+export async function updateQuiz(id: string, title: string, description: string, questions: any[], reviewMaterials: any[]) {
     if (!id || !title || questions.length === 0) {
         throw new Error("Dados inválidos para atualização.");
     }
@@ -405,11 +265,13 @@ export async function updateQuiz(id: string, title: string, description: string,
                 title,
                 description,
                 payload: { questions },
+                reviewMaterials: reviewMaterials, // CAMPO ATUALIZADO
             },
         });
 
-        // Apenas revalida o painel para onde estamos indo.
         revalidatePath('/teacher');
+        revalidatePath(`/teacher/activity/${id}/edit`); // Garante que a própria página seja revalidada
+
     } catch (error) {
         console.error("Erro ao atualizar quiz:", error);
         throw new Error("Falha ao salvar as alterações.");

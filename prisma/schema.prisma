@@ -65,26 +65,21 @@ model StudentResources {
 // --- SISTEMA PEDAGÓGICO POLIMÓRFICO ---
 
 model Activity {
-  id          String       @id @default(uuid())
-  title       String
-  description String?
+  id              String       @id @default(uuid())
+  title           String
+  description     String?
   
-  // Define como o Front vai renderizar
-  type        ActivityType 
-  
-  // Onde a mágica acontece. Armazena:
-  // - Perguntas do Quiz
-  // - Link do Youtube + Timestamps
-  // - Tema da Redação
-  payload     Json         
+  type            ActivityType
+  payload         Json
+  reviewMaterials Json?        // NOVO CAMPO: Armazena links/materiais de revisão
 
-  difficulty  Int          @default(1)
+  difficulty      Int          @default(1)
   
-  teacherId   String
-  teacher     Teacher      @relation(fields: [teacherId], references: [id])
-  attempts    ActivityAttempt[]
+  teacherId       String
+  teacher         Teacher      @relation(fields: [teacherId], references: [id])
+  attempts        ActivityAttempt[]
   
-  createdAt   DateTime     @default(now())
+  createdAt       DateTime     @default(now())
 }
 
 model ActivityAttempt {
@@ -94,13 +89,10 @@ model ActivityAttempt {
   activityId String
   activity   Activity @relation(fields: [activityId], references: [id])
   
-  // Resposta do aluno (texto, array de indices, link de audio)
   response   Json     
-  
-  score      Float    // Nota 0-100
-  feedback   String?  // Gerado pela IA
-  
-  rewarded   Boolean  @default(false) // Se já ganhou XP/Ouro
+  score      Float
+  feedback   String? 
+  rewarded   Boolean  @default(false)
   createdAt  DateTime @default(now())
 }
 

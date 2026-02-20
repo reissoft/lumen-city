@@ -1,13 +1,13 @@
 'use client'; 
 
 import { useState, useTransition, useMemo } from 'react';
-import { Prisma, Class } from '@prisma/client'; // Import Class type
+import { Prisma, Class } from '@prisma/client';
 import { AddStudentForm } from './add-student-form';
 import { EditStudentForm } from './edit-student-form';
 import { deleteStudent } from './actions';
 import { toast } from 'sonner';
 import { StudentAvatar } from './avatar';
-import { Pencil, Trash2, Search } from 'lucide-react';
+import { Pencil, Trash2, Search, Phone, Mail } from 'lucide-react';
 
 type StudentWithDetails = Prisma.StudentGetPayload<{ 
     include: { classes: true }
@@ -77,7 +77,25 @@ function StudentListItem({ student, onEdit }: { student: StudentWithDetails, onE
             <div className="text-center"><p className="font-medium">Nível</p><p>{student.level}</p></div>
             <div className="text-center"><p className="font-medium">XP</p><p>{student.xp}</p></div>
         </div>
+
+        {/* Botões de Ação com renderização condicional */}
         <div className="pl-6 flex items-center space-x-2">
+            {student.guardianPhone && (
+                <button className="p-2 rounded-md text-green-600 hover:bg-green-100 hover:text-green-800 transition-colors" title="Enviar recuperação por WhatsApp">
+                    <Phone size={18} />
+                </button>
+            )}
+            {student.guardianEmail && (
+                <button className="p-2 rounded-md text-sky-600 hover:bg-sky-100 hover:text-sky-800 transition-colors" title="Enviar recuperação por Email">
+                    <Mail size={18} />
+                </button>
+            )}
+
+            {/* Divisor condicional */}
+            {(student.guardianPhone || student.guardianEmail) && (
+               <div className="h-6 w-px bg-slate-200 mx-2"></div>
+            )}
+
              <button onClick={() => onEdit(student)} className="p-2 rounded-md text-blue-600 hover:bg-blue-100 hover:text-blue-800 transition-colors" title="Editar aluno"><Pencil size={18} /></button>
              <button onClick={handleDelete} disabled={isPending} className="p-2 rounded-md text-red-600 hover:bg-red-100 hover:text-red-800 disabled:text-red-300 disabled:bg-transparent transition-colors" title="Deletar aluno">
                 {isPending ? <div className="w-[18px] h-[18px] border-2 border-red-300 border-t-transparent rounded-full animate-spin"></div> : <Trash2 size={18} />}
@@ -87,7 +105,6 @@ function StudentListItem({ student, onEdit }: { student: StudentWithDetails, onE
   )
 }
 
-// Props agora incluem as turmas para o filtro
 interface AdminStudentsPageProps {
     students: StudentWithDetails[];
     classes: Class[];
@@ -96,12 +113,9 @@ interface AdminStudentsPageProps {
 export default function AdminStudentsPageClient({ students, classes }: AdminStudentsPageProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<StudentWithDetails | null>(null);
-  
-  // 1. Estados para o filtro e pesquisa
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClass, setSelectedClass] = useState("");
 
-  // 2. Lógica de filtragem
   const filteredStudents = useMemo(() => {
     return students.filter(student => {
         const nameMatch = student.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -124,7 +138,6 @@ export default function AdminStudentsPageClient({ students, classes }: AdminStud
       <EditStudentModal student={editingStudent} onClose={() => setEditingStudent(null)} />
 
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
-        {/* 3. Inputs de Filtro e Pesquisa */}
         <div className="p-4 sm:p-6 border-b flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -150,7 +163,6 @@ export default function AdminStudentsPageClient({ students, classes }: AdminStud
             </div>
         </div>
 
-        {/* 4. Renderização da lista filtrada */}
         <ul>
           {filteredStudents.length === 0 ? (
             <p className="p-10 text-center text-slate-500">Nenhum aluno encontrado com os filtros atuais.</p>

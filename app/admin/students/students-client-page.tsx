@@ -1,41 +1,43 @@
 'use client';
 
 import { useState, useTransition, useMemo } from 'react';
-import { Prisma, Class } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { AddStudentForm } from './add-student-form';
 import { EditStudentForm } from './edit-student-form';
-import { deleteStudent, toggleStudentActiveStatus } from './actions'; // 1. Importar a nova ação
+import { deleteStudent, toggleStudentActiveStatus } from './actions';
 import { toast } from 'sonner';
 import { StudentAvatar } from './avatar';
-import { Pencil, Trash2, Search, Phone, Mail, ToggleLeft, ToggleRight, Power } from 'lucide-react'; // 2. Importar novos ícones
+import { Pencil, Trash2, Search, Phone, Mail, ToggleLeft, ToggleRight, UserSquare } from 'lucide-react';
+
 
 type StudentWithDetails = Prisma.StudentGetPayload<{
-  include: { classes: true, _count: { select: { attempts: true } } }
+  include: { class: true }
 }>;
 
-// --- COMPONENTES DA PÁGINA ---
+type Class = Prisma.ClassGetPayload<{}>;
 
-function AddStudentModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void; }) {
+
+function AddStudentModal({ isOpen, onClose, classes }: { isOpen: boolean; onClose: () => void; classes: Class[] }) {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center">
       <div className="bg-white rounded-xl shadow-2xl p-8 max-w-lg w-full relative">
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl" aria-label="Fechar modal">&times;</button>
         <h2 className="text-2xl font-bold mb-6">Adicionar Novo Aluno</h2>
-        <AddStudentForm onClose={onClose} />
+        <AddStudentForm onClose={onClose} classes={classes} />
       </div>
     </div>
   );
 }
 
-function EditStudentModal({ student, onClose }: { student: StudentWithDetails | null; onClose: () => void; }) {
+function EditStudentModal({ student, onClose, classes }: { student: StudentWithDetails | null; onClose: () => void; classes: Class[] }) {
   if (!student) return null;
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center">
       <div className="bg-white rounded-xl shadow-2xl p-8 max-w-lg w-full relative">
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl" aria-label="Fechar modal">&times;</button>
         <h2 className="text-2xl font-bold mb-6">Editar Aluno</h2>
-        <EditStudentForm student={student} onClose={onClose} />
+        <EditStudentForm student={student} onClose={onClose} classes={classes} />
       </div>
     </div>
   )
@@ -67,9 +69,6 @@ function StudentListItem({ student, onEdit }: { student: StudentWithDetails, onE
     });
   }
 
-  const classNames = student.classes.map(c => c.name).join(', ');
-
-  // 4. Aplicar estilo condicional
   const itemClasses = `flex items-center p-4 border-t transition-all duration-200 ${!student.isActive ? 'opacity-50 bg-slate-50' : 'hover:bg-slate-50'}`;
 
   return (
@@ -78,20 +77,23 @@ function StudentListItem({ student, onEdit }: { student: StudentWithDetails, onE
         <StudentAvatar name={student.name} />
         <div className="flex-1">
           <p className={`font-semibold ${!student.isActive ? 'text-slate-500' : 'text-slate-800'}`}>{student.name}</p>
-          <div className="flex items-center space-x-2 text-sm text-slate-600">
-            <span>@{student.username}</span>
-            {classNames && <span className={`font-semibold ${!student.isActive ? 'text-blue-400' : 'text-blue-600'}`}>({classNames})</span>}
+          <div className="flex items-center space-x-4 text-sm text-slate-600">
+            <span className="flex items-center"><UserSquare size={14} className="mr-1"/> @{student.username}</span>
+            {student.class && 
+                <span className="flex items-center font-semibold text-blue-600">
+                    {student.class.name}
+                </span>
+            }
           </div>
         </div>
       </div>
-      <div className="hidden md:flex items-center space-x-6 text-sm text-slate-600">
-        <span>{student.guardianEmail}</span>
-        <div className="text-center"><p className="font-medium">Nível</p><p>{student.level}</p></div>
-        <div className="text-center"><p className="font-medium">XP</p><p>{student.xp}</p></div>
+      
+      <div className="hidden md:block mx-8 text-sm text-slate-600">
+          {student.guardianName && <p className="font-medium">{student.guardianName}</p>}
+          {student.guardianEmail && <p>{student.guardianEmail}</p>}
       </div>
 
       <div className="pl-6 flex items-center space-x-2">
-        {/* 3. Botão de Ativar/Desativar */}
         <button 
             onClick={handleToggle} 
             disabled={isTogglePending}
@@ -109,10 +111,14 @@ function StudentListItem({ student, onEdit }: { student: StudentWithDetails, onE
         )}
 
         {student.guardianPhone && (
-          <button className="p-2 rounded-md text-green-600 hover:bg-green-100 hover:text-green-800 transition-colors" title="Enviar recuperação por WhatsApp"><Phone size={18} /></button>
+           <a href={`https://wa.me/${student.guardianPhone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="p-2 rounded-md text-green-600 hover:bg-green-100 hover:text-green-800 transition-colors" title="Enviar recuperação por WhatsApp">
+            <Phone size={18} />
+          </a>
         )}
         {student.guardianEmail && (
-          <button className="p-2 rounded-md text-sky-600 hover:bg-sky-100 hover:text-sky-800 transition-colors" title="Enviar recuperação por Email"><Mail size={18} /></button>
+          <a href={`mailto:${student.guardianEmail}`} className="p-2 rounded-md text-sky-600 hover:bg-sky-100 hover:text-sky-800 transition-colors" title="Enviar recuperação por Email">
+            <Mail size={18} />
+          </a>
         )}
 
         {(student.guardianPhone || student.guardianEmail) && (
@@ -138,12 +144,12 @@ export default function AdminStudentsPageClient({ students, classes }: AdminStud
   const [editingStudent, setEditingStudent] = useState<StudentWithDetails | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClass, setSelectedClass] = useState("");
-  const [showInactive, setShowInactive] = useState(true); // Estado para controlar visibilidade
+  const [showInactive, setShowInactive] = useState(true);
 
   const filteredStudents = useMemo(() => {
     return students.filter(student => {
       const nameMatch = student.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const classMatch = selectedClass ? student.classes.some(c => c.id === selectedClass) : true;
+      const classMatch = selectedClass ? student.classId === selectedClass : true;
       const activityMatch = showInactive ? true : student.isActive;
       return nameMatch && classMatch && activityMatch;
     });
@@ -159,8 +165,8 @@ export default function AdminStudentsPageClient({ students, classes }: AdminStud
         <button onClick={() => setIsAddModalOpen(true)} className="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 shadow transition-transform transform hover:scale-105">+ Adicionar Aluno</button>
       </header>
 
-      <AddStudentModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
-      <EditStudentModal student={editingStudent} onClose={() => setEditingStudent(null)} />
+      <AddStudentModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} classes={classes} />
+      <EditStudentModal student={editingStudent} onClose={() => setEditingStudent(null)} classes={classes} />
 
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <div className="p-4 sm:p-6 border-b flex flex-col sm:flex-row gap-4 justify-between">

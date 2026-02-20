@@ -5,6 +5,9 @@ import { useEffect } from 'react'
 import { createStudent } from './actions'
 import { toast } from 'sonner'
 import { IMaskInput } from 'react-imask';
+import { Prisma } from '@prisma/client';
+
+type Class = Prisma.ClassGetPayload<{}>;
 
 const initialState = {
   error: '',
@@ -25,7 +28,7 @@ function SubmitButton() {
   );
 }
 
-export function AddStudentForm({ onClose }: { onClose: () => void }) {
+export function AddStudentForm({ onClose, classes }: { onClose: () => void, classes: Class[] }) {
   const [formState, formAction] = useFormState(createStudent, initialState);
 
   useEffect(() => {
@@ -52,10 +55,20 @@ export function AddStudentForm({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
+      <div className="space-y-1">
+          <label htmlFor="classId" className="font-medium text-gray-700">Turma</label>
+          <select id="classId" name="classId" className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+              <option value="">Nenhuma turma</option>
+              {classes.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+          </select>
+      </div>
+
       <hr className="my-6"/>
 
       {/* Campos do Responsável */}
-      <h3 class="text-lg font-medium text-gray-800 mb-2">Dados do Responsável (Opcional)</h3>
+      <h3 className="text-lg font-medium text-gray-800 mb-2">Dados do Responsável (Opcional)</h3>
        <div className="space-y-1">
             <label htmlFor="guardianName" className="font-medium text-gray-700">Nome do Responsável</label>
             <input type="text" id="guardianName" name="guardianName" className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500" />

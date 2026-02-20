@@ -7,7 +7,8 @@ import { toast } from 'sonner'
 import { IMaskInput } from 'react-imask';
 import { Prisma } from '@prisma/client'
 
-type Student = Prisma.StudentGetPayload<{}>;
+type Student = Prisma.StudentGetPayload<{ include: { class: true } }>;
+type Class = Prisma.ClassGetPayload<{}>;
 
 const initialState = {
   error: '',
@@ -31,9 +32,10 @@ function SubmitButton() {
 interface EditStudentFormProps {
   student: Student;
   onClose: () => void;
+  classes: Class[];
 }
 
-export function EditStudentForm({ student, onClose }: EditStudentFormProps) {
+export function EditStudentForm({ student, onClose, classes }: EditStudentFormProps) {
   const updateStudentWithId = updateStudent.bind(null, student.id);
   const [formState, formAction] = useFormState(updateStudentWithId, initialState);
 
@@ -61,10 +63,20 @@ export function EditStudentForm({ student, onClose }: EditStudentFormProps) {
             </div>
         </div>
 
+        <div className="space-y-1">
+            <label htmlFor="classId" className="font-medium text-gray-700">Turma</label>
+            <select id="classId" name="classId" defaultValue={student.classId || ''} className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
+                <option value="">Nenhuma turma</option>
+                {classes.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+            </select>
+        </div>
+
         <hr className="my-6"/>
 
         {/* Campos do Responsável */}
-        <h3 class="text-lg font-medium text-gray-800 mb-2">Dados do Responsável (Opcional)</h3>
+        <h3 className="text-lg font-medium text-gray-800 mb-2">Dados do Responsável (Opcional)</h3>
         <div className="space-y-1">
             <label htmlFor="guardianName" className="font-medium text-gray-700">Nome do Responsável</label>
             <input type="text" id="guardianName" name="guardianName" defaultValue={student.guardianName || ''} className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500" />

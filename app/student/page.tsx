@@ -27,30 +27,39 @@ const getCorrectLevelFromXp = (xp: number): number => {
 };
 
 async function getStudentData() {
-    const email = (await cookies()).get("lumen_session")?.value;
-    if (!email) redirect("/login");
+    const sessionValue = (await cookies()).get("lumen_session")?.value;
+    if (!sessionValue) redirect("/login");
 
+    // CORREÇÃO: Usar 'username' em vez de 'email' para buscar o aluno
     const student = await prisma.student.findUnique({
-        where: { email: email },
+        where: { username: sessionValue }, 
         include: { 
-            resources: true, // Já incluiamos, agora vamos usar
-            classes: { select: { name: true, id: true } } // Pegar nome e id das turmas
+            resources: true,
+            class: { select: { name: true, id: true } } 
         }
     });
 
     if (!student) {
-        return { student: null, activities: [], attemptsMap: new Map(), ranking: [] };
+        // Se não encontrar por username, tenta por email como um fallback, caso a lógica de login mude no futuro
+        const studentByEmail = await prisma.student.findUnique({
+             where: { email: sessionValue },
+             include: { resources: true, class: { select: { name: true, id: true } } }
+        });
+        if (!studentByEmail) return { student: null, activities: [], attemptsMap: new Map(), ranking: [] };
+        return getStudentDataByStudent(studentByEmail);
     }
+    
+    return getStudentDataByStudent(student);
+}
 
-    const studentClassIds = student.classes.map(c => c.id);
+async function getStudentDataByStudent(student: any) {
+    const studentClassId = student.class?.id; 
 
     let ranking = [];
-    if (studentClassIds.length > 0) {
+    if (studentClassId) { 
         ranking = await prisma.student.findMany({
             where: {
-                classes: {
-                    some: { id: { in: studentClassIds } },
-                },
+                classId: studentClassId, 
             },
             orderBy: { xp: 'desc' },
             select: { id: true, name: true, xp: true, },
@@ -63,11 +72,11 @@ async function getStudentData() {
     });
     
     let activities: Activity[] = [];
-    if (studentClassIds.length > 0) {
+    if (studentClassId) { 
         activities = await prisma.activity.findMany({
             where: {
                 classes: {
-                    some: { id: { in: studentClassIds } }
+                    some: { id: studentClassId } 
                 }
             },
             orderBy: { createdAt: 'desc' },
@@ -85,6 +94,7 @@ async function getStudentData() {
     return { student, activities, attemptsMap, ranking };
 }
 
+
 export default async function StudentHub() {
   const { student, activities, attemptsMap, ranking } = await getStudentData()
   
@@ -97,9 +107,8 @@ export default async function StudentHub() {
   const currentLevelProgress = student.xp - xpForCurrentLevelStart;
   const progressPercent = xpNeededForThisLevel > 0 ? (currentLevelProgress / xpNeededForThisLevel) * 100 : 100;
 
-  // 2. Preparar os dados para exibição
   const goldAmount = student.resources?.gold || 0;
-  const className = student.classes[0]?.name || "Sem turma";
+  const className = student.class?.name || "Sem turma";
 
   return (
     <div className="min-h-screen bg-slate-50 p-6 md:p-10">
@@ -112,7 +121,6 @@ export default async function StudentHub() {
               <h1 className="text-2xl font-bold text-slate-900">Olá, {student.name}!</h1>
               <div className="flex items-center gap-4 text-slate-500 mt-1">
                 <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 py-1 px-3"><Trophy size={14} className="mr-1.5"/> Nível {correctLevel}</Badge>
-                {/* 3. Exibir a turma e as moedas */}
                 <div className="flex items-center gap-1.5 text-sm font-medium"><Users size={14} className="text-slate-400"/>{className}</div>
                 <div className="flex items-center gap-1.5 text-sm font-medium"><Coins size={14} className="text-yellow-500"/>{goldAmount} Moedas</div>
               </div>
@@ -184,7 +192,7 @@ export default async function StudentHub() {
               })
             ) : (
               <div className="col-span-3 bg-white p-8 rounded-xl text-center text-slate-500 shadow-sm border border-slate-100">
-                <p>Nenhuma atividade disponível para suas turmas no momento.</p>
+                <p>Nenhuma atividade disponível para sua turma no momento.</p>
                 <p className="text-sm mt-2">Fale com seu professor para mais informações!</p>
               </div>
             )}

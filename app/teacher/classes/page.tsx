@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, PlusCircle, Users } from "lucide-react";
+import { ArrowRight, Users } from "lucide-react";
 
 const prisma = new PrismaClient();
 
@@ -44,11 +44,6 @@ export default async function ClassesDashboard() {
                     <h1 className="text-3xl font-bold text-slate-900">Minhas Turmas</h1>
                     <p className="text-slate-500">Gerencie suas turmas e adicione alunos.</p>
                 </div>
-                <Link href="/teacher/classes/new">
-                    <Button className="bg-indigo-600 hover:bg-indigo-700 gap-2">
-                        <PlusCircle size={18} /> Criar Nova Turma
-                    </Button>
-                </Link>
             </div>
 
             {teacher.classes.length > 0 ? (
@@ -76,14 +71,7 @@ export default async function ClassesDashboard() {
                 <div className="text-center bg-white p-12 rounded-lg shadow-sm border">
                     <Users className="mx-auto h-12 w-12 text-slate-400" />
                     <h3 className="mt-4 text-lg font-semibold text-slate-800">Nenhuma turma encontrada</h3>
-                    <p className="mt-2 text-sm text-slate-500">Comece criando sua primeira turma para poder adicionar alunos.</p>
-                    <div className="mt-6">
-                    <Link href="/teacher/classes/new">
-                        <Button className="bg-indigo-600 hover:bg-indigo-700">
-                           <PlusCircle size={18} className="mr-2" /> Criar Primeira Turma
-                        </Button>
-                    </Link>
-                    </div>
+                    <p className="mt-2 text-sm text-slate-500">As turmas agora são gerenciadas pelo administrador da escola.</p>
                 </div>
             )}
              <div className="mt-8">

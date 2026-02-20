@@ -6,15 +6,16 @@ import { PrismaClient, Activity } from '@prisma/client'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { cookies } from "next/headers"
+import bcrypt from 'bcryptjs'
 import { BUILDING_CONFIG, BuildingType } from '@/app/config/buildings'
 
 const prisma = new PrismaClient()
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
 async function getCurrentUser() {
-  const email = (await cookies()).get("lumen_session")?.value
-  if (!email) redirect("/login")
-  return email
+  const session = (await cookies()).get("lumen_session")?.value
+  if (!session) redirect("/login")
+  return session
 }
 
 // --- ACTIVITY CREATION ---
@@ -203,7 +204,6 @@ export async function deleteActivity(formData: FormData) {
 
 // --- STUDENT & SUBMISSIONS ---
 
-// Funções auxiliares para cálculo de XP
 const getTotalXpForLevelStart = (level: number): number => {
     if (level <= 1) return 0;
     const n = level - 1;
@@ -218,10 +218,10 @@ const calculateXp = (score: number, difficulty: number): number => {
 };
 
 export async function submitQuizResult(activityId: string, score: number) {
-    const email = await getCurrentUser();
+    const userIdentifier = await getCurrentUser();
 
     const student = await prisma.student.findUnique({
-        where: { email },
+        where: { username: userIdentifier }, // Busca pelo username
         select: { id: true, xp: true, level: true, resources: true }
     });
 
@@ -321,15 +321,25 @@ export async function createStudent(formData: FormData) {
   if (!teacher) return { error: "Erro de permissão" }
 
   const name = formData.get("name") as string
-  const email = formData.get("email") as string
-  const password = "123"
+  const username = formData.get("username") as string
+  const guardianEmail = formData.get("guardianEmail") as string
+  const guardianPhone = formData.get("guardianPhone") as string
+
+  if (!username) {
+    return { error: "O nome de usuário é obrigatório." };
+  }
+
+  const password = "123" // Senha padrão
+  const hashedPassword = await bcrypt.hash(password, 10);
 
   try {
     await prisma.student.create({
       data: {
         name,
-        email,
-        password,
+        username,
+        password: hashedPassword,
+        guardianEmail,
+        guardianPhone,
         schoolId: teacher.schoolId,
         resources: { create: { gold: 100, wood: 0, energy: 100 } },
         cityData: { buildings: [] }
@@ -338,8 +348,11 @@ export async function createStudent(formData: FormData) {
     
     revalidatePath("/teacher/students")
     return { success: true }
-  } catch (e) {
-    return { error: "Erro ao criar aluno (Email já existe?)" }
+  } catch (e: any) {
+     if (e.code === 'P2002' && e.meta?.target?.includes('username')) {
+        return { error: "Este nome de usuário já está em uso. Tente outro." };
+    }
+    return { error: "Erro ao criar aluno. Verifique os dados e tente novamente." }
   }
 }
 
@@ -348,10 +361,10 @@ export async function createStudent(formData: FormData) {
 const BUILDINGS = BUILDING_CONFIG;
 
 export async function buyBuilding(type: string, x: number, y: number) {
-  const studentEmail = await getCurrentUser()
+  const studentUsername = await getCurrentUser()
 
   try {
-    const student = await prisma.student.findUnique({ where: { email: studentEmail }, include: { resources: true } })
+    const student = await prisma.student.findUnique({ where: { username: studentUsername }, include: { resources: true } })
     if (!student || !student.resources) return
 
     const buildingInfo = BUILDINGS[type as keyof typeof BUILDINGS]
@@ -379,11 +392,11 @@ export async function buyBuilding(type: string, x: number, y: number) {
 }
 
 export async function rotateBuildingAction(buildingId: number, newRotation: number) {
-  const studentEmail = await getCurrentUser();
+  const studentUsername = await getCurrentUser();
 
   try {
     const student = await prisma.student.findUnique({
-      where: { email: studentEmail }
+      where: { username: studentUsername }
     });
 
     if (!student) return;
@@ -440,11 +453,11 @@ export async function updateCityName(studentId: string, newName: string) {
 }
 
 export async function demolishBuildingAction(buildingId: number) {
-  const studentEmail = await getCurrentUser();
+  const studentUsername = await getCurrentUser();
 
   try {
     const student = await prisma.student.findUnique({
-      where: { email: studentEmail }
+      where: { username: studentUsername }
     });
 
     if (!student) return;

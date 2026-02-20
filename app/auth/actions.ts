@@ -1,64 +1,58 @@
-// app/auth/actions.ts
 'use server'
-
-import { PrismaClient } from "@prisma/client"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+import { PrismaClient } from '@prisma/client'
+import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
 export async function login(formData: FormData) {
-  const email = formData.get("email") as string
-  const password = formData.get("password") as string
+  const identifier = formData.get('identifier') as string
+  const password = formData.get('password') as string
+  const cookieStore = cookies()
+  const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 dias
 
-  // Preparar o Cookie Store
-  const cookieStore = await cookies()
-  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 1 dia
-
-  // 1. Verificar se é Professor
-  const teacher = await prisma.teacher.findUnique({ where: { email } })
-  
-  if (teacher) {
-    if (teacher.password !== password) {
-        // CORREÇÃO: Redireciona em vez de retornar objeto
-        redirect("/login?error=senha_incorreta") 
-    }
-    const cookieOptions = { 
-      expires, 
-      httpOnly: true, 
-      path: '/',
-      secure: true,             // Obrigatório para o IDX
-      sameSite: 'none' as const // A mágica que permite o cookie no Iframe do IDX!
-  };
-    cookieStore.set("lumen_session", teacher.email, cookieOptions)
-    cookieStore.set("lumen_role", 'teacher', cookieOptions)
-    
-    redirect("/teacher")
+  if (!identifier || !password) {
+    redirect("/login?error=campos_vazios")
   }
 
-  // 2. Verificar se é Aluno
-  const student = await prisma.student.findUnique({ where: { email } })
-  
-  if (student) {
-    if (student.password !== password) {
-        // CORREÇÃO: Redireciona em vez de retornar objeto
-        redirect("/login?error=senha_incorreta")
-    }
-    const cookieOptions = { 
-      expires, 
-      httpOnly: true, 
-      path: '/',
-      secure: true,             // Obrigatório para o IDX
-      sameSite: 'none' as const // A mágica que permite o cookie no Iframe do IDX!
+  const cookieOptions = { 
+    expires, 
+    httpOnly: true, 
+    path: '/',
+    secure: true, 
+    sameSite: 'none' as const
   };
-    cookieStore.set("lumen_session", student.email, cookieOptions)
-    cookieStore.set("lumen_role", 'student', cookieOptions)
+
+  // Se o identificador contém "@", é um professor
+  if (identifier.includes('@')) {
+    const teacher = await prisma.teacher.findUnique({ where: { email: identifier } })
     
-    redirect("/student")
+    if (teacher) {
+      const isPasswordValid = await bcrypt.compare(password, teacher.password)
+      if (isPasswordValid) {
+        cookieStore.set("lumen_session", teacher.email, cookieOptions)
+        cookieStore.set("lumen_role", 'teacher', cookieOptions)
+        redirect("/teacher")
+      }
+    }
+  } 
+  // Caso contrário, é um aluno fazendo login com username
+  else {
+    const student = await prisma.student.findUnique({ where: { username: identifier } })
+    
+    if (student) {
+      const isPasswordValid = await bcrypt.compare(password, student.password)
+      if (isPasswordValid) {
+        cookieStore.set("lumen_session", student.username, cookieOptions) // Salva o USERNAME na sessão
+        cookieStore.set("lumen_role", 'student', cookieOptions)
+        redirect("/student")
+      }
+    }
   }
 
-  // Se não achou ninguém
-  redirect("/login?error=usuario_nao_encontrado")
+  // Se chegou até aqui, o usuário não foi encontrado ou a senha estava errada.
+  redirect("/login?error=credenciais_invalidas")
 }
 
 export async function logout() {

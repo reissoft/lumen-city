@@ -1,3 +1,4 @@
+
 // app/teacher/classes/actions.ts
 "use server"
 
@@ -48,12 +49,17 @@ export async function createClass(prevState: any, formData: FormData) {
 export async function addStudentToClass(prevState: any, formData: FormData) {
     const teacher = await getTeacherFromSession();
     const classId = formData.get("classId") as string;
-    const name = formData.get("studentName") as string;
-    const email = formData.get("studentEmail") as string;
-    const password = formData.get("studentPassword") as string;
+    
+    // Dados do formulário atualizado
+    const name = formData.get("name") as string;
+    const username = formData.get("username") as string;
+    const password = formData.get("password") as string;
+    const email = formData.get("email") as string || null;
+    const guardianEmail = formData.get("guardianEmail") as string || null;
+    const guardianPhone = formData.get("guardianPhone") as string || null;
 
-    if (!classId || !name || !email || !password) {
-        return { error: "Todos os campos são obrigatórios." };
+    if (!classId || !name || !username || !password) {
+        return { error: "Nome, usuário e senha são obrigatórios." };
     }
 
     try {
@@ -65,22 +71,31 @@ export async function addStudentToClass(prevState: any, formData: FormData) {
         await prisma.student.create({
             data: {
                 name,
-                email,
+                username,
                 password: hashedPassword,
-                schoolId: teacher.schoolId,
-                classes: { connect: { id: classId } },
+                email,
+                guardianEmail,
+                guardianPhone,
+                schoolId: teacher.schoolId, // Associa à escola do professor
+                classes: { connect: { id: classId } }, // Associa diretamente à turma
             },
         });
 
         revalidatePath(`/teacher/classes/${classId}`);
-        return { success: "Aluno adicionado com sucesso!" };
+        return { success: "Aluno criado e adicionado à turma!" };
 
     } catch (error: any) {
-        if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
-             return { error: "Um aluno com este email já existe." };
+        if (error.code === 'P2002') {
+            const field = error.meta?.target?.[0];
+            if (field === 'username') {
+                return { error: "Este nome de usuário já está em uso." };
+            }
+            if (field === 'email' && email) { // Apenas se um email foi fornecido
+                return { error: "Um aluno com este email já existe." };
+            }
         }
-        console.error("Erro ao adicionar aluno:", error);
-        return { error: "Ocorreu um erro inesperado." };
+        console.error("Erro ao adicionar aluno à turma:", error);
+        return { error: "Ocorreu um erro inesperado ao criar o aluno." };
     }
 }
 

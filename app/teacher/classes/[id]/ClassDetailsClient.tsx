@@ -1,3 +1,4 @@
+
 // app/teacher/classes/[id]/ClassDetailsClient.tsx
 "use client"
 
@@ -8,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Novo!
-import { ArrowLeft, UserPlus, Users, Trash2, Loader2, UserCog } from "lucide-react"; // Novos ícones!
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, UserPlus, Users, Trash2, Loader2, UserCog } from "lucide-react";
 import { toast } from "sonner";
 import { addStudentToClass, assignStudentToClass, removeStudentFromClass } from "../actions";
 import type { PageData } from './page';
@@ -80,7 +81,7 @@ export default function ClassDetailsClient({ classData, availableStudents }: Pag
                                                 <SelectContent>
                                                     {availableStudents.length > 0 ? (
                                                         availableStudents.map(student => (
-                                                            <SelectItem key={student.id} value={student.id}>{student.name}</SelectItem>
+                                                            <SelectItem key={student.id} value={student.id}>{student.name} ({student.username})</SelectItem>
                                                         ))
                                                     ) : (
                                                         <p className="p-4 text-sm text-slate-500">Nenhum aluno disponível.</p>
@@ -103,9 +104,13 @@ export default function ClassDetailsClient({ classData, availableStudents }: Pag
                                 <form ref={addFormRef} action={addFormAction}>
                                     <input type="hidden" name="classId" value={classData.id} />
                                     <div className="space-y-4">
-                                        <div><Label htmlFor="studentName">Nome</Label><Input id="studentName" name="studentName" required/></div>
-                                        <div><Label htmlFor="studentEmail">Email</Label><Input id="studentEmail" name="studentEmail" type="email" required/></div>
-                                        <div><Label htmlFor="studentPassword">Senha</Label><Input id="studentPassword" name="studentPassword" type="password" required/></div>
+                                        <div><Label htmlFor="name">Nome</Label><Input id="name" name="name" required/></div>
+                                        <div><Label htmlFor="username">Usuário</Label><Input id="username" name="username" required/></div>
+                                        <div><Label htmlFor="password">Senha</Label><Input id="password" name="password" type="password" required/></div>
+                                        <hr/>
+                                        <div><Label htmlFor="email">Email (Opcional)</Label><Input id="email" name="email" type="email" /></div>
+                                        <div><Label htmlFor="guardianEmail">E-mail do Responsável (Opcional)</Label><Input id="guardianEmail" name="guardianEmail" type="email" /></div>
+                                        <div><Label htmlFor="guardianPhone">Telefone do Responsável (Opcional)</Label><Input id="guardianPhone" name="guardianPhone" /></div>
                                         <SubmitButton icon={<UserPlus className="mr-2 h-4 w-4"/>}>Criar e Adicionar</SubmitButton>
                                     </div>
                                 </form>
@@ -126,7 +131,8 @@ export default function ClassDetailsClient({ classData, availableStudents }: Pag
                                         <div key={student.id} className="flex items-center justify-between bg-slate-50 p-3 rounded-md border">
                                             <div>
                                                 <p className="font-semibold text-slate-800">{student.name}</p>
-                                                <p className="text-sm text-slate-500">{student.email}</p>
+                                                {/* Mostra username em vez de email */}
+                                                <p className="text-sm text-slate-500">@{student.username}</p>
                                             </div>
                                             <form action={removeFormAction}>
                                                 <input type="hidden" name="studentId" value={student.id} />

@@ -37,17 +37,20 @@ model Class {
   teacherId String
   teacher   Teacher    @relation(fields: [teacherId], references: [id])
   students  Student[]
-  activities Activity[] // RELACIONAMENTO: Uma turma pode ter várias atividades (N-N)
+  activities Activity[]
   createdAt DateTime   @default(now())
 }
 
 model Student {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  schoolId  String
-  school    School   @relation(fields: [schoolId], references: [id])
+  id              String   @id @default(uuid())
+  name            String
+  email           String?  @unique
+  username        String   @unique // Agora obrigatório
+  password        String
+  guardianEmail   String?  
+  guardianPhone   String?  
+  schoolId        String
+  school          School   @relation(fields: [schoolId], references: [id])
   
   classes   Class[]
 
@@ -80,7 +83,7 @@ model Activity {
   difficulty      Int          @default(1)
   teacherId       String
   teacher         Teacher      @relation(fields: [teacherId], references: [id])
-  classes         Class[]      // RELACIONAMENTO: Uma atividade pode ser para várias turmas (N-N)
+  classes         Class[]
   attempts        ActivityAttempt[]
   createdAt       DateTime     @default(now())
 }

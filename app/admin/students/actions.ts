@@ -13,8 +13,10 @@ export async function createStudent(prevState: any, formData: FormData) {
     const schema = z.object({
         name: z.string().min(1, "Nome é obrigatório"),
         username: z.string().min(1, "Nome de usuário é obrigatório"),
+        guardianName: z.string().optional(), // Novo campo
         guardianEmail: z.string().email("Email do responsável inválido").optional().or(z.literal('')),
         guardianPhone: z.string().optional(),
+        notes: z.string().optional(), // Novo campo
     });
 
     const validatedFields = schema.safeParse(Object.fromEntries(formData.entries()));
@@ -72,8 +74,10 @@ export async function updateStudent(id: string, prevState: any, formData: FormDa
     const schema = z.object({
         name: z.string().min(1, "Nome é obrigatório"),
         username: z.string().min(1, "Nome de usuário é obrigatório"),
+        guardianName: z.string().optional(), // Novo campo
         guardianEmail: z.string().email("Email do responsável inválido").optional().or(z.literal('')),
         guardianPhone: z.string().optional(),
+        notes: z.string().optional(), // Novo campo
     });
 
     const validatedFields = schema.safeParse(Object.fromEntries(formData.entries()));

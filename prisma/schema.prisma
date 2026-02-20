@@ -25,7 +25,7 @@ model Teacher {
   name          String
   email         String     @unique
   password      String
-  isSchoolAdmin Boolean    @default(false) // <-- CAMPO ADICIONADO
+  isSchoolAdmin Boolean    @default(false)
   schoolId      String
   school        School     @relation(fields: [schoolId], references: [id])
   activities    Activity[]
@@ -46,12 +46,14 @@ model Student {
   id              String   @id @default(uuid())
   name            String
   email           String?  @unique
-  username        String   @unique // Agora obrigatório
+  username        String   @unique
   password        String
+  guardianName    String?   // <-- ADICIONADO AQUI
   guardianEmail   String?  
   guardianPhone   String?  
+  notes           String?   // <-- ADICIONADO AQUI
   schoolId        String
-  school          School   @relation(fields: [schoolId], references: [id], onDelete: Cascade) // Deleta o aluno se a escola for deletada
+  school          School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   
   classes   Class[]
 
@@ -66,7 +68,7 @@ model Student {
 model StudentResources {
   id        String  @id @default(uuid())
   studentId String  @unique
-  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade) // <-- ADICIONADO AQUI
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
   gold      Int     @default(100)
   wood      Int     @default(0)
   energy    Int     @default(0)
@@ -93,7 +95,7 @@ model Activity {
 model ActivityAttempt {
   id         String   @id @default(uuid())
   studentId  String
-  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade) // <-- ADICIONADO AQUI
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   activityId String
   activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
   response   Json     

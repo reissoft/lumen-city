@@ -72,7 +72,15 @@ export default function LoginPage() {
                         <SubmitButton />
                     </form>
                 </CardContent>
+           
+            
+            Adm.  admin@lumen.com : admin123 <br></br>
+            Porf. ana.silva@lumen.com : prof1-123 <br></br>
+            Alun. carlosp : aluno123
             </Card>
+            
+
         </div>
+        
     );
 }

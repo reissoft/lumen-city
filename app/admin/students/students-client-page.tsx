@@ -1,16 +1,16 @@
-'use client'; 
+'use client';
 
 import { useState, useTransition, useMemo } from 'react';
 import { Prisma, Class } from '@prisma/client';
 import { AddStudentForm } from './add-student-form';
 import { EditStudentForm } from './edit-student-form';
-import { deleteStudent } from './actions';
+import { deleteStudent, toggleStudentActiveStatus } from './actions'; // 1. Importar a nova ação
 import { toast } from 'sonner';
 import { StudentAvatar } from './avatar';
-import { Pencil, Trash2, Search, Phone, Mail } from 'lucide-react';
+import { Pencil, Trash2, Search, Phone, Mail, ToggleLeft, ToggleRight, Power } from 'lucide-react'; // 2. Importar novos ícones
 
-type StudentWithDetails = Prisma.StudentGetPayload<{ 
-    include: { classes: true }
+type StudentWithDetails = Prisma.StudentGetPayload<{
+  include: { classes: true, _count: { select: { attempts: true } } }
 }>;
 
 // --- COMPONENTES DA PÁGINA ---
@@ -29,85 +29,108 @@ function AddStudentModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
 }
 
 function EditStudentModal({ student, onClose }: { student: StudentWithDetails | null; onClose: () => void; }) {
-    if (!student) return null;
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center">
-            <div className="bg-white rounded-xl shadow-2xl p-8 max-w-lg w-full relative">
-                <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl" aria-label="Fechar modal">&times;</button>
-                <h2 className="text-2xl font-bold mb-6">Editar Aluno</h2>
-                <EditStudentForm student={student} onClose={onClose} />
-            </div>
-        </div>
-    )
+  if (!student) return null;
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center">
+      <div className="bg-white rounded-xl shadow-2xl p-8 max-w-lg w-full relative">
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl" aria-label="Fechar modal">&times;</button>
+        <h2 className="text-2xl font-bold mb-6">Editar Aluno</h2>
+        <EditStudentForm student={student} onClose={onClose} />
+      </div>
+    </div>
+  )
 }
 
 function StudentListItem({ student, onEdit }: { student: StudentWithDetails, onEdit: (student: StudentWithDetails) => void }) {
-  let [isPending, startTransition] = useTransition();
+  let [isTogglePending, startToggleTransition] = useTransition();
+  let [isDeletePending, startDeleteTransition] = useTransition();
+
+  const handleToggle = () => {
+    startToggleTransition(async () => {
+      const result = await toggleStudentActiveStatus(student.id, student.isActive);
+      if (result?.error) toast.error(result.error);
+      else if (result?.success) toast.success(result.success);
+    });
+  }
 
   const handleDelete = () => {
     toast.warning(`Tem certeza que deseja deletar o aluno ${student.name}?`, {
-        action: {
-            label: "Confirmar",
-            onClick: () => startTransition(async () => {
-                const result = await deleteStudent(student.id);
-                if (result?.error) toast.error(result.error);
-                else if (result?.success) toast.success(result.success);
-            })
-        },
-        cancel: { label: "Cancelar" }
+      action: {
+        label: "Confirmar",
+        onClick: () => startDeleteTransition(async () => {
+          const result = await deleteStudent(student.id);
+          if (result?.error) toast.error(result.error);
+          else if (result?.success) toast.success(result.success);
+        })
+      },
+      cancel: { label: "Cancelar" }
     });
   }
 
   const classNames = student.classes.map(c => c.name).join(', ');
 
+  // 4. Aplicar estilo condicional
+  const itemClasses = `flex items-center p-4 border-t transition-all duration-200 ${!student.isActive ? 'opacity-50 bg-slate-50' : 'hover:bg-slate-50'}`;
+
   return (
-    <li className="flex items-center p-4 border-t hover:bg-slate-50 transition-colors duration-150">
-        <div className="flex items-center space-x-4 flex-1">
-            <StudentAvatar name={student.name} />
-            <div className="flex-1">
-                <p className="font-semibold text-slate-800">{student.name}</p>
-                <div className="flex items-center space-x-2 text-sm text-slate-600">
-                    <span>@{student.username}</span>
-                    {classNames && <span className="font-semibold text-blue-600">({classNames})</span>}
-                </div>
-            </div>
+    <li className={itemClasses}>
+      <div className="flex items-center space-x-4 flex-1">
+        <StudentAvatar name={student.name} />
+        <div className="flex-1">
+          <p className={`font-semibold ${!student.isActive ? 'text-slate-500' : 'text-slate-800'}`}>{student.name}</p>
+          <div className="flex items-center space-x-2 text-sm text-slate-600">
+            <span>@{student.username}</span>
+            {classNames && <span className={`font-semibold ${!student.isActive ? 'text-blue-400' : 'text-blue-600'}`}>({classNames})</span>}
+          </div>
         </div>
-        <div className="hidden md:flex items-center space-x-6 text-sm text-slate-600">
-            <span>{student.guardianEmail}</span>
-            <div className="text-center"><p className="font-medium">Nível</p><p>{student.level}</p></div>
-            <div className="text-center"><p className="font-medium">XP</p><p>{student.xp}</p></div>
-        </div>
+      </div>
+      <div className="hidden md:flex items-center space-x-6 text-sm text-slate-600">
+        <span>{student.guardianEmail}</span>
+        <div className="text-center"><p className="font-medium">Nível</p><p>{student.level}</p></div>
+        <div className="text-center"><p className="font-medium">XP</p><p>{student.xp}</p></div>
+      </div>
 
-        {/* Botões de Ação com renderização condicional */}
-        <div className="pl-6 flex items-center space-x-2">
-            {student.guardianPhone && (
-                <button className="p-2 rounded-md text-green-600 hover:bg-green-100 hover:text-green-800 transition-colors" title="Enviar recuperação por WhatsApp">
-                    <Phone size={18} />
-                </button>
-            )}
-            {student.guardianEmail && (
-                <button className="p-2 rounded-md text-sky-600 hover:bg-sky-100 hover:text-sky-800 transition-colors" title="Enviar recuperação por Email">
-                    <Mail size={18} />
-                </button>
-            )}
+      <div className="pl-6 flex items-center space-x-2">
+        {/* 3. Botão de Ativar/Desativar */}
+        <button 
+            onClick={handleToggle} 
+            disabled={isTogglePending}
+            className={`p-2 rounded-md transition-colors ${student.isActive ? 'text-gray-400 hover:text-green-600 hover:bg-green-100' : 'text-green-600 hover:text-green-800 hover:bg-green-100'}`}
+            title={student.isActive ? 'Desativar aluno' : 'Ativar aluno'}
+        >
+            {isTogglePending 
+                ? <div className="w-[18px] h-[18px] border-2 border-gray-300 border-t-transparent rounded-full animate-spin"></div>
+                : (student.isActive ? <ToggleRight size={18} /> : <ToggleLeft size={18} />)
+            }
+        </button>
 
-            {/* Divisor condicional */}
-            {(student.guardianPhone || student.guardianEmail) && (
-               <div className="h-6 w-px bg-slate-200 mx-2"></div>
-            )}
+        {(student.guardianPhone || student.guardianEmail) && (
+            <div className="h-6 w-px bg-slate-200 mx-1"></div>
+        )}
 
-             <button onClick={() => onEdit(student)} className="p-2 rounded-md text-blue-600 hover:bg-blue-100 hover:text-blue-800 transition-colors" title="Editar aluno"><Pencil size={18} /></button>
-             <button onClick={handleDelete} disabled={isPending} className="p-2 rounded-md text-red-600 hover:bg-red-100 hover:text-red-800 disabled:text-red-300 disabled:bg-transparent transition-colors" title="Deletar aluno">
-                {isPending ? <div className="w-[18px] h-[18px] border-2 border-red-300 border-t-transparent rounded-full animate-spin"></div> : <Trash2 size={18} />}
-             </button>
-        </div>
+        {student.guardianPhone && (
+          <button className="p-2 rounded-md text-green-600 hover:bg-green-100 hover:text-green-800 transition-colors" title="Enviar recuperação por WhatsApp"><Phone size={18} /></button>
+        )}
+        {student.guardianEmail && (
+          <button className="p-2 rounded-md text-sky-600 hover:bg-sky-100 hover:text-sky-800 transition-colors" title="Enviar recuperação por Email"><Mail size={18} /></button>
+        )}
+
+        {(student.guardianPhone || student.guardianEmail) && (
+          <div className="h-6 w-px bg-slate-200 mx-1"></div>
+        )}
+
+        <button onClick={() => onEdit(student)} className="p-2 rounded-md text-blue-600 hover:bg-blue-100 hover:text-blue-800 transition-colors" title="Editar aluno"><Pencil size={18} /></button>
+        <button onClick={handleDelete} disabled={isDeletePending} className="p-2 rounded-md text-red-600 hover:bg-red-100 hover:text-red-800 disabled:text-red-300 disabled:bg-transparent transition-colors" title="Deletar aluno">
+          {isDeletePending ? <div className="w-[18px] h-[18px] border-2 border-red-300 border-t-transparent rounded-full animate-spin"></div> : <Trash2 size={18} />}
+        </button>
+      </div>
     </li>
   )
 }
 
 interface AdminStudentsPageProps {
-    students: StudentWithDetails[];
-    classes: Class[];
+  students: StudentWithDetails[];
+  classes: Class[];
 }
 
 export default function AdminStudentsPageClient({ students, classes }: AdminStudentsPageProps) {
@@ -115,14 +138,16 @@ export default function AdminStudentsPageClient({ students, classes }: AdminStud
   const [editingStudent, setEditingStudent] = useState<StudentWithDetails | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClass, setSelectedClass] = useState("");
+  const [showInactive, setShowInactive] = useState(true); // Estado para controlar visibilidade
 
   const filteredStudents = useMemo(() => {
     return students.filter(student => {
-        const nameMatch = student.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const classMatch = selectedClass ? student.classes.some(c => c.id === selectedClass) : true;
-        return nameMatch && classMatch;
+      const nameMatch = student.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const classMatch = selectedClass ? student.classes.some(c => c.id === selectedClass) : true;
+      const activityMatch = showInactive ? true : student.isActive;
+      return nameMatch && classMatch && activityMatch;
     });
-  }, [students, searchTerm, selectedClass]);
+  }, [students, searchTerm, selectedClass, showInactive]);
 
   return (
     <div className="p-4 sm:p-8">
@@ -133,34 +158,42 @@ export default function AdminStudentsPageClient({ students, classes }: AdminStud
         </div>
         <button onClick={() => setIsAddModalOpen(true)} className="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 shadow transition-transform transform hover:scale-105">+ Adicionar Aluno</button>
       </header>
-      
+
       <AddStudentModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
       <EditStudentModal student={editingStudent} onClose={() => setEditingStudent(null)} />
 
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
-        <div className="p-4 sm:p-6 border-b flex flex-col sm:flex-row gap-4">
+        <div className="p-4 sm:p-6 border-b flex flex-col sm:flex-row gap-4 justify-between">
+          <div className="flex flex-col sm:flex-row gap-4 flex-1">
             <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <input 
-                    type="text"
-                    placeholder="Pesquisar por nome..."
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg p-2 pl-10 focus:ring-2 focus:ring-blue-500 transition-shadow"
-                />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="text"
+                placeholder="Pesquisar por nome..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg p-2 pl-10 focus:ring-2 focus:ring-blue-500 transition-shadow"
+              />
             </div>
             <div className="flex-1 sm:max-w-xs">
-                <select
-                    value={selectedClass}
-                    onChange={e => setSelectedClass(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 transition-shadow"
-                >
-                    <option value="">Todas as turmas</option>
-                    {classes.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                </select>
+              <select
+                value={selectedClass}
+                onChange={e => setSelectedClass(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 transition-shadow"
+              >
+                <option value="">Todas as turmas</option>
+                {classes.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
             </div>
+          </div>
+          <div className="flex items-center">
+            <label htmlFor="show-inactive" className="flex items-center cursor-pointer">
+                <input type="checkbox" id="show-inactive" checked={showInactive} onChange={() => setShowInactive(!showInactive)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                <span className="ml-2 text-sm font-medium text-gray-700">Mostrar inativos</span>
+            </label>
+          </div>
         </div>
 
         <ul>

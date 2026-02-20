@@ -13,10 +13,10 @@ export async function createStudent(prevState: any, formData: FormData) {
     const schema = z.object({
         name: z.string().min(1, "Nome é obrigatório"),
         username: z.string().min(1, "Nome de usuário é obrigatório"),
-        guardianName: z.string().optional(), // Novo campo
+        guardianName: z.string().optional(),
         guardianEmail: z.string().email("Email do responsável inválido").optional().or(z.literal('')),
         guardianPhone: z.string().optional(),
-        notes: z.string().optional(), // Novo campo
+        notes: z.string().optional(),
     });
 
     const validatedFields = schema.safeParse(Object.fromEntries(formData.entries()));
@@ -71,13 +71,13 @@ export async function deleteStudent(id: string) {
 // --- AÇÃO DE ATUALIZAR ALUNO ---
 
 export async function updateStudent(id: string, prevState: any, formData: FormData) {
+    // Validação agora ignora o campo `username`
     const schema = z.object({
         name: z.string().min(1, "Nome é obrigatório"),
-        username: z.string().min(1, "Nome de usuário é obrigatório"),
-        guardianName: z.string().optional(), // Novo campo
+        guardianName: z.string().optional(),
         guardianEmail: z.string().email("Email do responsável inválido").optional().or(z.literal('')),
         guardianPhone: z.string().optional(),
-        notes: z.string().optional(), // Novo campo
+        notes: z.string().optional(),
     });
 
     const validatedFields = schema.safeParse(Object.fromEntries(formData.entries()));
@@ -89,20 +89,34 @@ export async function updateStudent(id: string, prevState: any, formData: FormDa
     try {
         await prisma.student.update({
             where: { id },
-            data: validatedFields.data,
+            data: validatedFields.data, // Apenas os dados validados são enviados
         });
 
         revalidatePath('/admin/students');
         return { success: 'Aluno atualizado com sucesso!' };
     } catch (error) {
+        // A verificação de erro para username não é mais necessária aqui
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            if (error.code === 'P2002' && error.meta?.target === 'Student_username_key') {
-                return { error: 'Este nome de usuário já está em uso.' };
-            }
             if (error.code === 'P2002' && error.meta?.target === 'Student_guardianEmail_key') {
                 return { error: 'Este email de responsável já está em uso.' };
             }
         }
         return { error: 'Não foi possível atualizar o aluno.' };
+    }
+}
+
+// --- AÇÃO DE ATIVAR/DESATIVAR ALUNO ---
+
+export async function toggleStudentActiveStatus(id: string, currentState: boolean) {
+    try {
+        await prisma.student.update({
+            where: { id },
+            data: { isActive: !currentState },
+        });
+        revalidatePath('/admin/students');
+        const newStatus = !currentState ? "ativado" : "desativado";
+        return { success: `Aluno ${newStatus} com sucesso!` };
+    } catch (error) {
+        return { error: "Não foi possível alterar o status do aluno." };
     }
 }

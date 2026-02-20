@@ -48,10 +48,11 @@ model Student {
   email           String?  @unique
   username        String   @unique
   password        String
-  guardianName    String?   // <-- ADICIONADO AQUI
+  isActive        Boolean  @default(true) // <-- ADICIONADO AQUI
+  guardianName    String?
   guardianEmail   String?  
   guardianPhone   String?  
-  notes           String?   // <-- ADICIONADO AQUI
+  notes           String?
   schoolId        String
   school          School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   

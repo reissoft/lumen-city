@@ -21,14 +21,15 @@ model School {
 }
 
 model Teacher {
-  id         String     @id @default(uuid())
-  name       String
-  email      String     @unique
-  password   String
-  schoolId   String
-  school     School     @relation(fields: [schoolId], references: [id])
-  activities Activity[]
-  classes    Class[]
+  id            String     @id @default(uuid())
+  name          String
+  email         String     @unique
+  password      String
+  isSchoolAdmin Boolean    @default(false) // <-- CAMPO ADICIONADO
+  schoolId      String
+  school        School     @relation(fields: [schoolId], references: [id])
+  activities    Activity[]
+  classes       Class[]
 }
 
 model Class {
@@ -50,7 +51,7 @@ model Student {
   guardianEmail   String?  
   guardianPhone   String?  
   schoolId        String
-  school          School   @relation(fields: [schoolId], references: [id])
+  school          School   @relation(fields: [schoolId], references: [id], onDelete: Cascade) // Deleta o aluno se a escola for deletada
   
   classes   Class[]
 
@@ -59,12 +60,13 @@ model Student {
   resources StudentResources?
   cityData  Json?
   attempts  ActivityAttempt[]
+  createdAt DateTime @default(now())
 }
 
 model StudentResources {
   id        String  @id @default(uuid())
   studentId String  @unique
-  student   Student @relation(fields: [studentId], references: [id])
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade) // <-- ADICIONADO AQUI
   gold      Int     @default(100)
   wood      Int     @default(0)
   energy    Int     @default(0)
@@ -91,9 +93,9 @@ model Activity {
 model ActivityAttempt {
   id         String   @id @default(uuid())
   studentId  String
-  student    Student  @relation(fields: [studentId], references: [id])
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade) // <-- ADICIONADO AQUI
   activityId String
-  activity   Activity @relation(fields: [activityId], references: [id])
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
   response   Json     
   score      Float
   feedback   String?

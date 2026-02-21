@@ -30,7 +30,7 @@ export async function login(prevState: { message: string }, formData: FormData) 
                 // Lógica de autorização explícita para admin
                 if (role === 'admin' && user.isSchoolAdmin) {
                     cookies().set(ROLE_COOKIE_NAME, 'admin');
-                    redirectPath = '/admin/dashboard'; 
+                    redirectPath = '/admin'; 
                 } 
                 // Lógica para professor comum
                 else if (role === 'teacher' && !user.isSchoolAdmin) {

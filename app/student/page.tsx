@@ -2,15 +2,18 @@
 import { PrismaClient, Activity } from "@prisma/client"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Play, Map as MapIcon, Trophy, Star, LogOut, BookOpen, Coins, Users, Settings } from "lucide-react"
+import { Play, Map as MapIcon, Trophy, Star, LogOut, BookOpen, Coins, Users, Settings, User } from "lucide-react"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { logout } from "../auth/actions"
 
 const prisma = new PrismaClient()
+
+// Tipagem estendida para a atividade, incluindo o professor
+type ActivityWithTeacher = Activity & { teacher: { name: string } | null };
 
 const getTotalXpForLevelStart = (level: number): number => {
     if (level <= 1) return 0;
@@ -26,12 +29,10 @@ const getCorrectLevelFromXp = (xp: number): number => {
     return level;
 };
 
-// LÓGICA DE SESSÃO CORRIGIDA
 async function getStudentData() {
     const sessionValue = cookies().get("lumen_session")?.value;
     if (!sessionValue) redirect("/login");
 
-    // A lógica de sessão original busca por usuário (username), que é o correto
     const student = await prisma.student.findUnique({
         where: { username: sessionValue }, 
         include: { 
@@ -40,7 +41,6 @@ async function getStudentData() {
         }
     });
 
-    // Se não encontrar, retorna nulo para exibir a mensagem de erro, sem redirecionamento abrupto
     if (!student) {
          return { student: null, activities: [], attemptsMap: new Map(), ranking: [] };
     }
@@ -63,11 +63,19 @@ async function getStudentDataByStudent(student: any) {
 
     const activityAttempts = await prisma.activityAttempt.findMany({ where: { studentId: student.id } });
     
-    let activities: Activity[] = [];
+    // MODIFICAÇÃO: Buscar atividades incluindo o nome do professor
+    let activities: ActivityWithTeacher[] = [];
     if (studentClassId) { 
         activities = await prisma.activity.findMany({
             where: { classes: { some: { id: studentClassId } } },
             orderBy: { createdAt: 'desc' },
+            include: {
+                teacher: { // Incluindo o professor relacionado
+                    select: {
+                        name: true // Selecionando apenas o nome
+                    }
+                }
+            }
         });
     }
     
@@ -81,7 +89,6 @@ async function getStudentDataByStudent(student: any) {
 
     return { student, activities, attemptsMap, ranking };
 }
-
 
 export default async function StudentHub() {
   const { student, activities, attemptsMap, ranking } = await getStudentData()
@@ -164,8 +171,8 @@ export default async function StudentHub() {
 
                 return (
                   <Card key={activity.id} className="hover:border-indigo-300 transition-colors flex flex-col">
-                    <CardHeader className="pb-2">
-                      <div className="flex justify-between items-center">
+                    <CardHeader className="pb-4">
+                      <div className="flex justify-between items-start">
                         <Badge variant="outline" className="text-xs">{activity.type}</Badge>
                         {bestScore !== undefined && (
                           <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 font-semibold flex items-center gap-1">
@@ -174,16 +181,24 @@ export default async function StudentHub() {
                           </Badge>
                         )}
                       </div>
-                      <CardTitle className="text-lg mt-2 line-clamp-1">{activity.title}</CardTitle>
+                      <CardTitle className="text-lg mt-2 line-clamp-2">{activity.title}</CardTitle>
+                      {/* MODIFICAÇÃO: Exibindo nome do professor */}
+                      {activity.teacher?.name && (
+                        <p className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1.5">
+                          <User size={12} /> Criado por {activity.teacher.name}
+                        </p>
+                      )}
                     </CardHeader>
-                    <CardContent className="flex-grow flex flex-col">
-                      <p className="text-sm text-slate-500 mb-4 line-clamp-2 h-10 flex-grow">{activity.description}</p>
-                      <Link href={activityPath} className="mt-auto">
+                    <CardContent className="flex-grow pb-4">
+                      <p className="text-sm text-slate-500 line-clamp-2 h-10 flex-grow">{activity.description}</p>
+                    </CardContent>
+                    <CardFooter className="p-4 pt-0">
+                      <Link href={activityPath} className="w-full">
                         <Button className={`w-full gap-2 ${hasReviewMaterials ? "bg-blue-600 hover:bg-blue-700" : "bg-slate-900 hover:bg-slate-800"}`}>
                           <ButtonIcon size={16} /> {buttonText}
                         </Button>
                       </Link>
-                    </CardContent>
+                    </CardFooter>
                   </Card>
                 );
               })

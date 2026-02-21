@@ -1,11 +1,11 @@
 // app/student/city/page.tsx
 
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
-import { PrismaClient } from '@prisma/client';
-import CityInterface from '@/components/CityInterface'; // CORRIGIDO: Voltando a usar o componente original
+import { PrismaClient } from "@prisma/client"
+import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
+import CityInterface from "@/components/CityInterface" 
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient()
 
 async function getStudentData() {
     const sessionUsername = cookies().get('lumen_session')?.value;
@@ -15,41 +15,19 @@ async function getStudentData() {
         redirect('/login');
     }
 
-    try {
-        const student = await prisma.student.findUnique({
-            where: { username: sessionUsername },
-            select: {
-                id: true,
-                name: true,
-                resources: true, // Garante que os recursos (ouro, etc.) sejam buscados
-            },
-        });
-
-        if (!student) {
-            redirect("/auth/logout");
-        }
-
-        const buildings = await prisma.building.findMany({
-            where: {
-                studentId: student.id,
-            },
-        });
-
-        return { student, buildings };
-
-    } catch (error) {
-        console.error("Falha ao buscar dados para a cidade do aluno:", error);
-        redirect("/auth/logout");
-    }
+  return await prisma.student.findUnique({
+    where: { username: sessionUsername },
+    include: { resources: true }
+  })
 }
 
-export default async function StudentCityPage() {
-    const { student, buildings } = await getStudentData();
+export default async function CityPage() {
+  const student = await getStudentData()
+  if (!student) return <div>Erro ao carregar perfil.</div>
 
-    if (!student) {
-        return <p className="text-center mt-10">Erro ao carregar perfil. Tente fazer login novamente.</p>;
-    }
+  const cityData = (student.cityData as any) || { buildings: [] }
+  const buildings = cityData.buildings || []
 
-    // CORRIGIDO: Voltando a renderizar o componente correto
-    return <CityInterface student={student} initialBuildings={buildings} />;
+  // Conecta o Backend (Server) com o Frontend Interativo (Client)
+  return <CityInterface student={student} buildings={buildings} />
 }

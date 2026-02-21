@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, BookCopy, Settings } from "lucide-react"; // Importar o ícone de Configurações
+import { Users, BookCopy, Settings, Shield } from "lucide-react"; // Importar o ícone Shield
 
 export default function AdminDashboard() {
     return (
@@ -12,7 +12,7 @@ export default function AdminDashboard() {
                 <p className="text-muted-foreground">Gerencie os principais recursos da sua escola.</p>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"> {/* Ajuste no grid para 3 colunas em telas grandes */}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {/* Card para Gerenciar Alunos */}
                 <Card>
                     <CardHeader>
@@ -29,6 +29,26 @@ export default function AdminDashboard() {
                     <CardContent>
                         <Link href="/admin/students">
                             <Button className="w-full">Acessar Alunos</Button>
+                        </Link>
+                    </CardContent>
+                </Card>
+
+                {/* Card para Gerenciar Professores */}
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-4">
+                            <div className="bg-green-100 text-green-600 p-3 rounded-full">
+                                <Shield className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <CardTitle>Gerenciar Professores</CardTitle>
+                                <CardDescription>Adicione, edite e gerencie os professores.</CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <Link href="/admin/teachers">
+                            <Button className="w-full">Acessar Professores</Button>
                         </Link>
                     </CardContent>
                 </Card>
@@ -53,8 +73,8 @@ export default function AdminDashboard() {
                     </CardContent>
                 </Card>
 
-                {/* Card para Configurações */}
-                <Card>
+                {/* Card para Configurações - pode ser movido para uma nova linha se preferir */}
+                <Card className="lg:col-span-3"> {/* Opcional: faz o card de config ocupar a largura toda em telas grandes */}
                     <CardHeader>
                         <div className="flex items-center gap-4">
                             <div className="bg-gray-100 text-gray-600 p-3 rounded-full">

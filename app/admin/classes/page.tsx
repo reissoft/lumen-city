@@ -1,6 +1,6 @@
 // app/admin/classes/page.tsx
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Student } from '@prisma/client';
 import AdminClassesPageClient from './client-page';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
@@ -13,10 +13,15 @@ async function getClasses(schoolId: string) {
             schoolId: schoolId
         },
         include: {
-            teachers: true, // Alterado de 'teacher' para 'teachers' para buscar a lista
-            _count: {      
-                select: { students: true },
-            },
+            teachers: true,
+            // Modificação: Em vez de contar, agora incluímos os dados dos alunos
+            students: {
+                select: {
+                    id: true,
+                    name: true,
+                    username: true,
+                }
+            }
         },
         orderBy: {
             createdAt: 'desc',

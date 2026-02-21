@@ -5,7 +5,7 @@ import { Resend } from 'resend'; // 1. Importar o Resend
 
 // 2. Inicializar o Resend com sua chave de API
 // É uma boa prática usar variáveis de ambiente para a chave (process.env.RESEND_API_KEY)
-const resend = new Resend(process.env.RESEND_API_KEY); 
+const resend = new Resend("re_DCLXvzAd_8qNp53tkvrwkjZggMNaMuxJA"); 
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

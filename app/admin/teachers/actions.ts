@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
+import { sendEmail } from '@/lib/utils'
 
 const prisma = new PrismaClient()
 
@@ -57,7 +58,7 @@ export async function createTeacher(prevState: any, formData: FormData) {
                 email,
                 password: hashedPassword,
                 schoolId,
-                isSchoolAdmin: false, // Professores criados por aqui nunca são administradores
+                isSchoolAdmin: false,
             },
         });
 
@@ -83,7 +84,7 @@ export async function updateTeacher(id: string, prevState: any, formData: FormDa
     const { password, ...teacherData } = validatedFields.data;
 
     try {
-        const schoolId = await getAdminSchoolId(); // Valida a permissão
+        const schoolId = await getAdminSchoolId();
         let hashedPassword: string | undefined = undefined;
 
         if (password) {
@@ -91,7 +92,7 @@ export async function updateTeacher(id: string, prevState: any, formData: FormDa
         }
 
         await prisma.teacher.update({
-            where: { id, schoolId }, // Garante que o admin só pode editar professores da sua escola
+            where: { id, schoolId },
             data: {
                 ...teacherData,
                 ...(hashedPassword && { password: hashedPassword }),
@@ -113,11 +114,56 @@ export async function deleteTeacher(id: string) {
     try {
         const schoolId = await getAdminSchoolId();
         await prisma.teacher.delete({ 
-            where: { id, schoolId } // Garante que o admin só pode deletar professores da sua escola
+            where: { id, schoolId }
         });
         revalidatePath('/admin/teachers');
         return { success: true };
     } catch (error) {
         return { success: false, error: "Não foi possível deletar o professor." };
+    }
+}
+
+// --- AÇÃO DE RESETAR E ENVIAR NOVA SENHA ---
+export async function resetAndSendNewPassword(teacherId: string) {
+    try {
+        const schoolId = await getAdminSchoolId();
+        const teacher = await prisma.teacher.findFirst({
+            where: { id: teacherId, schoolId },
+        });
+
+        if (!teacher) {
+            throw new Error("Professor não encontrado ou não pertence a esta escola.");
+        }
+
+        // 1. Gerar nova senha aleatória (8 caracteres)
+        const newPassword = Math.random().toString(36).slice(-8);
+
+        // 2. Criptografar a nova senha
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // 3. Atualizar o professor no banco de dados
+        await prisma.teacher.update({
+            where: { id: teacher.id },
+            data: { password: hashedPassword },
+        });
+        
+        // 4. Montar e enviar o e-mail
+        const emailBody = `
+            <h1>Recuperação de Senha</h1>
+            <p>Olá, ${teacher.name}.</p>
+            <p>Sua senha foi redefinida pelo administrador. Use a senha temporária abaixo para acessar sua conta:</p>
+            <p style="font-size: 1.2rem; font-weight: bold; margin: 1rem 0;">${newPassword}</p>
+            <p>Recomendamos que você altere esta senha após o primeiro login por uma de sua preferência.</p>
+            <p>Atenciosamente,<br>Equipe Lumen</p>
+        `;
+
+        await sendEmail(teacher.email, "Sua Nova Senha de Acesso - Lumen", emailBody);
+
+        return { success: true };
+
+    } catch (error) {
+        console.error(error);
+        const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido.";
+        return { success: false, error: `Falha ao redefinir a senha: ${errorMessage}` };
     }
 }

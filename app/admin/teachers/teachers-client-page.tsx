@@ -8,10 +8,11 @@ import { Pencil, Trash2, Search, Mail, KeyRound, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { AddTeacherForm } from './add-teacher-form';
 import { EditTeacherForm } from './edit-teacher-form';
-import { deleteTeacher } from './actions';
+import { deleteTeacher, resetAndSendNewPassword } from './actions'; // Importa a nova ação
 
 type Teacher = Prisma.TeacherGetPayload<{}>;
 
+// --- Modals (sem alteração) ---
 function AddTeacherModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void; }) {
   if (!isOpen) return null;
   return (
@@ -38,8 +39,10 @@ function EditTeacherModal({ teacher, onClose }: { teacher: Teacher | null; onClo
   )
 }
 
+// --- Componente do Item da Lista ---
 function TeacherListItem({ teacher, onEdit }: { teacher: Teacher, onEdit: (teacher: Teacher) => void }) {
-    let [isDeletePending, startDeleteTransition] = useTransition();
+    const [isDeletePending, startDeleteTransition] = useTransition();
+    const [isPasswordPending, startPasswordTransition] = useTransition(); // Novo estado de transição
 
     const handleDelete = () => {
         toast.warning(`Esta ação é irreversível. Tem certeza que deseja deletar ${teacher.name}?`, {
@@ -47,11 +50,7 @@ function TeacherListItem({ teacher, onEdit }: { teacher: Teacher, onEdit: (teach
                 label: "Confirmar Deleção",
                 onClick: () => startDeleteTransition(async () => {
                     const result = await deleteTeacher(teacher.id);
-                    if (!result.success) {
-                        toast.error(result.error);
-                    } else {
-                        toast.success("Professor deletado com sucesso!");
-                    }
+                    toast[result.success ? 'success' : 'error'](result.success ? "Professor deletado com sucesso!" : result.error);
                 })
             },
             cancel: { label: "Cancelar" }
@@ -59,7 +58,20 @@ function TeacherListItem({ teacher, onEdit }: { teacher: Teacher, onEdit: (teach
     }
 
     const handlePasswordRecovery = () => {
-        toast.info("A função de recuperação de senha por e-mail será implementada em breve.");
+        toast.warning(`Uma nova senha será gerada e enviada para ${teacher.email}. Deseja continuar?`, {
+            action: {
+                label: "Confirmar",
+                onClick: () => startPasswordTransition(async () => {
+                    const result = await resetAndSendNewPassword(teacher.id);
+                    if (result.success) {
+                        toast.success(`Nova senha enviada para ${teacher.name} com sucesso!`);
+                    } else {
+                        toast.error(result.error || "Falha ao enviar e-mail.");
+                    }
+                })
+            },
+            cancel: { label: "Cancelar" }
+        });
     }
 
     return (
@@ -77,8 +89,8 @@ function TeacherListItem({ teacher, onEdit }: { teacher: Teacher, onEdit: (teach
             </div>
 
             <div className="pl-6 flex items-center space-x-2">
-                <button onClick={handlePasswordRecovery} className="p-2 rounded-md text-yellow-600 hover:bg-yellow-100 hover:text-yellow-800 transition-colors" title="Recuperar senha">
-                    <Mail size={18} />
+                 <button onClick={handlePasswordRecovery} disabled={isPasswordPending} className="p-2 rounded-md text-yellow-600 hover:bg-yellow-100 hover:text-yellow-800 disabled:text-yellow-300 transition-colors" title="Resetar e enviar nova senha">
+                    {isPasswordPending ? <div className="w-[18px] h-[18px] border-2 border-yellow-300 border-t-transparent rounded-full animate-spin"></div> : <KeyRound size={18} />}
                 </button>
                 
                 <div className="h-6 w-px bg-slate-200"></div>
@@ -92,6 +104,7 @@ function TeacherListItem({ teacher, onEdit }: { teacher: Teacher, onEdit: (teach
     )
 }
 
+// --- Componente Principal da Página (sem alteração de lógica) ---
 interface AdminTeachersPageProps {
   teachers: Teacher[];
 }

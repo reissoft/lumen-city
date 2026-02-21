@@ -25,3 +25,38 @@ export async function sendEmail(to: string, subject: string, body: string) {
     console.error("Erro ao enviar email:", error);
   }
 }
+
+export async function sendWhatsApp(number: string, text: string) {
+  const evolutionApiUrl = "https://evolution-api-production-6a59.up.railway.app";
+  const evolutionApiKey = "Jesus_Te_Ama_2026";
+
+  if (!evolutionApiUrl || !evolutionApiKey) {
+    console.error("❌ ERRO FATAL: Variáveis da Evolution API não configuradas.");
+    return;
+  }
+
+  const cleanNumber = "55" + number.replace(/\D/g, "");
+
+  try {
+    const response = await fetch(`${evolutionApiUrl}/message/sendText/instancia_principal`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": evolutionApiKey
+      },
+      body: JSON.stringify({
+        number: cleanNumber,
+        options: { delay: 1200, presence: "composing" },
+        text: text 
+      })
+    });
+
+    if (!response.ok) {
+       console.error(`      ❌ Erro da API Zap: ${response.status} - ${response.statusText}`);
+    } else {
+       console.log("      ✨ Sucesso API Zap!");
+    }
+  } catch (error) {
+    console.error("      ❌ Erro de Conexão:", error);
+  }
+}

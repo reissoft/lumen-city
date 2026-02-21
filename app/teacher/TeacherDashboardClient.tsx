@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { toast } from "sonner";
-import { LogOut, Users, CheckCircle2, TrendingUp, GraduationCap, Trash2, Play } from "lucide-react";
+// Ícones atualizados para incluir Settings
+import { LogOut, Users, CheckCircle2, TrendingUp, GraduationCap, Trash2, Play, Settings } from "lucide-react";
 import { logout } from "../auth/actions";
 import { deleteActivity } from "../actions";
 
@@ -71,12 +72,18 @@ export default function TeacherDashboardClient({ teacherName, activities, stats 
 
   return (
     <div className="min-h-screen bg-slate-50 p-8">
-      <div className="absolute top-4 right-4">
-        <form action={logout}>
-          <Button variant="outline" size="sm" className="gap-2 text-red-500 hover:text-red-700 hover:bg-red-50 border-red-200">
-            <LogOut size={16} /> Sair
-          </Button>
-        </form>
+      {/* -- ÁREA DE AÇÕES DO USUÁRIO (CANTO SUPERIOR DIREITO) ATUALIZADA -- */}
+      <div className="absolute top-4 right-4 flex items-center gap-3">
+          <Link href="/teacher/settings">
+              <Button variant="outline" size="sm" className="gap-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 border-slate-200">
+                  <Settings size={16} /> Configurações
+              </Button>
+          </Link>
+          <form action={logout}>
+              <Button variant="outline" size="sm" className="gap-2 text-red-500 hover:text-red-700 hover:bg-red-50 border-red-200">
+                  <LogOut size={16} /> Sair
+              </Button>
+          </form>
       </div>
 
       <div className="max-w-4xl mx-auto">
@@ -86,7 +93,6 @@ export default function TeacherDashboardClient({ teacherName, activities, stats 
             <p className="text-slate-500">Bem-vindo(a), {teacherName}! Gerencie suas atividades.</p>
           </div>
           <div className="flex gap-3">
-            {/* 1. ATUALIZANDO O LINK PARA A NOVA PÁGINA DE TURMAS */}
             <Link href="/teacher/classes">
               <Button variant="outline" className="gap-2 bg-white hover:bg-slate-100 border-indigo-200 text-indigo-700">
                 <GraduationCap size={18} /> Minhas Turmas

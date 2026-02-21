@@ -290,9 +290,12 @@ export async function submitQuizResult(activityId: string, score: number) {
                 xp: newTotalXp,
                 level: newLevel,
                 resources: {
-                    update: {
-                        gold: {
-                            increment: goldReward
+                    upsert: {
+                        create: { gold: goldReward },
+                        update: {
+                            gold: {
+                                increment: goldReward
+                            }
                         }
                     }
                 }

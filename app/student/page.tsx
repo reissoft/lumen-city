@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Play, Map as MapIcon, Trophy, Star, LogOut, BookOpen, Coins, Users } from "lucide-react" // 1. Importar ícones
+import { Play, Map as MapIcon, Trophy, Star, LogOut, BookOpen, Coins, Users, Settings } from "lucide-react"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { logout } from "../auth/actions"
@@ -26,11 +26,12 @@ const getCorrectLevelFromXp = (xp: number): number => {
     return level;
 };
 
+// LÓGICA DE SESSÃO CORRIGIDA
 async function getStudentData() {
-    const sessionValue = (await cookies()).get("lumen_session")?.value;
+    const sessionValue = cookies().get("lumen_session")?.value;
     if (!sessionValue) redirect("/login");
 
-    // CORREÇÃO: Usar 'username' em vez de 'email' para buscar o aluno
+    // A lógica de sessão original busca por usuário (username), que é o correto
     const student = await prisma.student.findUnique({
         where: { username: sessionValue }, 
         include: { 
@@ -39,14 +40,9 @@ async function getStudentData() {
         }
     });
 
+    // Se não encontrar, retorna nulo para exibir a mensagem de erro, sem redirecionamento abrupto
     if (!student) {
-        // Se não encontrar por username, tenta por email como um fallback, caso a lógica de login mude no futuro
-        const studentByEmail = await prisma.student.findUnique({
-             where: { email: sessionValue },
-             include: { resources: true, class: { select: { name: true, id: true } } }
-        });
-        if (!studentByEmail) return { student: null, activities: [], attemptsMap: new Map(), ranking: [] };
-        return getStudentDataByStudent(studentByEmail);
+         return { student: null, activities: [], attemptsMap: new Map(), ranking: [] };
     }
     
     return getStudentDataByStudent(student);
@@ -58,27 +54,19 @@ async function getStudentDataByStudent(student: any) {
     let ranking = [];
     if (studentClassId) { 
         ranking = await prisma.student.findMany({
-            where: {
-                classId: studentClassId, 
-            },
+            where: { classId: studentClassId },
             orderBy: { xp: 'desc' },
             select: { id: true, name: true, xp: true, },
             take: 10,
         });
     }
 
-    const activityAttempts = await prisma.activityAttempt.findMany({
-        where: { studentId: student.id },
-    });
+    const activityAttempts = await prisma.activityAttempt.findMany({ where: { studentId: student.id } });
     
     let activities: Activity[] = [];
     if (studentClassId) { 
         activities = await prisma.activity.findMany({
-            where: {
-                classes: {
-                    some: { id: studentClassId } 
-                }
-            },
+            where: { classes: { some: { id: studentClassId } } },
             orderBy: { createdAt: 'desc' },
         });
     }
@@ -98,7 +86,7 @@ async function getStudentDataByStudent(student: any) {
 export default async function StudentHub() {
   const { student, activities, attemptsMap, ranking } = await getStudentData()
   
-  if (!student) return <div>Erro no perfil.</div>
+  if (!student) return <div className="flex items-center justify-center h-screen">Erro ao carregar seu perfil. Por favor, <a href="/login" className="underline pl-1">faça login</a> novamente.</div>
 
   const correctLevel = getCorrectLevelFromXp(student.xp);
   const xpForCurrentLevelStart = getTotalXpForLevelStart(correctLevel);
@@ -114,6 +102,19 @@ export default async function StudentHub() {
     <div className="min-h-screen bg-slate-50 p-6 md:p-10">
       <div className="max-w-4xl mx-auto space-y-8">
         
+        <div className="absolute top-4 right-4 flex items-center gap-3">
+            <Link href="/student/settings">
+                <Button variant="outline" size="sm" className="gap-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 border-slate-200">
+                    <Settings size={16} /> Minha Conta
+                </Button>
+            </Link>
+            <form action={logout}>
+                <Button variant="outline" size="sm" className="gap-2 text-red-500 hover:text-red-700 hover:bg-red-50 border-red-200">
+                    <LogOut size={16} /> Sair
+                </Button>
+            </form>
+        </div>
+
         <div className="flex flex-col md:flex-row justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
           <div className="flex items-center gap-4 mb-4 md:mb-0">
             <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center text-3xl">🦸‍♂️</div>
@@ -130,10 +131,6 @@ export default async function StudentHub() {
             <div className="flex justify-between text-xs font-semibold text-slate-400 uppercase mb-1"><span>Progresso para Nível {correctLevel + 1}</span><span>{student.xp} XP</span></div>
             <Progress value={progressPercent} className="h-3 w-48 md:w-64" />
           </div>
-        </div>
-
-        <div className="absolute top-4 right-4">
-          <form action={logout}><Button variant="outline" size="sm" className="gap-2 text-red-500 hover:text-red-700 hover:bg-red-50 border-red-200"><LogOut size={16} /> Sair</Button></form>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

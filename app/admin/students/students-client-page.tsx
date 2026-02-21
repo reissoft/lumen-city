@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useTransition, useMemo } from 'react';
+import Link from 'next/link'; // Importar Link
 import { Prisma } from '@prisma/client';
 import { toast } from 'sonner';
-import { Pencil, Trash2, Search, Mail, Phone, ToggleLeft, ToggleRight, UserSquare } from 'lucide-react';
+import { Pencil, Trash2, Search, Mail, Phone, ToggleLeft, ToggleRight, UserSquare, ArrowLeft } from 'lucide-react'; // Importar ArrowLeft
 
 import { Button } from '@/components/ui/button';
 import { AddStudentForm } from './add-student-form';
@@ -46,7 +47,7 @@ function EditStudentModal({ student, onClose, classes }: { student: StudentWithD
   );
 }
 
-// Item da Lista de Alunos - Modificado com novos botões e lógica
+// Item da Lista de Alunos - Sem alterações
 function StudentListItem({ student, onEdit }: { student: StudentWithDetails, onEdit: (student: StudentWithDetails) => void }) {
   const [isTogglePending, startToggleTransition] = useTransition();
   const [isDeletePending, startDeleteTransition] = useTransition();
@@ -120,17 +121,13 @@ function StudentListItem({ student, onEdit }: { student: StudentWithDetails, onE
           {isTogglePending ? <div className="w-5 h-5 border-2 border-gray-300 border-t-transparent rounded-full animate-spin"></div> : (student.isActive ? <ToggleRight /> : <ToggleLeft />)}
         </button>
         <div className="h-6 w-px bg-slate-200"></div>
-        
         <button onClick={handleEmailRecovery} disabled={isEmailPending || !student.guardianEmail} className="p-2 rounded-md text-sky-600 hover:bg-sky-100 hover:text-sky-800 disabled:text-gray-300 transition-colors" title="Enviar nova senha por E-mail">
           {isEmailPending ? <div className="w-5 h-5 border-2 border-sky-300 border-t-transparent rounded-full animate-spin"></div> : <Mail />}
         </button>
-
         <button onClick={handleWhatsAppRecovery} disabled={isWhatsAppPending || !student.guardianPhone} className="p-2 rounded-md text-green-600 hover:bg-green-100 hover:text-green-800 disabled:text-gray-300 transition-colors" title="Enviar nova senha por WhatsApp">
           {isWhatsAppPending ? <div className="w-5 h-5 border-2 border-green-300 border-t-transparent rounded-full animate-spin"></div> : <Phone />}
         </button>
-        
         <div className="h-6 w-px bg-slate-200"></div>
-
         <button onClick={() => onEdit(student)} className="p-2 rounded-md text-blue-600 hover:bg-blue-100 hover:text-blue-800 transition-colors" title="Editar aluno"><Pencil /></button>
         <button onClick={handleDelete} disabled={isDeletePending} className="p-2 rounded-md text-red-600 hover:bg-red-100 hover:text-red-800 disabled:text-red-300 disabled:bg-transparent transition-colors" title="Deletar aluno">
           {isDeletePending ? <div className="w-5 h-5 border-2 border-red-300 border-t-transparent rounded-full animate-spin"></div> : <Trash2 />}
@@ -140,7 +137,7 @@ function StudentListItem({ student, onEdit }: { student: StudentWithDetails, onE
   );
 }
 
-// Componente Principal - Sem alterações significativas
+// Componente Principal - Modificado com o botão Voltar
 export default function AdminStudentsPageClient({ students, classes }: { students: StudentWithDetails[]; classes: Class[] }) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<StudentWithDetails | null>(null);
@@ -159,6 +156,10 @@ export default function AdminStudentsPageClient({ students, classes }: { student
 
   return (
     <div className="p-4 sm:p-8">
+        <Link href="/admin" className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-800 mb-4">
+            <ArrowLeft size={18} className="mr-2" />
+            Voltar ao Painel
+        </Link>
       <header className="mb-8 flex flex-wrap justify-between items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-800">Gestão de Alunos</h1>

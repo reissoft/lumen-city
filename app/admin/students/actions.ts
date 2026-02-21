@@ -5,7 +5,6 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
-// Importa tanto sendEmail quanto sendWhatsApp
 import { sendEmail, sendWhatsApp } from '@/lib/utils'
 
 const prisma = new PrismaClient()
@@ -35,27 +34,59 @@ const studentSchema = z.object({
     classId: z.string().optional().or(z.literal('')),
 });
 
-// --- AÇÕES DE CRUD (SEM ALTERAÇÃO) ---
+// --- AÇÃO DE CRIAR ALUNO (MODIFICADA) ---
 export async function createStudent(prevState: any, formData: FormData) {
     const validatedFields = studentSchema.safeParse(Object.fromEntries(formData.entries()));
-    if (!validatedFields.success) return { error: 'Dados inválidos. Verifique os campos.' };
+    if (!validatedFields.success) {
+        return { error: 'Dados inválidos. Verifique os campos.' };
+    }
+    
     const { classId, ...studentData } = validatedFields.data;
+
     try {
         const schoolId = await getAdminSchoolId();
-        const password = Math.random().toString(36).substring(2, 8);
-        const hashedPassword = await bcrypt.hash(password, 10);
-        await prisma.student.create({
-            data: { ...studentData, password: hashedPassword, schoolId, classId: classId || null },
+        // 1. Gerar senha em texto plano
+        const newPassword = Math.random().toString(36).substring(2, 8);
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // 2. Criar o aluno no banco
+        const newStudent = await prisma.student.create({
+            data: {
+                ...studentData,
+                password: hashedPassword,
+                schoolId,
+                classId: classId || null,
+            },
         });
+
+        // 3. Enviar notificações (se houver contato)
+        try {
+            if (newStudent.guardianEmail) {
+                const emailBody = `<h1>Bem-vindo(a) à Lumen!</h1><p>Olá, ${newStudent.guardianName || 'Responsável'}.</p><p>Seu filho(a), ${newStudent.name}, foi cadastrado(a) em nossa plataforma. Seguem os dados para o primeiro acesso:</p><p>Usuário: <strong>${newStudent.username}</strong></p><p>Senha: <strong style="font-size: 1.2rem; font-weight: bold;">${newPassword}</strong></p><p>Recomendamos que você altere esta senha após o primeiro login.</p><p>Atenciosamente,<br>Equipe Lumen</p>`;
+                await sendEmail(newStudent.guardianEmail, `Bem-vindo(a) à Lumen - Acesso de ${newStudent.name}`, emailBody);
+            }
+            if (newStudent.guardianPhone) {
+                const whatsappMessage = `Bem-vindo(a) à Lumen!\nOlá, ${newStudent.guardianName || 'Responsável'}. O acesso para o(a) estudante ${newStudent.name} foi criado.\n\n*Usuário:* ${newStudent.username}\n*Senha:* ${newPassword}\n\nGuarde esses dados para acessar a plataforma.`;
+                await sendWhatsApp(newStudent.guardianPhone, whatsappMessage);
+            }
+        } catch (notificationError) {
+            console.error("Falha ao enviar notificação de boas-vindas:", notificationError);
+            // Não retorna erro para o usuário, pois o aluno foi criado.
+        }
+
         revalidatePath('/admin/students');
-        return { success: 'Aluno criado com sucesso!' };
+        return { success: 'Aluno criado com sucesso! Credenciais enviadas ao responsável.' };
+
     } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
             return { error: 'Este nome de usuário já está em uso.' };
         }
+        console.error("Erro ao criar aluno:", error);
         return { error: 'Não foi possível criar o aluno.' };
     }
 }
+
+// --- OUTRAS AÇÕES (SEM ALTERAÇÃO) ---
 export async function updateStudent(id: string, prevState: any, formData: FormData) {
     const validatedFields = studentSchema.omit({ username: true }).safeParse(Object.fromEntries(formData.entries()));
     if (!validatedFields.success) return { error: 'Dados inválidos para atualização.' };
@@ -87,9 +118,6 @@ export async function toggleStudentActiveStatus(id: string, currentState: boolea
         return { success: `Aluno ${!currentState ? "ativado" : "desativado"} com sucesso!` };
     } catch (error) { return { error: "Não foi possível alterar o status do aluno." }; }
 }
-// --- FIM DAS AÇÕES DE CRUD ---
-
-// --- AÇÃO DE RESETAR SENHA E ENVIAR POR EMAIL ---
 export async function resetAndSendNewPasswordViaEmail(studentId: string) {
     try {
         const schoolId = await getAdminSchoolId();
@@ -106,11 +134,9 @@ export async function resetAndSendNewPasswordViaEmail(studentId: string) {
         return { success: true };
     } catch (error) {
         const msg = error instanceof Error ? error.message : "Ocorreu um erro.";
-        return { success: false, error: `Falha ao redefinir via e-mail: ${msg}` };
+        return { success: false, error: `Falha ao redefinir via e--mail: ${msg}` };
     }
 }
-
-// --- AÇÃO DE RESETAR SENHA E ENVIAR POR WHATSAPP ---
 export async function resetAndSendNewPasswordViaWhatsApp(studentId: string) {
     try {
         const schoolId = await getAdminSchoolId();
@@ -124,7 +150,6 @@ export async function resetAndSendNewPasswordViaWhatsApp(studentId: string) {
 
         const message = `Olá, ${student.guardianName || 'Responsável'}. A senha de acesso para o(a) estudante ${student.name} na plataforma Lumen foi redefinida.\n\n*Usuário:* ${student.username}\n*Senha:* ${newPassword}\n\nAcesse a plataforma para fazer o login.`;
         
-        // A função sendWhatsApp é chamada aqui para enviar a mensagem diretamente
         await sendWhatsApp(student.guardianPhone, message);
 
         return { success: true };

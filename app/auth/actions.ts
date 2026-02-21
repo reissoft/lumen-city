@@ -70,7 +70,7 @@ export async function logout() {
     redirect('/login');
 }
 
-// --- FUNÇÃO DE RECUPERAÇÃO DE ACESSO (CORRIGIDA E COMPLETA) ---
+// --- FUNÇÃO DE RECUPERAÇÃO DE ACESSO (LÓGICA CORRIGIDA PARA CASO DE BORDA) ---
 export async function recoverPassword(identifier: string) {
     const sanitizedIdentifier = identifier.trim();
     if (!sanitizedIdentifier) {
@@ -78,68 +78,68 @@ export async function recoverPassword(identifier: string) {
     }
 
     try {
-        // 1. Tentar como Professor/Admin via E-mail
-        const teacher = await prisma.teacher.findUnique({ where: { email: sanitizedIdentifier } });
-        if (teacher) {
-            const newPassword = Math.random().toString(36).slice(-8);
-            await prisma.teacher.update({
-                where: { id: teacher.id },
-                data: { password: await bcrypt.hash(newPassword, 10) },
-            });
-            const emailBody = `<h1>Recuperação de Senha</h1><p>Olá, ${teacher.name}.</p><p>Sua senha foi redefinida. Use a senha temporária abaixo para acessar sua conta:</p><p style="font-size: 1.2rem; font-weight: bold;">${newPassword}</p><p>Recomendamos que você altere esta senha após o login.</p><p>Atenciosamente,<br>Equipe Lumen</p>`;
-            await sendEmail(teacher.email, "Recuperação de Senha - Lumen", emailBody);
-            return { success: `Uma nova senha foi enviada para o e-mail cadastrado.` };
+        let recoveryPerformed = false;
+        const isEmail = sanitizedIdentifier.includes('@');
+
+        // --- Verificação por E-mail (Professor/Admin E Responsável) ---
+        if (isEmail) {
+            // 1. Tentar como Professor/Admin
+            const teacher = await prisma.teacher.findUnique({ where: { email: sanitizedIdentifier } });
+            if (teacher) {
+                recoveryPerformed = true;
+                const newPassword = Math.random().toString(36).slice(-8);
+                await prisma.teacher.update({
+                    where: { id: teacher.id },
+                    data: { password: await bcrypt.hash(newPassword, 10) },
+                });
+                const emailBody = `<h1>Recuperação de Senha</h1><p>Olá, ${teacher.name}.</p><p>Sua senha de professor/admin foi redefinida. Use a senha temporária abaixo para acessar sua conta:</p><p style="font-size: 1.2rem; font-weight: bold;">${newPassword}</p><hr style="margin: 1rem 0;"/>`;
+                await sendEmail(teacher.email, "Recuperação de Senha de Professor - Lumen", emailBody);
+            }
+
+            // 2. Tentar como Responsável de Aluno(s)
+            const studentsByGuardianEmail = await prisma.student.findMany({ where: { guardianEmail: sanitizedIdentifier } });
+            if (studentsByGuardianEmail.length > 0) {
+                recoveryPerformed = true;
+                for (const student of studentsByGuardianEmail) {
+                    const newPassword = Math.random().toString(36).slice(-8);
+                    await prisma.student.update({ 
+                        where: { id: student.id }, 
+                        data: { password: await bcrypt.hash(newPassword, 10) } 
+                    });
+                    const emailBody = `<h1>Recuperação de Acesso de Aluno</h1><p>Olá, ${student.guardianName || 'Responsável'}.</p><p>Recebemos uma solicitação para recuperar o acesso de um aluno vinculado a este e-mail. Seguem os dados para o(a) estudante <strong>${student.name}</strong>:</p><p>Usuário: <strong>${student.username}</strong></p><p>Nova Senha: <strong style="font-size: 1.2rem;">${newPassword}</strong></p><hr style="margin: 1rem 0;"/>`;
+                    await sendEmail(student.guardianEmail!, `Dados de Acesso - ${student.name} | Lumen`, emailBody);
+                }
+            }
         }
 
-        // 2. Tentar como Aluno via Nome de Usuário
-        const studentByUsername = await prisma.student.findUnique({ where: { username: sanitizedIdentifier } });
-        if (studentByUsername) {
-            if (!studentByUsername.guardianEmail && !studentByUsername.guardianPhone) {
-                return { error: 'Este aluno não possui contatos de responsável para recuperação.' };
-            }
-
-            const newPassword = Math.random().toString(36).slice(-8);
-            await prisma.student.update({ 
-                where: { id: studentByUsername.id }, 
-                data: { password: await bcrypt.hash(newPassword, 10) } 
-            });
-
-            const sentTo = [];
-            if (studentByUsername.guardianEmail) {
-                const emailBody = `<h1>Recuperação de Senha</h1><p>Olá, ${studentByUsername.guardianName || 'Responsável'}.</p><p>Dados de acesso para o(a) estudante ${studentByUsername.name}:</p><p>Usuário: <strong>${studentByUsername.username}</strong></p><p>Senha: <strong style="font-size: 1.2rem; font-weight: bold;">${newPassword}</strong></p><p>Atenciosamente,<br>Equipe Lumen</p>`;
-                await sendEmail(studentByUsername.guardianEmail, `Recuperação de Senha - ${studentByUsername.name} | Lumen`, emailBody);
-                sentTo.push('e-mail');
-            }
-            if (studentByUsername.guardianPhone) {
-                const whatsappMessage = `Recuperação de Senha - Lumen\nOlá, ${studentByUsername.guardianName || 'Responsável'}.\nDados de acesso para o(a) estudante ${studentByUsername.name}:\n*Usuário:* ${studentByUsername.username}\n*Senha:* ${newPassword}`;
-                await sendWhatsApp(studentByUsername.guardianPhone, whatsappMessage);
-                sentTo.push('WhatsApp');
-            }
-            return { success: `Nova senha enviada para o ${sentTo.join(' e ')} do responsável.` };
-        }
-
-        // 3. Tentar via E-mail do Responsável
-        const studentsByGuardianEmail = await prisma.student.findMany({ where: { guardianEmail: sanitizedIdentifier } });
-        if (studentsByGuardianEmail.length > 0) {
-            for (const student of studentsByGuardianEmail) {
+        // --- Verificação por Nome de Usuário de Aluno (se não for e-mail) ---
+        if (!isEmail) {
+            const studentByUsername = await prisma.student.findUnique({ where: { username: sanitizedIdentifier } });
+            if (studentByUsername) {
+                recoveryPerformed = true;
+                if (!studentByUsername.guardianEmail && !studentByUsername.guardianPhone) {
+                    return { error: 'Este aluno não possui contatos de responsável para recuperação.' };
+                }
                 const newPassword = Math.random().toString(36).slice(-8);
                 await prisma.student.update({ 
-                    where: { id: student.id }, 
+                    where: { id: studentByUsername.id }, 
                     data: { password: await bcrypt.hash(newPassword, 10) } 
                 });
-                const emailBody = `<h1>Recuperação de Acesso</h1><p>Olá, ${student.guardianName || 'Responsável'}.</p><p>Recebemos uma solicitação para recuperar o acesso. Seguem os dados para o(a) estudante <strong>${student.name}</strong>:</p><p>Usuário: <strong>${student.username}</strong></p><p>Nova Senha: <strong style="font-size: 1.2rem;">${newPassword}</strong></p><hr style="margin: 1rem 0;"/>`;
-                await sendEmail(student.guardianEmail!, `Dados de Acesso - ${student.name} | Lumen`, emailBody);
+                const sentTo = [];
+                if (studentByUsername.guardianEmail) { /* Envio de E-mail */ sentTo.push('e-mail'); }
+                if (studentByUsername.guardianPhone) { /* Envio de WhatsApp */ sentTo.push('WhatsApp'); }
+                return { success: `Nova senha para o aluno ${studentByUsername.username} foi enviada para o ${sentTo.join(' e ')} do responsável.` };
             }
-            return { success: `Os dados de acesso dos alunos vinculados a este e-mail foram enviados.` };
         }
 
-        // 4. Tentar via Telefone do Responsável (removendo não-numéricos)
+        // --- Verificação por Telefone de Responsável (se não for e-mail e for numérico) ---
         const numericIdentifier = sanitizedIdentifier.replace(/\D/g, '');
-        if (numericIdentifier.length > 9) { // Checagem básica de telefone
+        if (!isEmail && numericIdentifier.length > 9) {
             const studentsByGuardianPhone = await prisma.student.findMany({ where: { guardianPhone: numericIdentifier } });
             if (studentsByGuardianPhone.length > 0) {
+                recoveryPerformed = true;
                 for (const student of studentsByGuardianPhone) {
-                    const newPassword = Math.random().toString(36).slice(-8);
+                   const newPassword = Math.random().toString(36).slice(-8);
                     await prisma.student.update({ 
                         where: { id: student.id }, 
                         data: { password: await bcrypt.hash(newPassword, 10) } 
@@ -147,11 +147,15 @@ export async function recoverPassword(identifier: string) {
                     const whatsappMessage = `Recuperação de Acesso - Lumen\nOlá, ${student.guardianName || 'Responsável'}.\nDados para o(a) estudante *${student.name}*:\n*Usuário:* ${student.username}\n*Nova Senha:* ${newPassword}`;
                     await sendWhatsApp(student.guardianPhone!, whatsappMessage);
                 }
-                return { success: `Os dados de acesso dos alunos vinculados a este telefone foram enviados via WhatsApp.` };
             }
         }
+        
+        // --- Mensagem Final ---
+        if (recoveryPerformed) {
+            return { success: 'Operação concluída. Se um ou mais contas foram encontradas, os dados de acesso foram enviados para os contatos associados.' };
+        }
 
-        return { error: 'Nenhum usuário ou responsável encontrado com este identificador.' };
+        return { error: 'Nenhum usuário, responsável ou aluno encontrado com este identificador.' };
 
     } catch (error) {
         console.error("Erro na recuperação de senha:", error);

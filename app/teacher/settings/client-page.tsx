@@ -10,16 +10,18 @@ import { updateProfile } from './actions';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 
 const initialState = { error: null, success: null };
+
+const cardStyles = `bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl shadow-lg`;
+const inputStyles = `w-full bg-white/5 border-2 border-white/20 rounded-lg p-3 text-white placeholder:text-white/50 focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400 transition`;
 
 function SubmitButton() {
     const { pending } = useFormStatus();
     return (
-        <Button type="submit" disabled={pending} className="w-full sm:w-auto">
-            {pending ? 'Salvando Alterações...' : 'Salvar Alterações'}
+        <Button type="submit" disabled={pending} className="w-full font-bold py-4 px-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 hover:scale-105 transition-transform flex items-center gap-2">
+            {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</> : 'Salvar Alterações'}
         </Button>
     );
 }
@@ -36,13 +38,11 @@ export default function TeacherSettingsClientPage({ teacher }: { teacher: Teache
         if (state.success) {
             toast.success(state.success);
         }
-        // O erro de string é para erros genéricos do servidor
         if (typeof state.error === 'string') {
             toast.error(state.error);
         }
     }, [state]);
 
-    // Função para obter a mensagem de erro específica de um campo
     const getFieldError = (fieldName: string) => {
         if (typeof state.error === 'object' && state.error && state.error[fieldName]) {
             return state.error[fieldName][0];
@@ -51,60 +51,56 @@ export default function TeacherSettingsClientPage({ teacher }: { teacher: Teache
     };
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
-            <div className="w-full max-w-2xl">
-                <div className="mb-6">
-                    <Link href="/teacher" className="inline-flex items-center text-sm font-medium text-gray-600 hover:text-gray-900">
-                        <ArrowLeft className="w-4 h-4 mr-2" />
-                        Voltar ao Painel
-                    </Link>
-                </div>
-                <Card>
-                    <form action={formAction}>
-                        <CardHeader>
-                            <CardTitle>Configurações do Perfil</CardTitle>
-                            <CardDescription>Atualize suas informações pessoais. Para salvar, é necessário confirmar sua senha atual.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            {/* Campo Nome */}
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 text-white">
+            <div className="absolute inset-0 bg-cover bg-center" style={{backgroundImage: 'url(/grid.svg)'}}></div>
+            <div className="container mx-auto p-4 md:p-8 relative max-w-3xl">
+                
+                <Link href="/teacher" className="inline-flex items-center gap-2 bg-white/10 border border-white/20 backdrop-blur-md hover:bg-white/20 rounded-full px-4 py-2 text-sm mb-8 transition-colors">
+                    <ArrowLeft size={16} /> Voltar ao Painel
+                </Link>
+
+                <header className="mb-10">
+                    <h1 className="text-4xl font-bold">Configurações do Perfil</h1>
+                    <p className="text-white/60">Atualize suas informações pessoais.</p>
+                </header>
+
+                <form action={formAction} className={`${cardStyles} p-6 md:p-8`}>
+                    <div className="space-y-6">
+                        <div className="grid md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <Label htmlFor="name">Nome</Label>
-                                <Input id="name" name="name" defaultValue={teacher.name ?? ''} />
-                                {getFieldError('name') && <p className="text-sm text-red-500">{getFieldError('name')}</p>}
+                                <Label htmlFor="name" className="font-semibold">Nome</Label>
+                                <Input id="name" name="name" defaultValue={teacher.name ?? ''} className={inputStyles} />
+                                {getFieldError('name') && <p className="text-sm text-red-400 mt-1">{getFieldError('name')}</p>}
                             </div>
-
-                            {/* Campo Email */}
                             <div className="space-y-2">
-                                <Label htmlFor="email">E-mail</Label>
-                                <Input id="email" name="email" type="email" defaultValue={teacher.email ?? ''} />
-                                {getFieldError('email') && <p className="text-sm text-red-500">{getFieldError('email')}</p>}
+                                <Label htmlFor="email" className="font-semibold">E-mail</Label>
+                                <Input id="email" name="email" type="email" defaultValue={teacher.email ?? ''} className={inputStyles} />
+                                {getFieldError('email') && <p className="text-sm text-red-400 mt-1">{getFieldError('email')}</p>}
                             </div>
+                        </div>
 
-                            {/* Campo Nova Senha */}
-                            <div className="space-y-2">
-                                <Label htmlFor="newPassword">Nova Senha</Label>
-                                <Input id="newPassword" name="newPassword" type="password" placeholder="Deixe em branco para não alterar" />
-                                {getFieldError('newPassword') && <p className="text-sm text-red-500">{getFieldError('newPassword')}</p>}
-                            </div>
-                            
-                            <hr className="my-6"/>
+                        <div className="space-y-2">
+                            <Label htmlFor="newPassword">Nova Senha</Label>
+                            <Input id="newPassword" name="newPassword" type="password" placeholder="Deixe em branco para não alterar" className={inputStyles} />
+                            {getFieldError('newPassword') && <p className="text-sm text-red-400 mt-1">{getFieldError('newPassword')}</p>}
+                        </div>
+                        
+                        <hr className="my-6 border-white/10"/>
 
-                            {/* Campo Senha Atual (Obrigatório) */}
-                            <div className="space-y-2">
-                                <Label htmlFor="currentPassword">Senha Atual</Label>
-                                <Input id="currentPassword" name="currentPassword" type="password" placeholder="Confirme sua senha para salvar" required />
-                                {getFieldError('currentPassword') && <p className="text-sm text-red-500">{getFieldError('currentPassword')}</p>}
-                            </div>
+                        <div className="space-y-2 bg-white/5 p-4 rounded-lg border border-yellow-500/20">
+                            <Label htmlFor="currentPassword" className="font-semibold text-yellow-300">Senha Atual (Obrigatório)</Label>
+                             <p className="text-sm text-white/60 -mt-1 mb-3">Para salvar as alterações, você precisa confirmar sua senha atual.</p>
+                            <Input id="currentPassword" name="currentPassword" type="password" placeholder="••••••••" required className={`${inputStyles} border-yellow-500/30`}/>
+                            {getFieldError('currentPassword') && <p className="text-sm text-red-400 mt-1">{getFieldError('currentPassword')}</p>}
+                        </div>
 
-                            {/* Erro genérico (se houver) */}
-                            {typeof state.error === 'string' && <p className="text-sm text-red-500 text-center">{state.error}</p>}
+                        {typeof state.error === 'string' && <p className="text-sm text-red-400 text-center">{state.error}</p>}
 
-                        </CardContent>
-                        <CardFooter className="flex justify-end">
-                            <SubmitButton />
-                        </CardFooter>
-                    </form>
-                </Card>
+                    </div>
+                    <footer className="mt-8 flex justify-end">
+                        <SubmitButton />
+                    </footer>
+                </form>
             </div>
         </div>
     );

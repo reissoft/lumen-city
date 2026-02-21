@@ -43,16 +43,15 @@ export default async function TeacherDashboard() {
   const activities = await getActivities(teacher.id);
 
   const stats = [
-    { title: "Total de Alunos", value: "32", icon: "Users", color: "text-blue-600" },
-    { title: "Quizzes Realizados", value: "145", icon: "CheckCircle2", color: "text-green-600" },
-    { title: "Engajamento Médio", value: "87%", icon: "TrendingUp", color: "text-purple-600" },
+    { title: "Total de Alunos", value: "32", icon: "Users", color: "text-blue-400" },
+    { title: "Quizzes Realizados", value: "145", icon: "CheckCircle2", color: "text-green-400" },
+    { title: "Engajamento Médio", value: "87%", icon: "TrendingUp", color: "text-purple-400" },
   ];
 
   return (
-    <Suspense fallback={<div>Carregando Painel...</div>}> 
+    <Suspense fallback={<div className='flex items-center justify-center min-h-screen text-white text-2xl bg-gradient-to-br from-gray-900 to-blue-900/20'>Carregando Painel...</div>}> 
       <TeacherDashboardClient 
         teacherName={teacher.name || 'Professor(a)'} 
-        // CORREÇÃO: Usando 'as any' para resolver o conflito de tipo para a prop 'activities'
         activities={activities as any} 
         stats={stats}
       />

@@ -1,66 +1,64 @@
 // app/teacher/classes/[id]/ClassDetailsClient.tsx
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, User } from "lucide-react";
 import { PageData } from "./page"; 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 
 export default function ClassDetailsClient({ classData }: { classData: PageData['classData'] }) {
 
     return (
-        <div className="container mx-auto p-4 md:p-8">
-            <div className="flex items-center mb-6">
-                <Link href="/teacher/classes">
-                    <Button variant="outline" size="icon" className="mr-4">
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                </Link>
-                <div>
-                    <h1 className="text-3xl font-bold">{classData.name}</h1>
-                    <p className="text-muted-foreground">Visualize os alunos da sua turma.</p>
-                </div>
-            </div>
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 text-white">
+            <div className="absolute inset-0 bg-cover bg-center" style={{backgroundImage: 'url(/grid.svg)'}}></div>
+            <div className="container mx-auto p-4 md:p-8 relative">
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Alunos Matriculados</CardTitle>
-                    <CardDescription>Esta é a lista de alunos atualmente nesta turma.</CardDescription>
-                </CardHeader>
-                <CardContent>
+                <Link href="/teacher/classes" className="inline-flex items-center gap-2 bg-white/10 border border-white/20 backdrop-blur-md hover:bg-white/20 rounded-full px-4 py-2 text-sm mb-8 transition-colors">
+                    <ArrowLeft size={16} /> Voltar para Turmas
+                </Link>
+
+                <header className="mb-10">
+                    <h1 className="text-4xl font-bold">{classData.name}</h1>
+                    <p className="text-white/60">Visualize os alunos da sua turma.</p>
+                </header>
+
+                <main className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl shadow-lg overflow-hidden">
                     <Table>
                         <TableHeader>
-                            <TableRow>
-                                <TableHead>Nome</TableHead>
-                                <TableHead>Usuário</TableHead>
-                                <TableHead className="text-right">XP</TableHead>
+                            <TableRow className="border-b-white/10 hover:bg-transparent">
+                                <TableHead className="text-white/80">Nome</TableHead>
+                                <TableHead className="text-white/80">Usuário</TableHead>
+                                <TableHead className="text-right text-white/80">XP</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {classData.students.length > 0 ? (
                                 classData.students.map(student => (
-                                    <TableRow key={student.id}>
-                                        <TableCell className="font-medium">{student.name}</TableCell>
-                                        <TableCell>{student.username}</TableCell>
+                                    <TableRow key={student.id} className="border-b-white/10 hover:bg-white/5">
+                                        <TableCell className="font-medium text-white flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                                                <User size={16} className="text-white/60"/>
+                                            </div>
+                                            {student.name}
+                                        </TableCell>
+                                        <TableCell className="text-white/70">@{student.username}</TableCell>
                                         <TableCell className="text-right">
-                                            <Badge variant="secondary">{student.xp} XP</Badge>
+                                            <Badge className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20 font-bold">{student.xp} XP</Badge>
                                         </TableCell>
                                     </TableRow>
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={3} className="text-center h-24">
+                                    <TableCell colSpan={3} className="text-center h-48 text-white/50">
                                         Nenhum aluno nesta turma ainda.
                                     </TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
                     </Table>
-                </CardContent>
-            </Card>
+                </main>
+            </div>
         </div>
     );
 }

@@ -4,24 +4,28 @@ import { useState, useMemo, useTransition } from 'react';
 import Link from 'next/link';
 import { Prisma } from '@prisma/client';
 import { toast } from 'sonner';
-import { Pencil, Trash2, Search, Mail, KeyRound, ArrowLeft } from 'lucide-react';
+import { Pencil, Trash2, Search, Mail, KeyRound, ArrowLeft, PlusCircle } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
+import { Input } from "@/components/ui/input";
 import { AddTeacherForm } from './add-teacher-form';
 import { EditTeacherForm } from './edit-teacher-form';
-import { deleteTeacher, resetAndSendNewPassword } from './actions'; // Importa a nova ação
+import { deleteTeacher, resetAndSendNewPassword } from './actions';
 
 type Teacher = Prisma.TeacherGetPayload<{}>;
 
-// --- Modals (sem alteração) ---
+// --- COMPONENTES DE MODAL (Estilizados) ---
 function AddTeacherModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void; }) {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-2xl p-8 max-w-lg w-full relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl" aria-label="Fechar modal">&times;</button>
-        <h2 className="text-2xl font-bold mb-6">Adicionar Novo Professor</h2>
-        <AddTeacherForm onClose={onClose} />
-      </div>
+    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div className="w-full max-w-lg bg-white/10 backdrop-blur-lg border-2 border-white/20 rounded-3xl shadow-2xl relative">
+            <button onClick={onClose} className="absolute top-4 right-4 text-white/50 hover:text-white text-3xl z-10" aria-label="Fechar modal">&times;</button>
+            <div className="p-8">
+                <h2 className="text-2xl font-bold mb-6 text-white">Adicionar Novo Professor</h2>
+                <AddTeacherForm onClose={onClose} />
+            </div>
+        </div>
     </div>
   );
 }
@@ -29,82 +33,71 @@ function AddTeacherModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
 function EditTeacherModal({ teacher, onClose }: { teacher: Teacher | null; onClose: () => void; }) {
   if (!teacher) return null;
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-2xl p-8 max-w-lg w-full relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl" aria-label="Fechar modal">&times;</button>
-        <h2 className="text-2xl font-bold mb-6">Editar Professor</h2>
-        <EditTeacherForm teacher={teacher} onClose={onClose} />
-      </div>
+    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div className="w-full max-w-lg bg-white/10 backdrop-blur-lg border-2 border-white/20 rounded-3xl shadow-2xl relative">
+            <button onClick={onClose} className="absolute top-4 right-4 text-white/50 hover:text-white text-3xl z-10" aria-label="Fechar modal">&times;</button>
+            <div className="p-8">
+                <h2 className="text-2xl font-bold mb-6 text-white">Editar Professor</h2>
+                <EditTeacherForm teacher={teacher} onClose={onClose} />
+            </div>
+        </div>
     </div>
   )
 }
 
-// --- Componente do Item da Lista ---
+// --- ITEM DA LISTA DE PROFESSORES (Estilizado) ---
 function TeacherListItem({ teacher, onEdit }: { teacher: Teacher, onEdit: (teacher: Teacher) => void }) {
     const [isDeletePending, startDeleteTransition] = useTransition();
-    const [isPasswordPending, startPasswordTransition] = useTransition(); // Novo estado de transição
+    const [isPasswordPending, startPasswordTransition] = useTransition();
 
     const handleDelete = () => {
-        toast.warning(`Esta ação é irreversível. Tem certeza que deseja deletar ${teacher.name}?`, {
-            action: {
-                label: "Confirmar Deleção",
-                onClick: () => startDeleteTransition(async () => {
-                    const result = await deleteTeacher(teacher.id);
-                    toast[result.success ? 'success' : 'error'](result.success ? "Professor deletado com sucesso!" : result.error);
-                })
-            },
+        toast.warning(`Tem certeza que deseja deletar ${teacher.name}?`, {
+            action: { label: "Confirmar", onClick: () => startDeleteTransition(async () => {
+                const result = await deleteTeacher(teacher.id);
+                toast[result.success ? 'success' : 'error'](result.success || result.error);
+            })},
             cancel: { label: "Cancelar" }
         });
     }
 
     const handlePasswordRecovery = () => {
-        toast.warning(`Uma nova senha será gerada e enviada para ${teacher.email}. Deseja continuar?`, {
-            action: {
-                label: "Confirmar",
-                onClick: () => startPasswordTransition(async () => {
-                    const result = await resetAndSendNewPassword(teacher.id);
-                    if (result.success) {
-                        toast.success(`Nova senha enviada para ${teacher.name} com sucesso!`);
-                    } else {
-                        toast.error(result.error || "Falha ao enviar e-mail.");
-                    }
-                })
-            },
+        toast.warning(`Gerar e enviar uma nova senha para ${teacher.email}?`, {
+            action: { label: "Confirmar", onClick: () => startPasswordTransition(async () => {
+                const result = await resetAndSendNewPassword(teacher.id);
+                toast[result.success ? 'success' : 'error'](result.success || result.error);
+            })},
             cancel: { label: "Cancelar" }
         });
     }
 
     return (
-        <li className="flex items-center p-4 border-t transition-colors hover:bg-slate-50">
-            <div className="flex items-center space-x-4 flex-1">
-                <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600">
+        <li className="flex flex-col md:flex-row items-start md:items-center p-5 border-t border-white/10 transition-all duration-200 hover:bg-white/5">
+            <div className="flex items-center space-x-4 flex-1 mb-4 md:mb-0">
+                <div className="w-11 h-11 rounded-full bg-white/10 border-2 border-white/20 flex items-center justify-center font-bold text-white text-lg">
                     {teacher.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1">
-                    <p className="font-semibold text-slate-800">{teacher.name}</p>
-                    <div className="flex items-center space-x-4 text-sm text-slate-600">
-                        <span className="flex items-center"><Mail size={14} className="mr-1" /> {teacher.email}</span>
-                    </div>
+                    <p className="font-semibold text-white">{teacher.name}</p>
+                    <p className="text-sm text-white/60 flex items-center gap-1.5"><Mail size={14} /> {teacher.email}</p>
                 </div>
             </div>
 
-            <div className="pl-6 flex items-center space-x-2">
-                 <button onClick={handlePasswordRecovery} disabled={isPasswordPending} className="p-2 rounded-md text-yellow-600 hover:bg-yellow-100 hover:text-yellow-800 disabled:text-yellow-300 transition-colors" title="Resetar e enviar nova senha">
-                    {isPasswordPending ? <div className="w-[18px] h-[18px] border-2 border-yellow-300 border-t-transparent rounded-full animate-spin"></div> : <KeyRound size={18} />}
+            <div className="flex items-center space-x-1.5 mt-4 md:mt-0">
+                <button onClick={handlePasswordRecovery} disabled={isPasswordPending} className="p-2 rounded-full text-yellow-400 hover:bg-white/10 disabled:opacity-30" title="Resetar e enviar nova senha">
+                    {isPasswordPending ? <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div> : <KeyRound size={18} />}
                 </button>
-                
-                <div className="h-6 w-px bg-slate-200"></div>
-
-                <button onClick={() => onEdit(teacher)} className="p-2 rounded-md text-blue-600 hover:bg-blue-100 hover:text-blue-800 transition-colors" title="Editar professor"><Pencil size={18} /></button>
-                <button onClick={handleDelete} disabled={isDeletePending} className="p-2 rounded-md text-red-600 hover:bg-red-100 hover:text-red-800 disabled:text-red-300 transition-colors" title="Deletar professor">
-                    {isDeletePending ? <div className="w-[18px] h-[18px] border-2 border-red-300 border-t-transparent rounded-full animate-spin"></div> : <Trash2 size={18} />}
+                <button onClick={() => onEdit(teacher)} className="p-2 rounded-full text-blue-400 hover:bg-white/10" title="Editar professor">
+                    <Pencil size={18} />
+                </button>
+                <button onClick={handleDelete} disabled={isDeletePending} className="p-2 rounded-full text-red-500 hover:bg-white/10 disabled:opacity-30" title="Deletar professor">
+                    {isDeletePending ? <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div> : <Trash2 size={18} />}
                 </button>
             </div>
         </li>
     )
 }
 
-// --- Componente Principal da Página (sem alteração de lógica) ---
+// --- COMPONENTE PRINCIPAL (Estilizado) ---
 interface AdminTeachersPageProps {
   teachers: Teacher[];
 }
@@ -122,46 +115,50 @@ export default function TeachersClientPage({ teachers }: AdminTeachersPageProps)
   }, [teachers, searchTerm]);
 
   return (
-    <div className="p-4 sm:p-8">
-        <Button variant="ghost" asChild className="mb-6 gap-2">
-            <Link href="/admin"><ArrowLeft size={16} /> Voltar</Link>
-        </Button>
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-gray-900 text-white">
+        <div className="absolute inset-0 bg-cover bg-center" style={{backgroundImage: 'url(/grid.svg)'}}></div>
+        <div className="container mx-auto p-4 md:p-8 relative">
+             <Link href="/admin" className="inline-flex items-center gap-2 bg-white/10 border border-white/20 backdrop-blur-md text-white hover:bg-white/20 rounded-full px-4 py-2 text-sm mb-8">
+                <ArrowLeft size={16} />
+                Voltar ao Painel
+            </Link>
 
-      <header className="mb-8 flex flex-wrap justify-between items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-800">Gestão de Professores</h1>
-          <p className="text-slate-500">Adicione, edite e gerencie os professores da sua escola.</p>
+            <header className="mb-10 flex flex-wrap justify-between items-center gap-4">
+                <div>
+                    <h1 className="text-4xl font-bold">Gestão de Professores</h1>
+                    <p className="text-white/60">Adicione, edite e gerencie os professores da sua escola.</p>
+                </div>
+                <Button onClick={() => setIsAddModalOpen(true)} className="font-bold py-6 px-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 hover:scale-105 transition-transform flex items-center gap-2">
+                    <PlusCircle size={20}/> Adicionar Professor
+                </Button>
+            </header>
+
+            <AddTeacherModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+            <EditTeacherModal teacher={editingTeacher} onClose={() => setEditingTeacher(null)} />
+
+            <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl shadow-lg">
+                <div className="p-5 border-b border-white/10">
+                    <div className="relative w-full">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" size={20} />
+                        <Input 
+                            type="text" 
+                            placeholder="Pesquisar por nome ou e-mail..." 
+                            value={searchTerm} 
+                            onChange={e => setSearchTerm(e.target.value)} 
+                            className="w-full bg-white/5 border-2 border-white/10 rounded-full p-3 pl-12 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                        />
+                    </div>
+                </div>
+
+                <ul>
+                    {filteredTeachers.length === 0 ? (
+                        <p className="p-10 text-center text-white/50">Nenhum professor encontrado.</p>
+                    ) : (
+                        filteredTeachers.map((teacher) => <TeacherListItem key={teacher.id} teacher={teacher} onEdit={setEditingTeacher} />)
+                    )}
+                </ul>
+            </div>
         </div>
-        <button onClick={() => setIsAddModalOpen(true)} className="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 shadow transition-transform transform hover:scale-105">
-          + Adicionar Professor
-        </button>
-      </header>
-
-      <AddTeacherModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
-      <EditTeacherModal teacher={editingTeacher} onClose={() => setEditingTeacher(null)} />
-
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
-        <div className="p-4 sm:p-6 border-b">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="Pesquisar por nome ou e-mail..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg p-2 pl-10 focus:ring-2 focus:ring-blue-500 transition-shadow"
-            />
-          </div>
-        </div>
-
-        <ul>
-          {filteredTeachers.length === 0 ? (
-            <p className="p-10 text-center text-slate-500">Nenhum professor encontrado.</p>
-          ) : (
-            filteredTeachers.map((teacher) => <TeacherListItem key={teacher.id} teacher={teacher} onEdit={setEditingTeacher} />)
-          )}
-        </ul>
-      </div>
     </div>
   );
 }

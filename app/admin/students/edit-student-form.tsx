@@ -22,7 +22,7 @@ function SubmitButton() {
     <button 
       type="submit" 
       disabled={pending}
-      className="w-full bg-green-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-green-700 disabled:bg-green-300 disabled:cursor-not-allowed transition-colors"
+      className="w-full bg-gradient-to-r from-green-500 to-teal-500 text-white font-bold py-3 px-4 rounded-full hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
     >
       {pending ? 'Salvando Alterações...' : 'Salvar Alterações'}
     </button>
@@ -34,6 +34,11 @@ interface EditStudentFormProps {
   onClose: () => void;
   classes: Class[];
 }
+
+const inputStyles = "w-full bg-white/5 border-2 border-white/20 rounded-lg p-2.5 text-white placeholder:text-white/50 focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400 transition";
+const labelStyles = "block text-sm font-medium text-white/80 mb-1";
+const readOnlyInputStyles = "w-full bg-black/10 border-2 border-white/10 rounded-lg p-2.5 text-white/50 cursor-not-allowed";
+
 
 export function EditStudentForm({ student, onClose, classes }: EditStudentFormProps) {
   const updateStudentWithId = updateStudent.bind(null, student.id);
@@ -50,64 +55,64 @@ export function EditStudentForm({ student, onClose, classes }: EditStudentFormPr
   }, [formState, onClose]);
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={formAction} className="space-y-5">
         {/* Campos do Aluno */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1">
-                <label htmlFor="name" className="font-medium text-gray-700">Nome Completo</label>
-                <input type="text" id="name" name="name" defaultValue={student.name} className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500" required />
+            <div>
+                <label htmlFor="name" className={labelStyles}>Nome Completo</label>
+                <input type="text" id="name" name="name" defaultValue={student.name} className={inputStyles} required />
             </div>
-            <div className="space-y-1">
-                <label htmlFor="username" className="font-medium text-gray-700">Nome de Usuário</label>
-                <input type="text" id="username" name="username" defaultValue={student.username} className="w-full border-gray-200 bg-gray-100 text-gray-500 rounded-lg p-2 cursor-not-allowed" required readOnly />
+            <div>
+                <label htmlFor="username" className={labelStyles}>Nome de Usuário</label>
+                <input type="text" id="username" name="username" defaultValue={student.username} className={readOnlyInputStyles} required readOnly />
             </div>
         </div>
 
-        <div className="space-y-1">
-            <label htmlFor="classId" className="font-medium text-gray-700">Turma</label>
-            <select id="classId" name="classId" defaultValue={student.classId || ''} className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500">
-                <option value="">Nenhuma turma</option>
+        <div>
+            <label htmlFor="classId" className={labelStyles}>Turma</label>
+            <select id="classId" name="classId" defaultValue={student.classId || ''} className={inputStyles}>
+                <option value="" className="bg-gray-800">Nenhuma turma</option>
                 {classes.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                    <option key={c.id} value={c.id} className="bg-gray-800">{c.name}</option>
                 ))}
             </select>
         </div>
 
-        <hr className="my-6"/>
+        <hr className="border-white/10"/>
 
         {/* Campos do Responsável */}
-        <h3 className="text-lg font-medium text-gray-800 mb-2">Dados do Responsável (Opcional)</h3>
-        <div className="space-y-1">
-            <label htmlFor="guardianName" className="font-medium text-gray-700">Nome do Responsável</label>
-            <input type="text" id="guardianName" name="guardianName" defaultValue={student.guardianName || ''} className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500" />
+        <h3 className="text-lg font-semibold text-white">Dados do Responsável (Opcional)</h3>
+        <div>
+            <label htmlFor="guardianName" className={labelStyles}>Nome do Responsável</label>
+            <input type="text" id="guardianName" name="guardianName" defaultValue={student.guardianName || ''} className={inputStyles} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1">
-                <label htmlFor="guardianEmail" className="font-medium text-gray-700">Email do Responsável</label>
-                <input type="email" id="guardianEmail" name="guardianEmail" defaultValue={student.guardianEmail || ''} className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500" />
+            <div>
+                <label htmlFor="guardianEmail" className={labelStyles}>Email do Responsável</label>
+                <input type="email" id="guardianEmail" name="guardianEmail" defaultValue={student.guardianEmail || ''} className={inputStyles} />
             </div>
-            <div className="space-y-1">
-                <label htmlFor="guardianPhone" className="font-medium text-gray-700">Telefone do Responsável</label>
+            <div>
+                <label htmlFor="guardianPhone" className={labelStyles}>Telefone do Responsável</label>
                 <IMaskInput
                     mask="(00) 00000-0000"
                     id="guardianPhone"
                     name="guardianPhone"
                     defaultValue={student.guardianPhone || ''}
-                    className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
+                    className={inputStyles}
                     placeholder="(XX) XXXXX-XXXX"
                 />
             </div>
         </div>
         
-        <hr className="my-6"/>
+        <hr className="border-white/10"/>
 
         {/* Campo de Observações */}
-        <div className="space-y-1">
-            <label htmlFor="notes" className="font-medium text-gray-700">Observações</label>
-            <textarea id="notes" name="notes" rows={3} defaultValue={student.notes || ''} className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500" placeholder="Alguma informação adicional sobre o aluno..."></textarea>
+        <div>
+            <label htmlFor="notes" className={labelStyles}>Observações</label>
+            <textarea id="notes" name="notes" rows={3} defaultValue={student.notes || ''} className={inputStyles} placeholder="Alguma informação adicional sobre o aluno..."></textarea>
         </div>
       
-      <div className="pt-4">
+      <div className="pt-2">
         <SubmitButton />
       </div>
     </form>

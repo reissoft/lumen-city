@@ -4,20 +4,12 @@
 import { useState, useTransition, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { generateQuiz } from "@/app/actions"
 import { getTeacherClasses } from "./actions"
-import { ArrowLeft, PlusCircle, Users } from "lucide-react"
+import { ArrowLeft, PlusCircle, Users, Bot, PencilLine } from "lucide-react"
 import Link from "next/link"
 import dynamic from 'next/dynamic'
 
@@ -33,11 +25,9 @@ export default function CreateActivityPage() {
   const [title, setTitle] = useState("")
   const [isGenerating, startTransition] = useTransition()
   
-  // Estados para as turmas
   const [classes, setClasses] = useState<Class[]>([]);
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
 
-  // Buscar turmas quando o componente montar
   useEffect(() => {
     async function fetchClasses() {
       const fetchedClasses = await getTeacherClasses();
@@ -46,7 +36,6 @@ export default function CreateActivityPage() {
     fetchClasses();
   }, []);
 
-  // Manipulador para seleção de turmas
   const handleClassSelection = (classId: string) => {
     setSelectedClasses(prev => 
       prev.includes(classId) 
@@ -63,7 +52,7 @@ export default function CreateActivityPage() {
     
     const formData = new FormData()
     formData.append("topic", title)
-    formData.append("classIds", JSON.stringify(selectedClasses)); // Envia os IDs das turmas
+    formData.append("classIds", JSON.stringify(selectedClasses));
 
     if (contextText) {
       formData.append("contextText", contextText)
@@ -82,85 +71,103 @@ export default function CreateActivityPage() {
     })
   }
 
-  const canProceed = !isGenerating && title && selectedClasses.length > 0;
+  const canProceed = !isGenerating && title.trim() !== "" && selectedClasses.length > 0;
+
+  const cardStyles = `bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl shadow-lg transition-all`;
+  const disabledOverlay = !canProceed ? 'opacity-40 pointer-events-none' : 'opacity-100';
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8">
-      <div className="max-w-4xl mx-auto">
-        <Button variant="ghost" asChild className="mb-6 gap-2">
-            <Link href="/teacher"><ArrowLeft size={16} /> Voltar</Link>
-        </Button>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 text-white">
+        <div className="absolute inset-0 bg-cover bg-center" style={{backgroundImage: 'url(/grid.svg)'}}></div>
+        <div className="container mx-auto p-4 md:p-8 relative space-y-10">
+            
+            <Link href="/teacher" className="inline-flex items-center gap-2 bg-white/10 border border-white/20 backdrop-blur-md hover:bg-white/20 rounded-full px-4 py-2 text-sm transition-colors">
+                <ArrowLeft size={16} /> Voltar ao Painel
+            </Link>
 
-        {/* 1. TEMA PRINCIPAL */}
-        <div className="mb-8">
-            <Label htmlFor="title" className="text-lg font-semibold">Tema Principal da Atividade</Label>
-            <Input
-                id="title"
-                placeholder="Ex: A Célula Animal, História do Brasil Colônia"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="mt-2 text-base p-4"
-                disabled={isGenerating}
-            />
-        </div>
+            <header>
+                <h1 className="text-4xl font-bold">Criar Nova Atividade</h1>
+                <p className="text-white/60 mt-1">Defina um tema, escolha as turmas e o método de criação.</p>
+            </header>
 
-        {/* 2. SELEÇÃO DE TURMAS */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-3"><Users /> Selecionar Turmas</CardTitle>
-            <CardDescription>Escolha para quais turmas esta atividade será disponibilizada.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {classes.length > 0 ? (
-              classes.map(cls => (
-                <div key={cls.id} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`class-${cls.id}`} 
-                    onCheckedChange={() => handleClassSelection(cls.id)}
-                    checked={selectedClasses.includes(cls.id)}
-                  />
-                  <Label htmlFor={`class-${cls.id}`} className="font-normal">{cls.name}</Label>
+            {/* 1. TEMA E TURMAS */}
+            <div className="grid md:grid-cols-2 gap-8 items-start">
+                 <section className={`${cardStyles} p-6 md:p-8`}>
+                    <Label htmlFor="title" className="block text-lg font-bold text-white mb-3">1. Defina um Tema</Label>
+                    <Input
+                        id="title"
+                        placeholder="Ex: A Célula Animal, Brasil Colônia..."
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        className="w-full bg-white/5 border-2 border-white/20 rounded-lg p-3 text-white placeholder:text-white/50 focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400 transition"
+                        disabled={isGenerating}
+                    />
+                </section>
+
+                <section className={`${cardStyles} p-6 md:p-8`}>
+                    <header className="mb-4">
+                        <h2 className="text-lg font-bold flex items-center gap-2"><Users size={20}/> 2. Selecionar Turmas</h2>
+                        <p className="text-sm text-white/50">Escolha para quais turmas esta atividade será visível.</p>
+                    </header>
+                    <div className="space-y-3 max-h-32 overflow-y-auto pr-2">
+                        {classes.length > 0 ? (
+                        classes.map(cls => (
+                            <div key={cls.id} className="flex items-center space-x-3 bg-white/5 p-3 rounded-lg">
+                            <Checkbox 
+                                id={`class-${cls.id}`} 
+                                onCheckedChange={() => handleClassSelection(cls.id)}
+                                checked={selectedClasses.includes(cls.id)}
+                                className="border-white/30 data-[state=checked]:bg-blue-500"
+                            />
+                            <Label htmlFor={`class-${cls.id}`} className="font-normal text-white/90 cursor-pointer">{cls.name}</Label>
+                            </div>
+                        ))
+                        ) : (
+                        <p className="text-sm text-white/50">Nenhuma turma encontrada.</p>
+                        )}
+                    </div>
+                </section>
+            </div>
+
+
+            {/* 2. OPÇÕES DE CRIAÇÃO */}
+            <div>
+                 <h2 className="text-2xl font-bold text-center mb-2">3. Escolha como Criar</h2>
+                 <p className="text-white/60 text-center mb-6">Use nossa IA para criar um quiz rápido ou crie as perguntas manualmente.</p>
+                 <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 ${disabledOverlay}`}>
+                    <div className={`${cardStyles} hover:border-blue-500/50`}>
+                        <QuizGeneratorCard 
+                        topic={title}
+                        isGenerating={isGenerating}
+                        handleGeneration={handleGenerateQuiz}
+                        />
+                    </div>
+
+                    <div className={`${cardStyles} flex flex-col p-6 md:p-8 hover:border-green-500/50`}>
+                        <header className="flex-grow">
+                           <div className="flex items-center gap-3 mb-2">
+                               <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/20">
+                                <PencilLine className="text-green-400" />
+                               </div>
+                                <h3 className="text-xl font-bold">Criar Quiz Manualmente</h3>
+                           </div>
+                           <p className="text-white/60 ml-1">
+                            Elabore cada pergunta e resposta para um controle total sobre o conteúdo.
+                           </p>
+                        </header>
+                        <footer className="mt-6">
+                        <Link 
+                            href={`/teacher/create-activity/manual?title=${encodeURIComponent(title)}&classIds=${JSON.stringify(selectedClasses)}`}
+                            className={`${!canProceed ? 'pointer-events-none' : ''}`}>
+                            <Button variant="secondary" className="w-full font-bold bg-white/10 border-white/20 backdrop-blur-md hover:bg-white/20 transition-colors" disabled={!canProceed}>
+                            Começar a Criar
+                            </Button>
+                        </Link>
+                        </footer>
+                    </div>
                 </div>
-              ))
-            ) : (
-              <p className="text-sm text-slate-500">Nenhuma turma encontrada.</p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* 3. OPÇÕES DE CRIAÇÃO */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Wrapper div para controlar o estado desabilitado */}
-          <div className={!canProceed ? 'opacity-50 pointer-events-none' : ''}>
-            <QuizGeneratorCard 
-              topic={title}
-              isGenerating={isGenerating}
-              handleGeneration={handleGenerateQuiz}
-            />
-          </div>
-
-          <Card className={`hover:border-green-500/50 transition-all ${!canProceed ? 'opacity-50' : ''}`}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3">
-                <PlusCircle className="text-green-600" />
-                Criar Quiz Manualmente
-              </CardTitle>
-              <CardDescription>
-                Use o tema e turmas definidos acima e crie cada pergunta.
-              </CardDescription>
-            </CardHeader>
-            <CardFooter>
-              <Link 
-                href={`/teacher/create-activity/manual?title=${encodeURIComponent(title)}&classIds=${JSON.stringify(selectedClasses)}`}
-                className={`w-full ${!canProceed ? 'pointer-events-none' : ''}`}>
-                <Button variant="secondary" className="w-full border-green-200 text-green-700" disabled={!canProceed}>
-                  Começar a Criar
-                </Button>
-              </Link>
-            </CardFooter>
-          </Card>
+            </div>
         </div>
-      </div>
     </div>
   )
 }

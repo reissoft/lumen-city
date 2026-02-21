@@ -16,7 +16,7 @@ export async function sendEmail(to: string, subject: string, body: string) {
   try {
     // Agora o 'await' funcionará corretamente
     await resend.emails.send({
-      from: "onboarding@finansistema.online", 
+      from: "lumen@finansistema.online", 
       to: to,
       subject: subject,
       html: body,

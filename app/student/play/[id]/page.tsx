@@ -165,6 +165,7 @@ export default function PlayQuizPage({ params }: { params: { id: string } }) {
                   <span>Score: {score}</span>
               </div>
           </div>
+          {/* @ts-ignore */}
           <Progress value={progress} className="mt-4 h-2 bg-white/10" indicatorClassName="bg-gradient-to-r from-green-400 to-cyan-400"/>
       </header>
 

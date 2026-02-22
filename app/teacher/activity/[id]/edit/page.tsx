@@ -139,13 +139,13 @@ function EditQuizPageContent() {
             </header>
 
             <div className={`${cardStyles} p-6 md:p-8 space-y-6`}>
-                <h2 class="text-xl font-bold text-white">Informações Gerais</h2>
+                <h2 className="text-xl font-bold text-white">Informações Gerais</h2>
                 <div className="space-y-2"><Label htmlFor="quiz-title" className={labelStyles}>Título da Atividade</Label><Input id="quiz-title" value={title} onChange={(e) => setTitle(e.target.value)} disabled={isSaving} className={inputStyles} placeholder="Ex: Conquista da América"/></div>
                 <div className="space-y-2"><Label htmlFor="quiz-description" className={labelStyles}>Descrição</Label><Textarea id="quiz-description" value={description} onChange={(e) => setDescription(e.target.value)} disabled={isSaving} className={cn(inputStyles, 'min-h-[80px]')} placeholder="Um breve resumo sobre o conteúdo desta missão."/></div>
             </div>
 
             <div className={`${cardStyles} p-6 md:p-8 space-y-4`}>
-                <h2 class="text-xl font-bold text-white flex items-center gap-3"><Users /> Turmas</h2>
+                <h2 className="text-xl font-bold text-white flex items-center gap-3"><Users /> Turmas</h2>
                 <p className="text-white/60 -mt-2">Escolha para quais turmas esta atividade será aplicada.</p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">{allTeacherClasses.length > 0 ? (allTeacherClasses.map(cls => (
                     <div key={cls.id} className="flex items-center space-x-3 bg-white/5 p-3 rounded-lg border-2 border-transparent has-[:checked]:border-blue-500/50 has-[:checked]:bg-blue-900/20 transition-all">
@@ -156,7 +156,7 @@ function EditQuizPageContent() {
             </div>
 
             <div className={`${cardStyles} p-6 md:p-8 space-y-4`}>
-                <h2 class="text-xl font-bold text-white flex items-center gap-3"><BookOpen/> Materiais de Revisão</h2>
+                <h2 className="text-xl font-bold text-white flex items-center gap-3"><BookOpen/> Materiais de Revisão</h2>
                 <div className="flex gap-2"><Input value={newLink} onChange={(e) => setNewLink(e.target.value)} placeholder="Cole um link do YouTube, um PDF ou qualquer outra URL" disabled={isSaving} className={inputStyles} /><Button onClick={addReviewMaterial} disabled={isSaving} className="bg-white/10 hover:bg-white/20 shrink-0">Adicionar</Button></div>
                 <div className="space-y-2 pt-2">{reviewMaterials.map(m => {
                     const Icon = materialIcons[m.type] || LinkIcon;

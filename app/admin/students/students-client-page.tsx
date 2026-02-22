@@ -71,15 +71,15 @@ function StudentListItem({ student, onEdit }: { student: StudentWithDetails, onE
   const handleToggle = () => createActionHandler(startToggleTransition, () => toggleStudentActiveStatus(student.id, student.isActive), `Status de ${student.name} alterado.`, "Falha ao alterar status.");
   const handleDelete = () => toast.warning(`Tem certeza que deseja deletar ${student.name}? Esta ação é irreversível.`, {
     action: { label: "Confirmar Deleção", onClick: () => createActionHandler(startDeleteTransition, () => deleteStudent(student.id), `${student.name} deletado com sucesso.`, "Falha ao deletar aluno.") },
-    cancel: { label: "Cancelar" }
+    cancel: { label: "Cancelar",onClick: () => {} }
   });
   const handleEmailRecovery = () => toast.warning(`Enviar nova senha para ${student.guardianEmail}?`, {
       action: { label: "Confirmar", onClick: () => createActionHandler(startEmailTransition, () => resetAndSendNewPasswordViaEmail(student.id), `Nova senha enviada para ${student.guardianEmail}!`, "Falha ao enviar e-mail.") },
-      cancel: { label: "Cancelar" }
+      cancel: { label: "Cancelar",onClick: () => {} }
   });
   const handleWhatsAppRecovery = () => toast.warning(`Enviar nova senha via WhatsApp para ${student.guardianName}?`, {
       action: { label: "Confirmar", onClick: () => createActionHandler(startWhatsAppTransition, () => resetAndSendNewPasswordViaWhatsApp(student.id), "WhatsApp enviado com sucesso!", "Falha ao enviar WhatsApp.") },
-      cancel: { label: "Cancelar" }
+      cancel: { label: "Cancelar",onClick: () => {} }
   });
 
   const itemClasses = `flex flex-col md:flex-row items-start md:items-center p-5 border-t border-white/10 transition-all duration-200 ${!student.isActive ? 'opacity-40' : 'hover:bg-white/5'}`;

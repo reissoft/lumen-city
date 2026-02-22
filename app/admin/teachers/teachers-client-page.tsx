@@ -56,7 +56,7 @@ function TeacherListItem({ teacher, onEdit }: { teacher: Teacher, onEdit: (teach
                 const result = await deleteTeacher(teacher.id);
                 toast[result.success ? 'success' : 'error'](result.success || result.error);
             })},
-            cancel: { label: "Cancelar" }
+            cancel: { label: "Cancelar",onClick: ()=>{} }
         });
     }
 
@@ -66,7 +66,7 @@ function TeacherListItem({ teacher, onEdit }: { teacher: Teacher, onEdit: (teach
                 const result = await resetAndSendNewPassword(teacher.id);
                 toast[result.success ? 'success' : 'error'](result.success || result.error);
             })},
-            cancel: { label: "Cancelar" }
+            cancel: { label: "Cancelar", onClick: ()=>{} }
         });
     }
 

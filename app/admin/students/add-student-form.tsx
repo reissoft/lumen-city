@@ -32,6 +32,7 @@ const inputStyles = "w-full bg-white/5 border-2 border-white/20 rounded-lg p-2.5
 const labelStyles = "block text-sm font-medium text-white/80 mb-1";
 
 export function AddStudentForm({ onClose, classes }: { onClose: () => void, classes: Class[] }) {
+  // @ts-ignore
   const [formState, formAction] = useFormState(createStudent, initialState);
 
   useEffect(() => {

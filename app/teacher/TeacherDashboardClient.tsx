@@ -56,7 +56,7 @@ export default function TeacherDashboardClient({ teacherName, activities, stats 
             }
         },
         cancel: {
-            label: "Cancelar",
+            label: "Cancelar", onClick: ()=>{}
         }
     });
   };

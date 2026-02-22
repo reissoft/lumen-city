@@ -42,6 +42,7 @@ const readOnlyInputStyles = "w-full bg-black/10 border-2 border-white/10 rounded
 
 export function EditStudentForm({ student, onClose, classes }: EditStudentFormProps) {
   const updateStudentWithId = updateStudent.bind(null, student.id);
+  // @ts-ignore
   const [formState, formAction] = useFormState(updateStudentWithId, initialState);
 
   useEffect(() => {

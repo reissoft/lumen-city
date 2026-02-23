@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { cookies } from 'next/headers';
@@ -34,41 +35,41 @@ export async function GET() {
   }
 
   try {
-    let teachers: { id: string; name: string | null }[] = [];
-    let students: { id: string; name: string | null }[] = [];
+    let teachers: any[] = [];
+    let students: any[] = [];
 
     if (user.role === 'admin') {
       teachers = await prisma.teacher.findMany({
         where: { schoolId: user.schoolId, id: { not: user.id } },
         select: { id: true, name: true },
       });
+      // MODIFICAÇÃO: Inclui a informação da turma para os alunos
       students = await prisma.student.findMany({
         where: { schoolId: user.schoolId },
-        select: { id: true, name: true },
+        select: { id: true, name: true, class: { select: { name: true } } },
       });
     } else if (user.role === 'student') {
-      // --- LÓGICA CORRETA PARA ALUNOS ---
       if (user.classId) {
         const studentClass = await prisma.class.findUnique({
           where: { id: user.classId },
-          include: { teachers: true }, // A relação em `Class` para professores é `teachers`
+          include: { teachers: true },
         });
         if (studentClass) {
           teachers = studentClass.teachers.map(t => ({ id: t.id, name: t.name }));
         }
       }
     } else if (user.role === 'teacher') {
-      // --- LÓGICA CORRETA PARA PROFESSORES ---
       const teacherClasses = await prisma.class.findMany({
         where: { teachers: { some: { id: user.id } } },
-        include: { students: true }, // A relação em `Class` para alunos é `students`
+        include: { students: true },
       });
 
-      const studentMap = new Map<string, { id: string; name: string | null }>();
+      // MODIFICAÇÃO: Adiciona o nome da turma ao criar a lista de alunos
+      const studentMap = new Map<string, { id: string; name: string | null; className: string }>();
       teacherClasses.forEach(c => {
         c.students.forEach(s => {
           if (!studentMap.has(s.id)) {
-            studentMap.set(s.id, { id: s.id, name: s.name });
+            studentMap.set(s.id, { id: s.id, name: s.name, className: c.name });
           }
         });
       });
@@ -77,7 +78,13 @@ export async function GET() {
 
     const responseUsers = {
       teachers: teachers.map(t => ({ id: t.id, name: t.name, role: 'teacher' as const })),
-      students: students.map(s => ({ id: s.id, name: s.name, role: 'student' as const })),
+      // MODIFICAÇÃO: Formata a resposta para incluir o nome da turma
+      students: students.map(s => ({
+        id: s.id,
+        name: s.name,
+        role: 'student' as const,
+        className: s.className || s.class?.name || null,
+      })),
     };
 
     return NextResponse.json(responseUsers);

@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
+// MODIFICAÇÃO: Adiciona `className` à interface do Contato
 interface Contact {
   id: string;
   name: string | null;
   role: 'teacher' | 'student';
+  className?: string | null;
 }
 
 interface CurrentUser {
@@ -64,8 +66,9 @@ export default function ContactList({ onSelectContact, selectedContactId, curren
       >
         <div>
             <p className="font-semibold text-white">{contact.name}</p>
+            {/* MODIFICAÇÃO: Exibe a turma do aluno */}
             <p className={`text-sm ${isSelected ? 'text-white/80' : 'text-white/50'}`}>
-            {contact.role === 'teacher' ? 'Professor' : 'Aluno'}
+              {contact.role === 'teacher' ? 'Professor' : `Aluno - ${contact.className}`}
             </p>
         </div>
         {unreadCount > 0 && (
@@ -85,7 +88,6 @@ export default function ContactList({ onSelectContact, selectedContactId, curren
         <p className="text-white/50 px-2">Carregando...</p>
       ) : (
         <div className="space-y-4">
-          {/* CORREÇÃO: Só renderiza a seção de professores se houver professores */}
           {contacts.teachers.length > 0 && (
             <div>
               <h3 className="font-bold text-white/40 text-sm uppercase px-2 mb-2">Professores</h3>
@@ -95,7 +97,6 @@ export default function ContactList({ onSelectContact, selectedContactId, curren
             </div>
           )}
 
-          {/* CORREÇÃO: Só renderiza a seção de alunos se houver alunos */}
           {contacts.students.length > 0 && (
             <div>
               <h3 className="font-bold text-white/40 text-sm uppercase px-2 mb-2">Alunos</h3>

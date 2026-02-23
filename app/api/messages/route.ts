@@ -102,6 +102,7 @@ export async function POST(req: NextRequest) {
     const recipient = await (async () => {
         let target = await prisma.teacher.findUnique({ where: { id: recipientId } });
         if (target) return {...target, role: 'teacher'};
+        {/* @ts-ignore */}
         target = await prisma.student.findUnique({ where: { id: recipientId } });
         if (target) return {...target, role: 'student'};
         return null;

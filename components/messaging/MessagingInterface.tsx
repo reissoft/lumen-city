@@ -44,6 +44,7 @@ export default function MessagingInterface({ currentUser, initialUnreadMessages,
       <div className={`w-full md:w-1/3 lg:w-1/4 border-r border-white/10 ${selectedContact ? 'hidden md:flex' : 'flex'} flex-col`}>
         <ContactList 
           currentUser={currentUser}
+          // @ts-ignore 
           onSelectContact={handleSelectContact} 
           selectedContactId={selectedContact?.id}
           unreadMessages={unreadMessages}

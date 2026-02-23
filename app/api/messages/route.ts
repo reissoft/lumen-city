@@ -41,16 +41,15 @@ export async function GET(req: NextRequest) {
 
   try {
     const messages = await prisma.message.findMany({
-      // CORREÇÃO: A lógica da query foi reestruturada para ser explícita e correta.
       where: {
         OR: [
-          { // 1. Mensagens DE mim PARA o contato
+          { 
             AND: [
               { OR: [{ senderTeacherId: user.id }, { senderStudentId: user.id }] },
               { OR: [{ receiverTeacherId: contactId }, { receiverStudentId: contactId }] },
             ],
           },
-          { // 2. Mensagens DE o contato PARA mim
+          { 
             AND: [
               { OR: [{ senderTeacherId: contactId }, { senderStudentId: contactId }] },
               { OR: [{ receiverTeacherId: user.id }, { receiverStudentId: user.id }] },
@@ -93,6 +92,41 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Recipient not found' }, { status: 404 });
     }
 
+    // --- INÍCIO DA VALIDAÇÃO DE TURMA COMPARTILHADA (BASEADA NO SCHEMA REAL) ---
+    let haveSharedClass = false;
+    const recipientRole = recipientTeacher ? 'teacher' : 'student';
+
+    if (user.role === 'admin') {
+      haveSharedClass = true;
+    } else {
+      const studentId = user.role === 'student' ? user.id : recipientId;
+      const teacherId = user.role === 'teacher' ? user.id : recipientId;
+
+      // Encontra o aluno para pegar o classId
+      const student = await prisma.student.findUnique({ 
+        where: { id: studentId },
+        select: { classId: true }
+      });
+
+      if (student && student.classId) {
+        // Verifica se o professor está associado àquela turma específica
+        const classCount = await prisma.class.count({
+          where: {
+            id: student.classId,
+            teachers: { some: { id: teacherId } },
+          },
+        });
+        if (classCount > 0) {
+          haveSharedClass = true;
+        }
+      }
+    }
+
+    if (!haveSharedClass) {
+      return NextResponse.json({ error: 'Forbidden: You can only message members of your own classes.' }, { status: 403 });
+    }
+    // --- FIM DA VALIDAÇÃO ---
+
     const createdMessage = await prisma.message.create({
       data: {
         content: content,
@@ -114,7 +148,6 @@ export async function POST(req: NextRequest) {
       },
     });
     
-    // CORREÇÃO: Busca a mensagem recém-criada com os `includes` para retornar o objeto no formato correto.
     const sentMessage = await prisma.message.findUnique({
         where: { id: createdMessage.id },
         include: {

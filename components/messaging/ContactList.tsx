@@ -17,9 +17,11 @@ interface ContactListProps {
   onSelectContact: (contact: Contact) => void;
   selectedContactId?: string;
   currentUser: CurrentUser;
+  // 1. Recebendo as mensagens não lidas
+  unreadMessages: Record<string, number>; 
 }
 
-export default function ContactList({ onSelectContact, selectedContactId, currentUser }: ContactListProps) {
+export default function ContactList({ onSelectContact, selectedContactId, currentUser, unreadMessages }: ContactListProps) {
   const [contacts, setContacts] = useState<{ teachers: Contact[]; students: Contact[] }>({ teachers: [], students: [] });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -49,28 +51,36 @@ export default function ContactList({ onSelectContact, selectedContactId, curren
     }
 
     const isSelected = contact.id === selectedContactId;
+    // 2. Verificando se há mensagens não lidas deste contato
+    const unreadCount = unreadMessages[contact.id];
 
     return (
       <div
         key={contact.id}
         onClick={() => onSelectContact(contact)}
-        // 1. Estilos adaptados para o fundo escuro/translúcido
-        className={`p-3 rounded-lg cursor-pointer transition-colors ${
+        className={`relative flex justify-between items-center p-3 rounded-lg cursor-pointer transition-colors ${
           isSelected 
           ? 'bg-white/20' 
           : 'hover:bg-white/10'
         }`}
       >
-        <p className="font-semibold text-white">{contact.name}</p>
-        <p className={`text-sm ${isSelected ? 'text-white/80' : 'text-white/50'}`}>
-          {contact.role === 'teacher' ? 'Professor' : 'Aluno'}
-        </p>
+        <div>
+            <p className="font-semibold text-white">{contact.name}</p>
+            <p className={`text-sm ${isSelected ? 'text-white/80' : 'text-white/50'}`}>
+            {contact.role === 'teacher' ? 'Professor' : 'Aluno'}
+            </p>
+        </div>
+        {/* 3. Exibindo o indicador de mensagem não lida */}
+        {unreadCount > 0 && (
+            <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-xs text-white font-bold">
+                {unreadCount}
+            </div>
+        )}
       </div>
     );
   };
 
   return (
-    // 2. Removendo fundos e bordas desnecessários, ajustando o texto
     <div className="p-2 md:p-4 h-full overflow-y-auto">
       <h2 className="text-2xl font-bold mb-4 px-2 text-white">Contatos</h2>
       

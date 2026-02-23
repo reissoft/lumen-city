@@ -17,7 +17,6 @@ interface ContactListProps {
   onSelectContact: (contact: Contact) => void;
   selectedContactId?: string;
   currentUser: CurrentUser;
-  // 1. Recebendo as mensagens não lidas
   unreadMessages: Record<string, number>; 
 }
 
@@ -51,7 +50,6 @@ export default function ContactList({ onSelectContact, selectedContactId, curren
     }
 
     const isSelected = contact.id === selectedContactId;
-    // 2. Verificando se há mensagens não lidas deste contato
     const unreadCount = unreadMessages[contact.id];
 
     return (
@@ -70,7 +68,6 @@ export default function ContactList({ onSelectContact, selectedContactId, curren
             {contact.role === 'teacher' ? 'Professor' : 'Aluno'}
             </p>
         </div>
-        {/* 3. Exibindo o indicador de mensagem não lida */}
         {unreadCount > 0 && (
             <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-xs text-white font-bold">
                 {unreadCount}
@@ -88,27 +85,25 @@ export default function ContactList({ onSelectContact, selectedContactId, curren
         <p className="text-white/50 px-2">Carregando...</p>
       ) : (
         <div className="space-y-4">
-          <div>
-            <h3 className="font-bold text-white/40 text-sm uppercase px-2 mb-2">Professores</h3>
-            <div className="space-y-1">
-              {contacts.teachers.length > 0 ? (
-                contacts.teachers.map(renderContact)
-              ) : (
-                <p className="text-sm text-white/40 px-2">Nenhum professor.</p>
-              )}
+          {/* CORREÇÃO: Só renderiza a seção de professores se houver professores */}
+          {contacts.teachers.length > 0 && (
+            <div>
+              <h3 className="font-bold text-white/40 text-sm uppercase px-2 mb-2">Professores</h3>
+              <div className="space-y-1">
+                {contacts.teachers.map(renderContact)}
+              </div>
             </div>
-          </div>
+          )}
 
-          <div>
-            <h3 className="font-bold text-white/40 text-sm uppercase px-2 mb-2">Alunos</h3>
-            <div className="space-y-1">
-              {contacts.students.length > 0 ? (
-                contacts.students.map(renderContact)
-              ) : (
-                <p className="text-sm text-white/40 px-2">Nenhum aluno.</p>
-              )}
+          {/* CORREÇÃO: Só renderiza a seção de alunos se houver alunos */}
+          {contacts.students.length > 0 && (
+            <div>
+              <h3 className="font-bold text-white/40 text-sm uppercase px-2 mb-2">Alunos</h3>
+              <div className="space-y-1">
+                {contacts.students.map(renderContact)}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>

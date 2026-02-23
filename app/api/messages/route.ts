@@ -41,15 +41,20 @@ export async function GET(req: NextRequest) {
 
   try {
     const messages = await prisma.message.findMany({
+      // CORREÇÃO: A lógica da query foi reestruturada para ser explícita e correta.
       where: {
         OR: [
-          { // Mensagens que eu enviei para o contato
-            OR: [{ senderTeacherId: user.id }, { senderStudentId: user.id }],
-            OR: [{ receiverTeacherId: contactId }, { receiverStudentId: contactId }],
+          { // 1. Mensagens DE mim PARA o contato
+            AND: [
+              { OR: [{ senderTeacherId: user.id }, { senderStudentId: user.id }] },
+              { OR: [{ receiverTeacherId: contactId }, { receiverStudentId: contactId }] },
+            ],
           },
-          { // Mensagens que o contato enviou para mim
-            OR: [{ senderTeacherId: contactId }, { senderStudentId: contactId }],
-            OR: [{ receiverTeacherId: user.id }, { receiverStudentId: user.id }],
+          { // 2. Mensagens DE o contato PARA mim
+            AND: [
+              { OR: [{ senderTeacherId: contactId }, { senderStudentId: contactId }] },
+              { OR: [{ receiverTeacherId: user.id }, { receiverStudentId: user.id }] },
+            ],
           },
         ],
       },
@@ -88,7 +93,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Recipient not found' }, { status: 404 });
     }
 
-    const newMessage = await prisma.message.create({
+    const createdMessage = await prisma.message.create({
       data: {
         content: content,
         ...(user.role === 'student'
@@ -102,21 +107,23 @@ export async function POST(req: NextRequest) {
 
     await prisma.notification.create({
       data: {
-        messageId: newMessage.id,
+        messageId: createdMessage.id,
         read: false,
         recipientTeacherId: recipientTeacher ? recipientId : undefined,
         recipientStudentId: recipientStudent ? recipientId : undefined,
       },
     });
+    
+    // CORREÇÃO: Busca a mensagem recém-criada com os `includes` para retornar o objeto no formato correto.
+    const sentMessage = await prisma.message.findUnique({
+        where: { id: createdMessage.id },
+        include: {
+            senderTeacher: { select: { id: true, name: true } },
+            senderStudent: { select: { id: true, name: true } },
+        }
+    });
 
-    // Retornar a mensagem e os detalhes do remetente para a UI
-    const senderDetails = {
-      id: user.id,
-      name: user.name,
-      role: user.role
-    };
-
-    return NextResponse.json({ newMessage, senderDetails }, { status: 201 });
+    return NextResponse.json(sentMessage, { status: 201 });
 
   } catch (error) {
     console.error('Error sending message:', error);

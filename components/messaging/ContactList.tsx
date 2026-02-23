@@ -13,7 +13,6 @@ interface CurrentUser {
   id: string;
 }
 
-// 1. Adicionar `selectedContactId` e `currentUser` às props
 interface ContactListProps {
   onSelectContact: (contact: Contact) => void;
   selectedContactId?: string;
@@ -44,9 +43,7 @@ export default function ContactList({ onSelectContact, selectedContactId, curren
     fetchContacts();
   }, []);
 
-  // Função para renderizar um item de contato, agora com lógica de destaque
   const renderContact = (contact: Contact) => {
-    // Não mostrar o próprio usuário na lista de contatos
     if (contact.id === currentUser.id) {
       return null;
     }
@@ -57,15 +54,15 @@ export default function ContactList({ onSelectContact, selectedContactId, curren
       <div
         key={contact.id}
         onClick={() => onSelectContact(contact)}
-        // 2. Aplicar estilo condicional se o contato estiver selecionado
+        // 1. Estilos adaptados para o fundo escuro/translúcido
         className={`p-3 rounded-lg cursor-pointer transition-colors ${
           isSelected 
-          ? 'bg-blue-500/10 text-blue-800' 
-          : 'hover:bg-gray-100'
+          ? 'bg-white/20' 
+          : 'hover:bg-white/10'
         }`}
       >
-        <p className="font-semibold">{contact.name}</p>
-        <p className={`text-sm ${isSelected ? 'text-blue-600' : 'text-gray-500'}`}>
+        <p className="font-semibold text-white">{contact.name}</p>
+        <p className={`text-sm ${isSelected ? 'text-white/80' : 'text-white/50'}`}>
           {contact.role === 'teacher' ? 'Professor' : 'Aluno'}
         </p>
       </div>
@@ -73,31 +70,32 @@ export default function ContactList({ onSelectContact, selectedContactId, curren
   };
 
   return (
-    <div className="p-2 md:p-4 h-full overflow-y-auto text-black bg-white">
-      <h2 className="text-2xl font-bold mb-4 px-2">Contatos</h2>
+    // 2. Removendo fundos e bordas desnecessários, ajustando o texto
+    <div className="p-2 md:p-4 h-full overflow-y-auto">
+      <h2 className="text-2xl font-bold mb-4 px-2 text-white">Contatos</h2>
       
       {isLoading ? (
-        <p className="text-gray-500 px-2">Carregando...</p>
+        <p className="text-white/50 px-2">Carregando...</p>
       ) : (
         <div className="space-y-4">
           <div>
-            <h3 className="font-bold text-gray-500 text-sm uppercase px-2 mb-2">Professores</h3>
+            <h3 className="font-bold text-white/40 text-sm uppercase px-2 mb-2">Professores</h3>
             <div className="space-y-1">
               {contacts.teachers.length > 0 ? (
                 contacts.teachers.map(renderContact)
               ) : (
-                <p className="text-sm text-gray-400 px-2">Nenhum professor.</p>
+                <p className="text-sm text-white/40 px-2">Nenhum professor.</p>
               )}
             </div>
           </div>
 
           <div>
-            <h3 className="font-bold text-gray-500 text-sm uppercase px-2 mb-2">Alunos</h3>
+            <h3 className="font-bold text-white/40 text-sm uppercase px-2 mb-2">Alunos</h3>
             <div className="space-y-1">
               {contacts.students.length > 0 ? (
                 contacts.students.map(renderContact)
               ) : (
-                <p className="text-sm text-gray-400 px-2">Nenhum aluno.</p>
+                <p className="text-sm text-white/40 px-2">Nenhum aluno.</p>
               )}
             </div>
           </div>

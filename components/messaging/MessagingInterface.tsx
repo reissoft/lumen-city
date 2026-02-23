@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import ContactList from './ContactList';
 import MessageWindow from './MessageWindow';
-import { useSearchParams } from 'next/navigation';
 
 interface CurrentUser {
   id: string;
@@ -23,16 +22,14 @@ interface MessagingInterfaceProps {
 }
 
 export default function MessagingInterface({ currentUser }: MessagingInterfaceProps) {
-  // O estado `selectedContact` agora controla qual view mostrar no mobile.
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
 
   return (
-    <div className="flex h-full bg-white/90 backdrop-blur-lg text-black rounded-xl overflow-hidden">
+    // 1. Aplicando o estilo de vidro (glassmorphism)
+    <div className="flex h-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg overflow-hidden">
       
       {/* -- Lista de Contatos -- */}
-      {/* Visível por padrão. Em telas `md` ou maiores, fica sempre visível. */}
-      {/* Em telas menores, é OCULTADO se um contato for selecionado. */}
-      <div className={`w-full md:w-1/3 lg:w-1/4 border-r border-gray-200/80 ${selectedContact ? 'hidden md:flex' : 'flex'} flex-col`}>
+      <div className={`w-full md:w-1/3 lg:w-1/4 border-r border-white/10 ${selectedContact ? 'hidden md:flex' : 'flex'} flex-col`}>
         <ContactList 
           currentUser={currentUser}
           onSelectContact={setSelectedContact} 
@@ -41,20 +38,20 @@ export default function MessagingInterface({ currentUser }: MessagingInterfacePr
       </div>
 
       {/* -- Janela de Mensagem -- */}
-      {/* Oculta por padrão em telas pequenas. */}
-      {/* Aparece quando um contato é selecionado. */}
       <div className={`w-full md:w-2/3 lg:w-3/4 ${selectedContact ? 'flex' : 'hidden md:flex'} flex-col`}>
         {selectedContact ? (
           <MessageWindow 
             contact={selectedContact} 
             currentUser={currentUser} 
-            // Passa uma função para o botão "Voltar" no mobile
             onBack={() => setSelectedContact(null)} 
           />
         ) : (
-          // Mensagem para telas grandes quando nenhum contato está selecionado
-          <div className="flex-1 flex items-center justify-center text-gray-500">
-            <p>Selecione um contato para iniciar a conversa</p>
+          // 2. Mensagem para telas grandes, com estilo adaptado ao novo fundo
+          <div className="flex-1 flex items-center justify-center text-white/50">
+            <div className="text-center">
+                <h2 className="text-2xl font-bold">Bem-vindo ao Mensagens</h2>
+                <p className="mt-2 text-white/40">Selecione um contato para iniciar uma conversa.</p>
+            </div>
           </div>
         )}
       </div>

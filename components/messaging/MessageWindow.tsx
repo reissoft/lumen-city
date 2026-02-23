@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Message {
   id: string;
@@ -27,9 +29,10 @@ interface CurrentUser {
 interface MessageWindowProps {
   contact: Contact;
   currentUser: CurrentUser;
+  onBack: () => void;
 }
 
-export default function MessageWindow({ contact, currentUser }: MessageWindowProps) {
+export default function MessageWindow({ contact, currentUser, onBack }: MessageWindowProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -64,18 +67,9 @@ export default function MessageWindow({ contact, currentUser }: MessageWindowPro
         content: newMessage,
       });
 
-      const { newMessage: sentMessage, senderDetails } = response.data;
+      const sentMessage = response.data;
 
-      // Correção: Construir o objeto completo para a UI, incluindo os IDs do remetente
-      const newCompleteMessage: Message = {
-        ...sentMessage,
-        senderTeacher: senderDetails.role !== 'student' ? { id: senderDetails.id, name: senderDetails.name } : null,
-        senderStudent: senderDetails.role === 'student' ? { id: senderDetails.id, name: senderDetails.name } : null,
-        senderTeacherId: senderDetails.role !== 'student' ? senderDetails.id : null,
-        senderStudentId: senderDetails.role === 'student' ? senderDetails.id : null,
-      };
-
-      setMessages(prevMessages => [...prevMessages, newCompleteMessage]);
+      setMessages(prevMessages => [...prevMessages, sentMessage]);
       setNewMessage('');
     } catch (error) {
       console.error('Error sending message:', error);
@@ -83,27 +77,33 @@ export default function MessageWindow({ contact, currentUser }: MessageWindowPro
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-100 text-black">
-      <header className="bg-gray-200 p-4 border-b border-gray-300">
+    <div className="flex flex-col h-full bg-white text-black">
+      <header className="flex items-center gap-4 bg-gray-50 p-3 border-b border-gray-200">
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={onBack}
+          className="md:hidden"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
         <h2 className="font-bold text-lg">{contact.name}</h2>
       </header>
 
-      <main className="flex-1 p-4 overflow-y-auto">
+      <main className="flex-1 p-4 overflow-y-auto bg-gray-100">
         {messages.map((message) => {
-          // Correção: Lógica de verificação do usuário atual mais robusta
           const isCurrentUser = (message.senderTeacherId === currentUser.id) || (message.senderStudentId === currentUser.id);
           const sender = message.senderTeacher || message.senderStudent;
           const senderName = sender?.name || 'Usuário desconhecido';
 
           return (
             <div key={message.id} className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'} mb-4`}>
-              <div className={`rounded-lg px-4 py-2 max-w-sm ${isCurrentUser ? 'bg-blue-500 text-white' : 'bg-white'}`}>
-                {/* Correção: O nome do remetente só aparece se NÃO for o usuário atual */}
+              {/* CORREÇÃO: Removido o ternário inválido */}
+              <div className={`rounded-lg px-4 py-2 max-w-sm shadow ${isCurrentUser ? 'bg-blue-500 text-white' : 'bg-white'}`}>
                 {!isCurrentUser && (
                   <p className="text-xs text-gray-600 font-bold">{senderName}</p>
                 )}
                 <p>{message.content}</p>
-                {/* Correção: Formatação de hora mais limpa */}
                 <p className="text-xs text-right mt-1 opacity-70">
                   {new Date(message.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                 </p>
@@ -114,8 +114,8 @@ export default function MessageWindow({ contact, currentUser }: MessageWindowPro
         <div ref={messagesEndRef} />
       </main>
 
-      <footer className="bg-gray-200 p-4 border-t border-gray-300">
-        <div className="flex">
+      <footer className="bg-white p-4 border-t border-gray-200">
+        <div className="flex gap-2">
           <input
             type="text"
             value={newMessage}
@@ -126,7 +126,7 @@ export default function MessageWindow({ contact, currentUser }: MessageWindowPro
           />
           <button
             onClick={handleSendMessage}
-            className="ml-4 bg-blue-500 text-white rounded-full px-4 py-2 font-bold hover:bg-blue-600 focus:outline-none"
+            className="bg-blue-500 text-white rounded-full px-5 py-2 font-bold hover:bg-blue-600 focus:outline-none"
           >
             Enviar
           </button>

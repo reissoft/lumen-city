@@ -8,6 +8,8 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { logout } from "../auth/actions"
 import Image from "next/image"
+// 1. Importar o novo cabeçalho de cliente
+import StudentHeader from './StudentHeader';
 
 const prisma = new PrismaClient()
 
@@ -112,24 +114,8 @@ export default async function StudentHub() {
       <div className="absolute inset-0 bg-cover bg-center" style={{backgroundImage: 'url(/grid.svg)'}}></div>
       <div className="container mx-auto p-4 md:p-8 relative space-y-10">
         
-        <header className="flex flex-wrap justify-between items-center gap-4">
-            <div>
-                <h1 className="text-3xl md:text-4xl font-bold">Portal do Aluno</h1>
-                <p className="text-white/60">Bem-vindo(a) de volta, {student.name}!</p>
-            </div>
-            <div className="flex items-center gap-3">
-                <Link href="/student/settings">
-                    <Button variant="outline" className="font-semibold rounded-full bg-white/10 border-white/20 backdrop-blur-md hover:bg-white/20 transition-colors flex items-center gap-2">
-                        <Settings size={16} />
-                    </Button>
-                </Link>
-                <form action={logout}>
-                     <Button variant="outline" className="font-semibold rounded-full bg-white/10 border-white/20 backdrop-blur-md hover:bg-white/20 transition-colors flex items-center gap-2">
-                        <LogOut size={16} />
-                    </Button>
-                </form>
-            </div>
-        </header>
+        {/* 2. Usar o novo componente de cabeçalho */}
+        <StudentHeader studentName={student.name || 'Aluno(a)'} />
 
         <section className={`${cardStyles} p-6`}>
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">

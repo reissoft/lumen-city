@@ -7,6 +7,7 @@ const prisma = new PrismaClient();
 const SESSION_COOKIE_NAME = 'lumen_session';
 const ROLE_COOKIE_NAME = 'lumen_role';
 
+// Lógica de autenticação reutilizada
 async function getAuthenticatedUser() {
   const session = cookies().get(SESSION_COOKIE_NAME)?.value;
   const role = cookies().get(ROLE_COOKIE_NAME)?.value;
@@ -25,7 +26,7 @@ async function getAuthenticatedUser() {
   return { ...user, role };
 }
 
-// GET - Buscar notificações não lidas para o usuário logado
+// GET: Busca as notificações não lidas para o usuário
 export async function GET() {
   const user = await getAuthenticatedUser();
   if (!user) {
@@ -36,53 +37,57 @@ export async function GET() {
     const notifications = await prisma.notification.findMany({
       where: {
         read: false,
-        ...(user.role === 'student'
-          ? { recipientStudentId: user.id }
-          : { recipientTeacherId: user.id }),
+        OR: [
+          { recipientTeacherId: user.id },
+          { recipientStudentId: user.id },
+        ],
       },
       include: {
         message: {
           include: {
-            sender: true, // Inclui o objeto completo do remetente
+            senderTeacher: { select: { name: true, id: true } },
+            senderStudent: { select: { name: true, id: true } },
           },
         },
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     });
 
     return NextResponse.json(notifications);
+
   } catch (error) {
     console.error('Error fetching notifications:', error);
     return NextResponse.json({ error: 'Error fetching notifications' }, { status: 500 });
   }
 }
 
-// POST - Marcar notificações como lidas
-export async function POST(req: NextRequest) {
-  const user = await getAuthenticatedUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  try {
-    const { notificationIds } = await req.json();
-    if (!notificationIds || !Array.isArray(notificationIds)) {
-      return NextResponse.json({ error: 'Notification IDs are required' }, { status: 400 });
+// DELETE: Marca todas as notificações do usuário como lidas
+export async function DELETE(req: NextRequest) {
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await prisma.notification.updateMany({
-      where: {
-        id: { in: notificationIds },
-        // Segurança: Garante que o usuário só pode marcar as *suas* notificações como lidas
-        ...(user.role === 'student'
-          ? { recipientStudentId: user.id }
-          : { recipientTeacherId: user.id }),
-      },
-      data: { read: true },
-    });
+    try {
+        await prisma.notification.updateMany({
+            where: {
+                read: false,
+                OR: [
+                  { recipientTeacherId: user.id },
+                  { recipientStudentId: user.id },
+                ],
+            },
+            data: {
+                read: true,
+            },
+        });
 
-    return NextResponse.json({ message: 'Notifications marked as read' });
-  } catch (error) {
-    console.error('Error updating notifications:', error);
-    return NextResponse.json({ error: 'Error updating notifications' }, { status: 500 });
-  }
+        return NextResponse.json({ message: 'Notifications marked as read' }, { status: 200 });
+
+    } catch (error) {
+        console.error('Error marking notifications as read:', error);
+        return NextResponse.json({ error: 'Error marking notifications as read' }, { status: 500 });
+    }
 }

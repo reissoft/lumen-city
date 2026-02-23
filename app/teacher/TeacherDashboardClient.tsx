@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { LogOut, Users, CheckCircle2, TrendingUp, GraduationCap, Trash2, Play, Settings, BookCopy, Shield, Pencil } from "lucide-react";
 import { logout } from "../auth/actions";
 import { deleteActivity } from "../actions";
+// 1. Importar o componente de notificações
+import NotificationBell from '@/components/notifications/NotificationBell';
 
 const iconComponents: { [key: string]: React.ElementType } = {
   Users,
@@ -83,7 +85,9 @@ export default function TeacherDashboardClient({ teacherName, activities, stats 
                         <p className="text-white/60">Bem-vindo(a), {teacherName}!</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-2">
+                {/* 2. Adicionar o sino de notificações */}
+                <div className="flex items-center gap-4">
+                    <NotificationBell />
                     <Link href="/teacher/settings">
                         <Button variant="outline" size="icon" className="bg-white/10 border-white/20 rounded-full backdrop-blur-md hover:bg-white/20">
                             <Settings size={20} />

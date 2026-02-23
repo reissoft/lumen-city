@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, BookCopy, Settings, Shield, LogOut } from "lucide-react";
+import { Users, BookCopy, Settings, Shield, LogOut, MessageSquare } from "lucide-react";
 import { logout } from "../auth/actions";
 
 // Componente de Card Reutilizável para o Painel
@@ -25,6 +25,11 @@ function DashboardCard({ icon: Icon, title, description, href, buttonText, color
             iconText: 'text-purple-300',
             buttonGradient: 'from-purple-500 to-pink-500'
         },
+        orange: {
+            iconBg: 'bg-orange-500/10',
+            iconText: 'text-orange-300',
+            buttonGradient: 'from-orange-500 to-red-500'
+        },
         gray: {
             iconBg: 'bg-gray-500/10',
             iconText: 'text-gray-300',
@@ -35,8 +40,8 @@ function DashboardCard({ icon: Icon, title, description, href, buttonText, color
     const selectedColor = colorClasses[color as keyof typeof colorClasses] || colorClasses.gray;
 
     return (
-        <Card className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl shadow-lg hover:bg-white/10 transition-all duration-300">
-            <CardContent className="p-8 flex flex-col items-center text-center">
+        <Card className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl shadow-lg hover:bg-white/10 transition-all duration-300 h-full">
+            <CardContent className="p-8 flex flex-col items-center text-center h-full">
                 <div className={`w-20 h-20 flex items-center justify-center rounded-full mb-5 ${selectedColor.iconBg}`}>
                     <Icon className={`w-10 h-10 ${selectedColor.iconText}`} />
                 </div>
@@ -97,18 +102,24 @@ export default function AdminDashboard() {
                         buttonText="Acessar Turmas"
                         color="purple"
                     />
-                </div>
-                 {/* Card de Configurações em destaque */}
-                 <div className="mt-8">
                     <DashboardCard 
-                            icon={Settings} 
-                            title="Configurações Gerais" 
-                            description="Ajuste as configurações globais da plataforma, gerencie dados da escola e sua conta de administrador."
-                            href="/admin/settings" 
-                            buttonText="Acessar Configurações"
-                            color="gray"
-                        />
-                 </div>
+                        icon={MessageSquare} 
+                        title="Moderação de Mensagens" 
+                        description="Visualize as conversas entre todos os usuários da plataforma para garantir a segurança e a conformidade."
+                        href="/messaging" 
+                        buttonText="Moderar Mensagens"
+                        color="orange"
+                    />
+                     {/* MODIFICAÇÃO: Card de configurações movido para dentro da grade */}
+                    <DashboardCard 
+                        icon={Settings} 
+                        title="Configurações Gerais" 
+                        description="Ajuste as configurações globais da plataforma, gerencie dados da escola e sua conta de administrador."
+                        href="/admin/settings" 
+                        buttonText="Acessar Configurações"
+                        color="gray"
+                    />
+                </div>
             </div>
         </div>
     );

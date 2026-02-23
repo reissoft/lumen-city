@@ -31,6 +31,9 @@ model Teacher {
   school        School     @relation(fields: [schoolId], references: [id])
   activities    Activity[]
   classes       Class[]    // Relação muitos-para-muitos com Turmas
+  sentMessages     Message[]  @relation("TeacherSentMessages")
+  receivedMessages Message[]  @relation("TeacherReceivedMessages")
+  notifications    Notification[]
 }
 
 model Class {
@@ -69,6 +72,9 @@ model Student {
   cityData  Json?
   attempts  ActivityAttempt[]
   createdAt DateTime @default(now())
+  sentMessages     Message[]  @relation("StudentSentMessages")
+  receivedMessages Message[]  @relation("StudentReceivedMessages")
+  notifications    Notification[]
 }
 
 model StudentResources {
@@ -110,6 +116,45 @@ model ActivityAttempt {
   rewarded   Boolean  @default(false)
   createdAt  DateTime @default(now())
 }
+
+// --- SISTEMA DE MENSAGENS ---
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  read      Boolean  @default(false)
+
+  senderTeacherId   String?
+  senderTeacher     Teacher? @relation("TeacherSentMessages", fields: [senderTeacherId], references: [id], onDelete: SetNull)
+
+  senderStudentId   String?
+  senderStudent     Student? @relation("StudentSentMessages", fields: [senderStudentId], references: [id], onDelete: SetNull)
+
+  receiverTeacherId String?
+  receiverTeacher   Teacher? @relation("TeacherReceivedMessages", fields: [receiverTeacherId], references: [id], onDelete: SetNull)
+
+  receiverStudentId String?
+  receiverStudent   Student? @relation("StudentReceivedMessages", fields: [receiverStudentId], references: [id], onDelete: SetNull)
+  
+  notification      Notification?
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  messageId String   @unique
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  recipientTeacherId String?
+  recipientTeacher   Teacher? @relation(fields: [recipientTeacherId], references: [id], onDelete: Cascade)
+
+  recipientStudentId String?
+  recipientStudent   Student? @relation(fields: [recipientStudentId], references: [id], onDelete: Cascade)
+}
+
 
 // --- ENUMS ---
 

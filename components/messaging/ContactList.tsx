@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-// MODIFICAÇÃO: Adiciona `className` à interface do Contato
 interface Contact {
   id: string;
   name: string | null;
@@ -19,10 +18,11 @@ interface ContactListProps {
   onSelectContact: (contact: Contact) => void;
   selectedContactId?: string;
   currentUser: CurrentUser;
-  unreadMessages: Record<string, number>; 
+  unreadMessages: Record<string, number>;
+  isModerating?: boolean; // MODIFICAÇÃO: Recebe a prop
 }
 
-export default function ContactList({ onSelectContact, selectedContactId, currentUser, unreadMessages }: ContactListProps) {
+export default function ContactList({ onSelectContact, selectedContactId, currentUser, unreadMessages, isModerating = false }: ContactListProps) {
   const [contacts, setContacts] = useState<{ teachers: Contact[]; students: Contact[] }>({ teachers: [], students: [] });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -30,7 +30,13 @@ export default function ContactList({ onSelectContact, selectedContactId, curren
     const fetchContacts = async () => {
       setIsLoading(true);
       try {
-        const response = await axios.get('/api/users');
+        // MODIFICAÇÃO: Constrói a URL da API condicionalmente
+        let apiUrl = '/api/users';
+        if (isModerating) {
+          apiUrl = `/api/users?viewAs=${currentUser.id}`;
+        }
+
+        const response = await axios.get(apiUrl);
         setContacts({
           teachers: response.data.teachers || [],
           students: response.data.students || [],
@@ -43,8 +49,11 @@ export default function ContactList({ onSelectContact, selectedContactId, curren
       }
     };
 
-    fetchContacts();
-  }, []);
+    if (currentUser?.id) { // Garante que o currentUser esteja disponível
+        fetchContacts();
+    }
+
+  }, [currentUser, isModerating]); // MODIFICAÇÃO: Adiciona dependências ao useEffect
 
   const renderContact = (contact: Contact) => {
     if (contact.id === currentUser.id) {
@@ -66,7 +75,6 @@ export default function ContactList({ onSelectContact, selectedContactId, curren
       >
         <div>
             <p className="font-semibold text-white">{contact.name}</p>
-            {/* MODIFICAÇÃO: Exibe a turma do aluno */}
             <p className={`text-sm ${isSelected ? 'text-white/80' : 'text-white/50'}`}>
               {contact.role === 'teacher' ? 'Professor' : `Aluno - ${contact.className}`}
             </p>

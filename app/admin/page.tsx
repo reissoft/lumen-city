@@ -102,15 +102,15 @@ export default function AdminDashboard() {
                         buttonText="Acessar Turmas"
                         color="purple"
                     />
+                    {/* MODIFICAÇÃO: Link do card aponta para a nova página de moderação */}
                     <DashboardCard 
                         icon={MessageSquare} 
                         title="Moderação de Mensagens" 
                         description="Visualize as conversas entre todos os usuários da plataforma para garantir a segurança e a conformidade."
-                        href="/messaging" 
+                        href="/admin/moderation" 
                         buttonText="Moderar Mensagens"
                         color="orange"
                     />
-                     {/* MODIFICAÇÃO: Card de configurações movido para dentro da grade */}
                     <DashboardCard 
                         icon={Settings} 
                         title="Configurações Gerais" 

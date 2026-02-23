@@ -1,3 +1,4 @@
+// app/messaging/page.tsx
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { PrismaClient } from '@prisma/client';
@@ -11,80 +12,89 @@ const ROLE_COOKIE_NAME = 'lumen_role';
 
 const prisma = new PrismaClient();
 
-async function getCurrentUser() {
+// Função para obter o usuário logado (pode ser admin, professor ou aluno)
+async function getLoggedInUser() {
   const session = cookies().get(SESSION_COOKIE_NAME)?.value;
   const role = cookies().get(ROLE_COOKIE_NAME)?.value;
 
-  if (!session || !role) {
-    return null;
-  }
+  if (!session || !role) return null;
 
-  let user = null;
+  let user: any = null;
   if (role === 'teacher' || role === 'admin') {
-    user = await prisma.teacher.findUnique({
-      where: { email: session },
-    });
+    user = await prisma.teacher.findUnique({ where: { email: session } });
   } else if (role === 'student') {
-    user = await prisma.student.findUnique({
-      where: { username: session },
-    });
+    user = await prisma.student.findUnique({ where: { username: session } });
   }
 
   if (!user) return null;
 
-  return {
-    id: user.id,
-    name: user.name,
-    role: role,
-    schoolId: user.schoolId,
-  };
+  return { id: user.id, name: user.name, role, schoolId: user.schoolId };
 }
 
+// Função para obter os dados do usuário a ser exibido na interface de mensagens
+// Pode ser o próprio usuário logado ou um professor sendo moderado por um admin.
+async function getViewUser(loggedInUser: any, moderateAsId?: string) {
+  if (loggedInUser.role === 'admin' && moderateAsId) {
+    const teacherToModerate = await prisma.teacher.findUnique({
+      where: { id: moderateAsId },
+    });
+    if (teacherToModerate) {
+      // Retorna os dados do professor para moderação
+      return { ...teacherToModerate, role: 'teacher' }; 
+    }
+  }
+  // Por padrão, ou se a moderação falhar, retorna o usuário logado
+  return loggedInUser;
+}
+
+// Função para buscar mensagens não lidas
 async function getUnreadMessages(userId: string, userRole: string) {
     const recipientCondition = userRole === 'student' ? { recipientStudentId: userId } : { recipientTeacherId: userId };
-    
     const notifications = await prisma.notification.findMany({
-        where: {
-            ...recipientCondition,
-            read: false,
-            // CORREÇÃO FINAL E CORRETA: Em vez de checar se o campo é nulo, a abordagem correta
-            // é simplesmente verificar se a relação `message` existe, fornecendo um filtro vazio.
-            message: {}
-        },
-        select: {
-            message: {
-                select: {
-                    senderStudentId: true,
-                    senderTeacherId: true
-                }
-            }
-        }
+        where: { ...recipientCondition, read: false, message: {} },
+        select: { message: { select: { senderStudentId: true, senderTeacherId: true } } }
     });
-
-    const unreadFrom = notifications.reduce((acc, notif) => {
-        // O filtro acima garante que notif.message nunca será nulo aqui.
-        if (!notif.message) return acc; 
-
+    return notifications.reduce((acc, notif) => {
+        if (!notif.message) return acc;
         const senderId = notif.message.senderStudentId || notif.message.senderTeacherId;
         if (senderId) {
             acc[senderId] = (acc[senderId] || 0) + 1;
         }
         return acc;
     }, {} as Record<string, number>);
-
-    return unreadFrom;
 }
 
-export default async function MessagingPage() {
-  const currentUser = await getCurrentUser();
-
-  if (!currentUser) {
+export default async function MessagingPage({ searchParams }: { searchParams: { [key: string]: string | undefined } }) {
+  const loggedInUser = await getLoggedInUser();
+  if (!loggedInUser) {
     redirect('/');
   }
 
-  const unreadMessages = await getUnreadMessages(currentUser.id, currentUser.role);
+  const moderateAsId = searchParams.moderateAs;
+  let backUrl = '/';
+  let viewUser = loggedInUser;
+  let isModerating = false;
 
-  const backUrl = currentUser.role === 'student' ? '/student' : '/teacher';
+  // Lógica de Moderação
+  if (loggedInUser.role === 'admin' && moderateAsId) {
+    const teacherToModerate = await prisma.teacher.findUnique({ where: { id: moderateAsId } });
+    if (teacherToModerate) {
+        // Define o usuário da visão como o professor a ser moderado
+        viewUser = { id: teacherToModerate.id, name: teacherToModerate.name, role: 'teacher', schoolId: teacherToModerate.schoolId };
+        backUrl = '/admin/moderation'; // Link de volta para a seleção de professores
+        isModerating = true;
+    }
+  } else {
+    // Lógica normal para não-admins ou admins sem moderação
+    switch (loggedInUser.role) {
+      case 'admin': backUrl = '/admin'; break;
+      case 'teacher': backUrl = '/teacher'; break;
+      case 'student': backUrl = '/student'; break;
+    }
+  }
+  
+  // Busca mensagens não lidas para o usuário que está sendo visualizado
+  const unreadMessages = await getUnreadMessages(viewUser.id, viewUser.role);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-gray-900 text-white p-4 relative">
@@ -93,12 +103,17 @@ export default async function MessagingPage() {
       <Link href={backUrl} passHref>
         <Button variant="ghost" className="absolute top-5 left-6 z-20 flex items-center gap-2 text-white/70 hover:bg-white/10 hover:text-white transition-colors">
           <ArrowLeft className="h-5 w-5" />
-          Voltar ao Painel
+          {isModerating ? 'Voltar para Seleção' : 'Voltar ao Painel'}
         </Button>
       </Link>
 
       <div className="w-full max-w-7xl h-[calc(100vh-80px)] z-10 mt-10">
-        <MessagingInterface currentUser={currentUser} initialUnreadMessages={unreadMessages} />
+        {/* MODIFICAÇÃO: Passa a prop isModerating para o componente */}
+        <MessagingInterface 
+            currentUser={viewUser} 
+            initialUnreadMessages={unreadMessages} 
+            isModerating={isModerating}
+        />
       </div>
     </div>
   );

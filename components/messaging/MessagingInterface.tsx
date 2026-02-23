@@ -19,18 +19,16 @@ interface Contact {
 
 interface MessagingInterfaceProps {
   currentUser: CurrentUser;
-  // 1. Recebendo as mensagens não lidas da página
-  initialUnreadMessages: Record<string, number>; 
+  initialUnreadMessages: Record<string, number>;
+  isModerating?: boolean; // MODIFICAÇÃO: Adiciona a prop opcional
 }
 
-export default function MessagingInterface({ currentUser, initialUnreadMessages }: MessagingInterfaceProps) {
+export default function MessagingInterface({ currentUser, initialUnreadMessages, isModerating = false }: MessagingInterfaceProps) {
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
-  // 2. Criando um estado para poder atualizar a contagem no futuro (ex: quando o usuário ler a mensagem)
   const [unreadMessages, setUnreadMessages] = useState(initialUnreadMessages);
 
   const handleSelectContact = (contact: Contact) => {
     setSelectedContact(contact);
-    // Limpa a notificação para este contato ao selecioná-lo
     if (unreadMessages[contact.id]) {
       setUnreadMessages(prev => {
         const newUnread = { ...prev };
@@ -48,8 +46,8 @@ export default function MessagingInterface({ currentUser, initialUnreadMessages 
           currentUser={currentUser}
           onSelectContact={handleSelectContact} 
           selectedContactId={selectedContact?.id}
-          // 3. Passando as contagens de não lidas para a lista de contatos
           unreadMessages={unreadMessages}
+          isModerating={isModerating} // MODIFICAÇÃO: Passa a prop para o ContactList
         />
       </div>
 

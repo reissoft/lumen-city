@@ -5,6 +5,7 @@ import axios from 'axios';
 import { ArrowLeft, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+// CORREÇÃO: Reverte a interface para o schema original do Prisma
 interface Message {
   id: string;
   content: string;
@@ -35,7 +36,6 @@ interface MessageWindowProps {
 export default function MessageWindow({ contact, currentUser, onBack }: MessageWindowProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  // 1. Adicionando estado de carregamento
   const [isLoading, setIsLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -45,26 +45,26 @@ export default function MessageWindow({ contact, currentUser, onBack }: MessageW
 
   useEffect(() => {
     const fetchMessages = async () => {
-      if (!contact) return;
+      if (!contact || !currentUser) return;
       
-      setIsLoading(true); // Inicia o carregamento
+      setIsLoading(true);
       setMessages([]);
 
       try {
-        const response = await axios.get(`/api/messages?contactId=${contact.id}`);
+        // A requisição para a API está correta, enviando IDs genéricos
+        const response = await axios.get(`/api/messages?senderId=${currentUser.id}&contactId=${contact.id}`);
         setMessages(response.data);
       } catch (error) {
         console.error('Error fetching messages:', error);
       } finally {
-        setIsLoading(false); // Finaliza o carregamento
+        setIsLoading(false);
       }
     };
 
     fetchMessages();
-  }, [contact]);
+  }, [contact, currentUser]);
 
   useEffect(() => {
-    // Garante o scroll para o final apenas quando as mensagens forem carregadas
     if (!isLoading) {
       scrollToBottom();
     }
@@ -73,13 +73,14 @@ export default function MessageWindow({ contact, currentUser, onBack }: MessageW
   const handleSendMessage = async () => {
     if (newMessage.trim() === '') return;
     try {
+      // O corpo da requisição está correto, enviando IDs genéricos
       const response = await axios.post('/api/messages', {
+        senderId: currentUser.id,
         recipientId: contact.id,
         content: newMessage,
       });
 
       const sentMessage = response.data;
-
       setMessages(prevMessages => [...prevMessages, sentMessage]);
       setNewMessage('');
     } catch (error) {
@@ -90,19 +91,13 @@ export default function MessageWindow({ contact, currentUser, onBack }: MessageW
   return (
     <div className="flex flex-col h-full text-white">
       <header className="flex items-center gap-4 bg-black/10 p-3 border-b border-white/10">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={onBack}
-          className="md:hidden text-white/80 hover:bg-white/10 hover:text-white"
-        >
+        <Button variant="ghost" size="icon" onClick={onBack} className="md:hidden text-white/80 hover:bg-white/10 hover:text-white">
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h2 className="font-bold text-lg text-white">{contact.name}</h2>
       </header>
 
       <main className="flex-1 p-4 overflow-y-auto">
-        {/* 2. Lógica de exibição com 3 estados: Carregando, Sem Mensagens, Com Mensagens */}
         {isLoading ? (
           <div className="flex justify-center items-center h-full text-white/50">Carregando mensagens...</div>
         ) : messages.length === 0 ? (
@@ -111,6 +106,7 @@ export default function MessageWindow({ contact, currentUser, onBack }: MessageW
           </div>
         ) : (
             messages.map((message) => {
+            // CORREÇÃO: Lógica de renderização revertida para o schema original
             const isCurrentUser = (message.senderTeacherId === currentUser.id) || (message.senderStudentId === currentUser.id);
             const sender = message.senderTeacher || message.senderStudent;
             const senderName = sender?.name || 'Usuário desconhecido';

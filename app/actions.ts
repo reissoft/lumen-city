@@ -364,33 +364,73 @@ export async function createStudent(formData: FormData) {
 const BUILDINGS = BUILDING_CONFIG;
 
 export async function buyBuilding(type: string, x: number, y: number) {
-  const studentUsername = await getCurrentUser()
+  const studentUsername = await getCurrentUser();
 
   try {
-    const student = await prisma.student.findUnique({ where: { username: studentUsername }, include: { resources: true } })
-    if (!student || !student.resources) return
+    const student = await prisma.student.findUnique({
+      where: { username: studentUsername },
+      include: { resources: true },
+    });
 
-    const buildingInfo = BUILDINGS[type as keyof typeof BUILDINGS]
-    const currentCity = (student.cityData as any) || { buildings: [] }
-    const isOccupied = currentCity.buildings.find((b: any) => b.x === x && b.y === y)
+    if (!student) {
+      console.error("Ação 'buyBuilding': Aluno não encontrado.");
+      return;
+    }
+
+    // VERIFICA E CRIA RECURSOS SE NÃO EXISTIREM (SOLUÇÃO ROBUSTA)
+    let studentResources = student.resources;
+    if (!studentResources) {
+      console.log(`Criando registro de recursos para o aluno: ${student.id}`);
+      studentResources = await prisma.studentResources.create({
+        data: {
+          studentId: student.id,
+          gold: 0, // Valor inicial padrão
+        },
+      });
+    }
+
+    const buildingInfo = BUILDINGS[type as keyof typeof BUILDINGS];
+
+    // VERIFICA SE TEM OURO SUFICIENTE
+   /* if (studentResources.gold < buildingInfo.cost) {
+      console.error("Ação 'buyBuilding': Ouro insuficiente.");
+      return; // Retorna para não continuar a execução
+    }*/
+
+    const currentCity = (student.cityData as any) || { buildings: [] };
+    const isOccupied = currentCity.buildings.find((b: any) => b.x === x && b.y === y);
+
+    if (isOccupied) {
+      console.error("Ação 'buyBuilding': Local já ocupado.");
+      return;
+    }
+
+    const newBuilding = { id: Date.now(), type, x, y, rotation: 0 };
     
-    if (isOccupied) return 
+    // SOLUÇÃO DE IMUTABILIDADE: Cria um novo objeto cityData
+    const newCityData = {
+        ...currentCity,
+        buildings: [...currentCity.buildings, newBuilding]
+    };
 
-    const newBuilding = { id: Date.now(), type, x, y }
-    currentCity.buildings.push(newBuilding)
-
+    // Executa a atualização no banco de dados
     await prisma.student.update({
       where: { id: student.id },
       data: {
-        resources: { update: { gold: { decrement: buildingInfo.cost } } },
-        cityData: currentCity
-      }
-    })
+        resources: {
+          update: {
+            gold: { decrement: buildingInfo.cost },
+          },
+        },
+        cityData: newCityData, // Salva o novo objeto
+      },
+    });
 
-    revalidatePath('/student/city')
-    
+    console.log("Debug: Construção salva no banco de dados!");
+    revalidatePath('/student/city');
+
   } catch (error) {
-    console.error(error)
+    console.error("Erro na função 'buyBuilding':", error);
   }
 }
 
@@ -406,13 +446,15 @@ export async function rotateBuildingAction(buildingId: number, newRotation: numb
 
     const cityData = (student.cityData as any) || { buildings: [] };
     
-    cityData.buildings = cityData.buildings.map((b: any) => 
+    // SOLUÇÃO DE IMUTABILIDADE
+    const newBuildings = cityData.buildings.map((b: any) => 
       b.id === buildingId ? { ...b, rotation: newRotation } : b
     );
+    const newCityData = { ...cityData, buildings: newBuildings };
 
     await prisma.student.update({
       where: { id: student.id },
-      data: { cityData }
+      data: { cityData: newCityData }
     });
 
     revalidatePath('/student/city');
@@ -467,11 +509,14 @@ export async function demolishBuildingAction(buildingId: number) {
 
     const cityData = (student.cityData as any) || { buildings: [] };
     
-    cityData.buildings = cityData.buildings.filter((b: any) => b.id !== buildingId);
+    // SOLUÇÃO DE IMUTABILIDADE
+    const newBuildings = cityData.buildings.filter((b: any) => b.id !== buildingId);
+    const newCityData = { ...cityData, buildings: newBuildings };
+
 
     await prisma.student.update({
       where: { id: student.id },
-      data: { cityData }
+      data: { cityData: newCityData }
     });
 
     revalidatePath('/student/city');

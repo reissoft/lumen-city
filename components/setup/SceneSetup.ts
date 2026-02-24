@@ -8,6 +8,12 @@ import {
 } from '../constants';
 import { createGridTexture, loadSkybox } from '../utils/texture';
 
+// --- FUNÇÃO PARA DETECTAR MOBILE ---
+const isMobile = () => {
+    if (typeof window === 'undefined') return false;
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+};
+
 export class SceneSetup {
   private app: pc.Application;
 
@@ -48,9 +54,10 @@ export class SceneSetup {
         LIGHT_CONFIG.color.b
       ),
       intensity: LIGHT_CONFIG.intensity,
-      castShadows: true,
+      // --- OTIMIZAÇÃO DE SOMBRA ---
+      castShadows: !isMobile(), // Desativa sombras em dispositivos móveis
       shadowDistance: LIGHT_CONFIG.shadowDistance,
-      shadowResolution: LIGHT_CONFIG.shadowResolution,
+      shadowResolution: isMobile() ? 1024 : 2048, // Resolução menor para mobile se sombras estiverem ativas
       shadowType: pc.SHADOW_PCF3,
       normalOffsetBias: 0.05,
     });

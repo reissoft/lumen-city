@@ -1,0 +1,123 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D City Viewer</title>
+    <style>
+        body {
+            background-color: #1a202c;
+            color: white;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #a0aec0;
+        }
+        canvas {
+            background-color: #2d3748;
+            border: 2px solid #a0aec0;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Protótipo - Visualizador 2D da Cidade</h1>
+    <canvas id="cityCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('cityCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // --- Configurações ---
+        const TILE_SIZE = 40;   // Tamanho de cada célula em pixels
+        const GRID_WIDTH = 20;  // Largura da cidade em número de células
+        const GRID_HEIGHT = 15; // Altura da cidade em número de células
+
+        canvas.width = TILE_SIZE * GRID_WIDTH;
+        canvas.height = TILE_SIZE * GRID_HEIGHT;
+
+        // --- Dados de Exemplo (Mock Data) ---
+        // Na aplicação real, estes dados viriam do seu banco de dados (student.cityData)
+        const cityData = [
+            { type: 'house', x: 2, y: 2 },
+            { type: 'school', x: 5, y: 3 },
+            { type: 'park', x: 8, y: 5 },
+            { type: 'power', x: 1, y: 8 },
+            { type: 'house', x: 3, y: 6 },
+            { type: 'house', x: 12, y: 10 },
+            { type: 'school', x: 15, y: 2 },
+        ];
+
+        // Mapeia o 'type' da construção para o arquivo de ícone 2D
+        const buildingIcons = {
+            house: new Image(),
+            school: new Image(),
+            park: new Image(),
+            power: new Image(),
+        };
+
+        buildingIcons.house.src = '/assets/house.png';
+        buildingIcons.school.src = '/assets/school.png';
+        buildingIcons.park.src = '/assets/park.png';
+        buildingIcons.power.src = '/assets/power.png';
+
+        // --- Funções de Renderização ---
+
+        function drawGrid() {
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            for (let x = 0; x <= canvas.width; x += TILE_SIZE) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= canvas.height; y += TILE_SIZE) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+        }
+
+        function drawBuildings() {
+            cityData.forEach(building => {
+                const icon = buildingIcons[building.type];
+                if (icon && icon.complete) { // Desenha apenas se a imagem carregou
+                    ctx.drawImage(icon, building.x * TILE_SIZE, building.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                }
+            });
+        }
+        
+        function render() {
+            // Limpa a tela
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Desenha o grid
+            drawGrid();
+            // Desenha as construções
+            drawBuildings();
+        }
+
+        // Garante que todas as imagens sejam carregadas antes de desenhar pela primeira vez
+        let imagesLoaded = 0;
+        const totalImages = Object.keys(buildingIcons).length;
+        Object.values(buildingIcons).forEach(img => {
+            img.onload = () => {
+                imagesLoaded++;
+                if (imagesLoaded === totalImages) {
+                    render();
+                }
+            };
+            // Se a imagem já estiver em cache, ela pode não disparar 'onload'
+            if (img.complete) {
+              img.onload();
+            }
+        });
+    </script>
+</body>
+</html>

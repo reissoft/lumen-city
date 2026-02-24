@@ -10,7 +10,6 @@ const prisma = new PrismaClient();
 const SESSION_COOKIE_NAME = 'lumen_session';
 const ROLE_COOKIE_NAME = 'lumen_role';
 
-// --- FUNÇÃO DE LOGIN (EXISTENTE E SEM ALTERAÇÃO) ---
 export async function login(prevState: { message: string }, formData: FormData) {
     const role = formData.get('role') as string;
     const username = formData.get('username') as string;
@@ -20,12 +19,11 @@ export async function login(prevState: { message: string }, formData: FormData) 
         return { message: 'Todos os campos são obrigatórios.' };
     }
 
-    let user: any = null;
     let redirectPath = '';
 
     try {
         if (role === 'admin' || role === 'teacher') {
-            user = await prisma.teacher.findUnique({ where: { email: username } });
+            const user = await prisma.teacher.findUnique({ where: { email: username } });
             if (user && await bcrypt.compare(password, user.password)) {
                 if (role === 'admin' && user.isSchoolAdmin) {
                     cookies().set(ROLE_COOKIE_NAME, 'admin');
@@ -38,13 +36,17 @@ export async function login(prevState: { message: string }, formData: FormData) 
                 else {
                     return { message: 'Papel selecionado inválido para este usuário.' };
                 }
+                // Correção: Define o cookie de sessão com o email do professor/admin
+                cookies().set(SESSION_COOKIE_NAME, user.email);
             } else {
                 return { message: 'Credenciais inválidas.' };
             }
         } else if (role === 'student') {
-            user = await prisma.student.findUnique({ where: { username: username } });
+            const user = await prisma.student.findUnique({ where: { username: username } });
             if (user && await bcrypt.compare(password, user.password)) {
                 cookies().set(ROLE_COOKIE_NAME, 'student');
+                // Correção: Define o cookie de sessão com o username do aluno
+                cookies().set(SESSION_COOKIE_NAME, user.username);
                 redirectPath = '/student';
             } else {
                 return { message: 'Credenciais inválidas.' };
@@ -52,9 +54,6 @@ export async function login(prevState: { message: string }, formData: FormData) 
         } else {
             return { message: 'Papel inválido selecionado.' };
         }
-
-        cookies().set(SESSION_COOKIE_NAME, username);
-
     } catch (error) {
         console.error(error);
         return { message: 'Ocorreu um erro no servidor.' };
@@ -63,14 +62,12 @@ export async function login(prevState: { message: string }, formData: FormData) 
     redirect(redirectPath);
 }
 
-// --- FUNÇÃO DE LOGOUT (EXISTENTE E SEM ALTERAÇÃO) ---
 export async function logout() {
     cookies().delete(SESSION_COOKIE_NAME);
     cookies().delete(ROLE_COOKIE_NAME);
     redirect('/login');
 }
 
-// --- FUNÇÃO DE RECUPERAÇÃO DE ACESSO (LÓGICA CORRIGIDA PARA CASO DE BORDA) ---
 export async function recoverPassword(identifier: string) {
     const sanitizedIdentifier = identifier.trim();
     if (!sanitizedIdentifier) {
@@ -81,9 +78,7 @@ export async function recoverPassword(identifier: string) {
         let recoveryPerformed = false;
         const isEmail = sanitizedIdentifier.includes('@');
 
-        // --- Verificação por E-mail (Professor/Admin E Responsável) ---
         if (isEmail) {
-            // 1. Tentar como Professor/Admin
             const teacher = await prisma.teacher.findUnique({ where: { email: sanitizedIdentifier } });
             if (teacher) {
                 recoveryPerformed = true;
@@ -96,7 +91,6 @@ export async function recoverPassword(identifier: string) {
                 await sendEmail(teacher.email, "Recuperação de Senha de Professor - Lumen", emailBody);
             }
 
-            // 2. Tentar como Responsável de Aluno(s)
             const studentsByGuardianEmail = await prisma.student.findMany({ where: { guardianEmail: sanitizedIdentifier } });
             if (studentsByGuardianEmail.length > 0) {
                 recoveryPerformed = true;
@@ -112,7 +106,6 @@ export async function recoverPassword(identifier: string) {
             }
         }
 
-        // --- Verificação por Nome de Usuário de Aluno (se não for e-mail) ---
         if (!isEmail) {
             const studentByUsername = await prisma.student.findUnique({ where: { username: sanitizedIdentifier } });
             if (studentByUsername) {
@@ -126,13 +119,12 @@ export async function recoverPassword(identifier: string) {
                     data: { password: await bcrypt.hash(newPassword, 10) } 
                 });
                 const sentTo = [];
-                if (studentByUsername.guardianEmail) { /* Envio de E-mail */ sentTo.push('e-mail'); }
-                if (studentByUsername.guardianPhone) { /* Envio de WhatsApp */ sentTo.push('WhatsApp'); }
+                if (studentByUsername.guardianEmail) { sentTo.push('e-mail'); }
+                if (studentByUsername.guardianPhone) { sentTo.push('WhatsApp'); }
                 return { success: `Nova senha para o aluno ${studentByUsername.username} foi enviada para o ${sentTo.join(' e ')} do responsável.` };
             }
         }
 
-        // --- Verificação por Telefone de Responsável (se não for e-mail e for numérico) ---
         const numericIdentifier = sanitizedIdentifier.replace(/\D/g, '');
         if (!isEmail && numericIdentifier.length > 9) {
             const studentsByGuardianPhone = await prisma.student.findMany({ where: { guardianPhone: numericIdentifier } });
@@ -150,7 +142,6 @@ export async function recoverPassword(identifier: string) {
             }
         }
         
-        // --- Mensagem Final ---
         if (recoveryPerformed) {
             return { success: 'Operação concluída. Se um ou mais contas foram encontradas, os dados de acesso foram enviados para os contatos associados.' };
         }

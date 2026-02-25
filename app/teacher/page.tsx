@@ -33,7 +33,8 @@ async function getActivities(teacherId: string) {
       description: true,
       type: true,
       difficulty: true,
-      reviewMaterials: true, 
+      reviewMaterials: true,
+      payload: true
     }
   });
 }

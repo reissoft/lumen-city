@@ -35,7 +35,8 @@ interface Activity {
   description: string | null;
   type: string;
   difficulty: number;
-  reviewMaterials?: any[] | null; 
+  reviewMaterials?: any[] | null;
+  payload?: any;
 }
 
 export default function TeacherDashboardClient({ teacherName, activities, stats }: { teacherName: string, activities: Activity[], stats: any[] }) {
@@ -152,7 +153,10 @@ export default function TeacherDashboardClient({ teacherName, activities, stats 
               </section>
 
               <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {activities.map((activity) => (
+                  {activities.map((activity) => {
+                      const xpMaxReward = activity.payload?.xpMaxReward || 0;
+                      const goldReward = activity.payload?.goldReward || 0;
+                      return (
                       <div key={activity.id} className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl shadow-lg hover:border-blue-500/50 transition-all flex flex-col p-6">
                           <header className="flex-grow mb-4">
                               <div className="flex justify-between items-start mb-3">
@@ -161,6 +165,21 @@ export default function TeacherDashboardClient({ teacherName, activities, stats 
                               </div>
                               <h3 className="text-xl font-bold text-white">{activity.title}</h3>
                               <p className="text-sm line-clamp-2 mt-1 text-white/60">{activity.description}</p>
+                              
+                              <div className="flex gap-3 mt-4 pt-4 border-t border-white/10">
+                                  {xpMaxReward > 0 && (
+                                      <div className="flex items-center gap-1.5 text-sm">
+                                          <span className="text-lg">🎯</span>
+                                          <span className="text-white/70">XP: <span className="font-bold text-cyan-300">{xpMaxReward}</span></span>
+                                      </div>
+                                  )}
+                                  {goldReward > 0 && (
+                                      <div className="flex items-center gap-1.5 text-sm">
+                                          <span className="text-lg">💰</span>
+                                          <span className="text-white/70">Ouro: <span className="font-bold text-yellow-300">{goldReward}</span></span>
+                                      </div>
+                                  )}
+                              </div>
                           </header>
                           <footer className="mt-auto flex gap-2">
                               <Button 
@@ -183,7 +202,8 @@ export default function TeacherDashboardClient({ teacherName, activities, stats 
                               </Button>
                           </footer>
                       </div>
-                  ))}
+                      );
+                  })}
               </section>
 
               {activities.length === 0 && 

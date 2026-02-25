@@ -50,10 +50,12 @@ async function getViewUser(loggedInUser: any, moderateAsId?: string) {
 // Função para buscar mensagens não lidas
 async function getUnreadMessages(userId: string, userRole: string) {
     const recipientCondition = userRole === 'student' ? { recipientStudentId: userId } : { recipientTeacherId: userId };
+    // @ts-ignore
     const notifications = await prisma.notification.findMany({
         where: { ...recipientCondition, read: false, message: {} },
         select: { message: { select: { senderStudentId: true, senderTeacherId: true } } }
     });
+    // @ts-ignore
     return notifications.reduce((acc, notif) => {
         if (!notif.message) return acc;
         const senderId = notif.message.senderStudentId || notif.message.senderTeacherId;

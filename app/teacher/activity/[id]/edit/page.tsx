@@ -40,6 +40,8 @@ function EditQuizPageContent() {
   const [allTeacherClasses, setAllTeacherClasses] = useState<ClassState[]>([])
   const [selectedClasses, setSelectedClasses] = useState<string[]>([])
   const [newLink, setNewLink] = useState("");
+  const [xpMaxReward, setXpMaxReward] = useState(0)
+  const [goldReward, setGoldReward] = useState(0)
   const [loading, setLoading] = useState(true)
   const [isSaving, startTransition] = useTransition()
 
@@ -60,6 +62,11 @@ function EditQuizPageContent() {
         setDescription(activity.description || "")
         const activityQuestions = (activity.payload as any)?.questions || []
         setQuestions(activityQuestions.map((q: any, index: number) => ({ id: Date.now() + index, text: q.text, options: q.options.map((opt: string, i: number) => ({ id: i + 1, text: opt })), correctAnswerId: q.correct + 1 })));
+        
+        // Carregar valores customizados de XP e Gold
+        const payload = activity.payload as any;
+        setXpMaxReward(payload?.xpMaxReward || 0);
+        setGoldReward(payload?.goldReward || 0);
         
         const dbMaterials = (activity.reviewMaterials as any[]) || [];
         const parsedMaterials = dbMaterials.map((material, index) => {
@@ -156,7 +163,7 @@ function EditQuizPageContent() {
 
     startTransition(async () => {
       try {
-        await updateQuiz(id, title, description, formattedQuestions, materialsToSave, selectedClasses);
+        await updateQuiz(id, title, description, formattedQuestions, materialsToSave, selectedClasses, xpMaxReward, goldReward);
         toast.success("Atividade salva com sucesso!")
         router.push('/teacher');
       } catch (error) {
@@ -188,6 +195,46 @@ function EditQuizPageContent() {
                 <h2 className="text-xl font-bold text-white">Informações Gerais</h2>
                 <div className="space-y-2"><Label htmlFor="quiz-title" className={labelStyles}>Título da Atividade</Label><Input id="quiz-title" value={title} onChange={(e) => setTitle(e.target.value)} disabled={isSaving} className={inputStyles} placeholder="Ex: Conquista da América"/></div>
                 <div className="space-y-2"><Label htmlFor="quiz-description" className={labelStyles}>Descrição</Label><Textarea id="quiz-description" value={description} onChange={(e) => setDescription(e.target.value)} disabled={isSaving} className={cn(inputStyles, 'min-h-[80px]')} placeholder="Um breve resumo sobre o conteúdo desta missão."/></div>
+                
+                <div className="grid md:grid-cols-2 gap-6 pt-4 border-t border-white/10">
+                    <div className="space-y-2">
+                        <Label htmlFor="xp-reward" className={labelStyles}>XP Máximo a Ganhar 🎯</Label>
+                        <div className="flex items-center gap-2">
+                            <Input 
+                                id="xp-reward" 
+                                type="number" 
+                                min="0" 
+                                max="1000" 
+                                value={xpMaxReward} 
+                                onChange={(e) => setXpMaxReward(Math.max(0, parseInt(e.target.value) || 0))} 
+                                disabled={isSaving} 
+                                className={inputStyles} 
+                                placeholder="0 (sem limite)"
+                            />
+                            <span className="text-sm text-white/60 whitespace-nowrap">0 = desativado</span>
+                        </div>
+                        <p className="text-xs text-white/50">Quando configurado, o aluno ganha XP proporcional ao score (ex: 80% de 100 XP = 80 XP)</p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <Label htmlFor="gold-reward" className={labelStyles}>Ouro ao Completar 💰</Label>
+                        <div className="flex items-center gap-2">
+                            <Input 
+                                id="gold-reward" 
+                                type="number" 
+                                min="0" 
+                                max="1000" 
+                                value={goldReward} 
+                                onChange={(e) => setGoldReward(Math.max(0, parseInt(e.target.value) || 0))} 
+                                disabled={isSaving} 
+                                className={inputStyles} 
+                                placeholder="0 (padrão: 10)"
+                            />
+                            <span className="text-sm text-white/60 whitespace-nowrap">0 = padrão</span>
+                        </div>
+                        <p className="text-xs text-white/50">Quando configurado, o aluno ganha esse valor de ouro ao passar (70%+)</p>
+                    </div>
+                </div>
             </div>
 
             <div className={`${cardStyles} p-6 md:p-8 space-y-4`}>

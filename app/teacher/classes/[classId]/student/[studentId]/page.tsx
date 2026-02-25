@@ -53,7 +53,7 @@ async function getStudentData(studentId: string): Promise<StudentPageData> {
       },
     },
   });
-
+// @ts-ignore
   return { student, activityAttempts };
 }
 

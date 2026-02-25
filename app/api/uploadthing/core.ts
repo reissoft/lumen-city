@@ -11,8 +11,8 @@ export const ourFileRouter = {
   
   activityAttachment: f({
     image: { maxFileSize: "4MB" },
-    pdf: { maxFileSize: "16MB" },
-    audio: { maxFileSize: "8MB" }, // Adicionado suporte para áudio
+    pdf: { maxFileSize: "4MB" },
+    audio: { maxFileSize: "4MB" }, // Adicionado suporte para áudio
   })
     .onUploadComplete(async ({ file }) => {
       console.log("Upload de anexo de atividade completo! URL:", file.url, "Tipo:", file.type);

@@ -38,14 +38,84 @@ async function getActivities(teacherId: string) {
   });
 }
 
+async function getTeacherStats(teacherId: string) {
+  // 1. Encontrar todas as turmas do professor (usando a relação muitos-para-muitos)
+  const teacherClasses = await prisma.class.findMany({
+    where: {
+      teachers: { // A turma tem uma lista de `teachers`
+        some: {   // Onde `some` (algum) professor da lista
+          id: teacherId, // Tenha o ID do professor atual
+        },
+      },
+    },
+    select: { id: true },
+  });
+
+  // Se não houver turmas, não há estatísticas para calcular.
+  if (teacherClasses.length === 0) {
+    return { totalStudents: 0, totalAttempts: 0, averageEngagement: 0 };
+  }
+  const teacherClassIds = teacherClasses.map(c => c.id);
+
+  // 2. Encontrar todos os alunos que pertencem a essas turmas
+  const studentsOfTeacher = await prisma.student.findMany({
+    where: {
+      classId: {
+        in: teacherClassIds,
+      },
+    },
+    select: { id: true },
+  });
+  const totalStudents = studentsOfTeacher.length;
+  const studentIdsOfTeacher = studentsOfTeacher.map(s => s.id);
+
+  // 3. Contar o total de tentativas (quizzes realizados) nas atividades deste professor
+  const totalAttempts = await prisma.activityAttempt.count({
+    where: {
+      activity: {
+        teacherId: teacherId,
+      },
+    },
+  });
+
+  // 4. Contar quantos alunos únicos (das turmas do professor) realizaram pelo menos uma atividade
+  let engagedStudentsCount = 0;
+  if (studentIdsOfTeacher.length > 0) {
+      const engagedStudents = await prisma.activityAttempt.groupBy({
+        by: ['studentId'],
+        where: {
+          studentId: {
+            in: studentIdsOfTeacher,
+          },
+        },
+      });
+      engagedStudentsCount = engagedStudents.length;
+  }
+
+  // 5. Calcular a porcentagem de engajamento
+  const averageEngagement = totalStudents > 0
+    ? Math.round((engagedStudentsCount / totalStudents) * 100)
+    : 0;
+
+  return {
+    totalStudents,
+    totalAttempts,
+    averageEngagement,
+  };
+}
+
 export default async function TeacherDashboard() {
   const teacher = await getTeacherData();
-  const activities = await getActivities(teacher.id);
+  
+  const [activities, statsData] = await Promise.all([
+    getActivities(teacher.id),
+    getTeacherStats(teacher.id),
+  ]);
 
   const stats = [
-    { title: "Total de Alunos", value: "32", icon: "Users", color: "text-blue-400" },
-    { title: "Quizzes Realizados", value: "145", icon: "CheckCircle2", color: "text-green-400" },
-    { title: "Engajamento Médio", value: "87%", icon: "TrendingUp", color: "text-purple-400" },
+    { title: "Total de Alunos", value: statsData.totalStudents.toString(), icon: "Users", color: "text-blue-400" },
+    { title: "Quizzes Realizados", value: statsData.totalAttempts.toString(), icon: "CheckCircle2", color: "text-green-400" },
+    { title: "Engajamento Médio", value: `${statsData.averageEngagement}%`, icon: "TrendingUp", color: "text-purple-400" },
   ];
 
   return (

@@ -220,6 +220,24 @@ function EditQuizPageContent() {
                   config={{
                     mode: "auto",
                   }}
+                  content={{
+                    label: "Arraste e solte ou clique para selecionar um arquivo",
+                    button: "Selecionar",
+                    allowedContent: "Imagens, PDFs, etc. (até 4MB)",
+                  }}
+                  appearance={{
+                    container: {
+                      border: "2px dashedrgba(169, 171, 175, 0.12)",
+                      backgroundColor: "#1a202c",
+                    },
+                    label: {
+                      color: "#a0aec0",
+                    },
+                    button: {
+                      backgroundColor: "#4a5568",
+                      color: "#e2e8f0",
+                    },
+                  }}
                 />
             </div>
 

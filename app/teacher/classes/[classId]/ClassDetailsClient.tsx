@@ -1,6 +1,7 @@
-// app/teacher/classes/[id]/ClassDetailsClient.tsx
+// app/teacher/classes/[classId]/ClassDetailsClient.tsx
 'use client';
 
+import { useRouter } from "next/navigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, User } from "lucide-react";
@@ -8,6 +9,7 @@ import { PageData } from "./page";
 import Link from "next/link";
 
 export default function ClassDetailsClient({ classData }: { classData: PageData['classData'] }) {
+    const router = useRouter();
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 text-white">
@@ -35,7 +37,11 @@ export default function ClassDetailsClient({ classData }: { classData: PageData[
                         <TableBody>
                             {classData.students.length > 0 ? (
                                 classData.students.map(student => (
-                                    <TableRow key={student.id} className="border-b-white/10 hover:bg-white/5">
+                                    <TableRow 
+                                        key={student.id} 
+                                        className="border-b-white/10 hover:bg-white/10 transition-colors cursor-pointer"
+                                        onClick={() => router.push(`/teacher/classes/${classData.id}/student/${student.id}`)}
+                                    >
                                         <TableCell className="font-medium text-white flex items-center gap-3">
                                             <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
                                                 <User size={16} className="text-white/60"/>

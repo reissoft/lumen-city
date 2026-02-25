@@ -1,0 +1,84 @@
+/* public/print.css */
+
+@media print {
+
+    /* Esconde elementos que não devem aparecer na impressão */
+    .no-print,
+    #back-button,
+    #filter-section {
+        display: none !important;
+    }
+
+    /* Reseta o fundo e a cor do texto para o documento inteiro */
+    body,
+    #page-content {
+        background: white !important;
+        color: black !important;
+    }
+
+    /* Garante que o container da página não tenha efeitos de fundo */
+    #page-content > .container {
+        background: none !important;
+    }
+
+    /* Remove a imagem de fundo */
+    .absolute.inset-0 {
+        display: none !important;
+    }
+
+    /* Estiliza o cabeçalho para impressão */
+    header h1,
+    header p {
+        color: black !important;
+    }
+
+    /* Reseta o estilo da tabela para o modo de impressão */
+    main,
+    main > table,
+    main > table tr {
+        background-color: white !important;
+        border-color: #ccc !important;
+        box-shadow: none !important;
+    }
+
+    /* Ajusta a cor do texto no cabeçalho e células da tabela */
+    th,
+    td,
+    .text-white,
+    .text-white\/80,
+    .text-white\/70,
+    .text-white\/60,
+    .text-white\/50 {
+        color: black !important;
+    }
+    
+    /* Garante que os badges tenham um fundo claro e borda visível */
+    .bg-green-500\/10 {
+        background-color: #e6f7eb !important;
+        color: #006400 !important;
+        border: 1px solid #b7ebc3 !important;
+    }
+
+    .bg-yellow-500\/10 {
+        background-color: #fffbe6 !important;
+        color: #d46b08 !important;
+        border: 1px solid #ffe58f !important;
+    }
+
+    /* Garante que os ícones de check/xis sejam visíveis */
+    .text-green-400 {
+        color: #22c55e !important;
+    }
+
+    .text-red-400 {
+        color: #ef4444 !important;
+    }
+
+    /* Remove sombras e outros efeitos visuais que não são para impressão */
+    .backdrop-blur-lg,
+    .shadow-lg {
+        backdrop-filter: none !important;
+        box-shadow: none !important;
+    }
+
+}

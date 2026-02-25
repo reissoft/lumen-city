@@ -13,13 +13,15 @@ import { getActivityById, updateQuiz } from "@/app/actions"
 import { getTeacherClasses } from "@/app/teacher/create-activity/actions"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { UploadDropzone } from "@/components/utils/uploadthing";
+
 
 // --- Estruturas de Dados ---
 interface QuestionState { id: number; text: string; options: { id: number; text: string }[]; correctAnswerId: number; }
 interface ReviewMaterialState { id: number; url: string; type: string; }
 type ClassState = { id: string; name: string; };
 
-// --- Estilos ---
+// --- Estilos -- -
 const cardStyles = `bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl shadow-lg`;
 const inputStyles = `w-full bg-white/5 border-2 border-white/20 rounded-lg p-3 text-white placeholder:text-white/50 focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400 transition`;
 const labelStyles = `font-semibold text-white/80 text-sm`;
@@ -60,7 +62,34 @@ function EditQuizPageContent() {
         setQuestions(activityQuestions.map((q: any, index: number) => ({ id: Date.now() + index, text: q.text, options: q.options.map((opt: string, i: number) => ({ id: i + 1, text: opt })), correctAnswerId: q.correct + 1 })));
         
         const dbMaterials = (activity.reviewMaterials as any[]) || [];
-        setReviewMaterials(dbMaterials.map((mat: any, index) => ({ id: Date.now() + index, url: mat.url, type: mat.type })));
+        const parsedMaterials = dbMaterials.map((material, index) => {
+            let materialObject;
+            try {
+                // Se o material já for um objeto, usa direto.
+                if (typeof material === 'object' && material !== null && material.url) {
+                    materialObject = material;
+                } else {
+                    // Tenta parsear se for uma string JSON.
+                    materialObject = JSON.parse(material);
+                }
+            } catch (e) {
+                // Se falhar, trata como uma URL string simples (legado).
+                const urlString = String(material);
+                const lowerUrl = urlString.toLowerCase();
+                let type = 'link';
+                if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) { type = 'youtube'; }
+                else if (lowerUrl.endsWith('.pdf')) { type = 'pdf'; }
+                else if (lowerUrl.endsWith('.png') || lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.gif') || lowerUrl.endsWith('.webp')) { type = 'image'; }
+                materialObject = { url: urlString, type };
+            }
+            
+            return {
+                id: Date.now() + index,
+                url: materialObject.url,
+                type: materialObject.type,
+            };
+        });
+        setReviewMaterials(parsedMaterials);
 
         setAllTeacherClasses(teacherClasses);
         const associatedClassIds = activity.classes.map((cls: { id: string }) => cls.id);
@@ -97,6 +126,15 @@ function EditQuizPageContent() {
 
     setReviewMaterials([...reviewMaterials, { id: Date.now(), url: newLink, type }]);
     setNewLink("");
+  };
+  const addReviewMaterialFromUpload = (res: { url: string; type: string; }) => {
+    const newMaterial: ReviewMaterialState = {
+      id: Date.now(),
+      url: res.url,
+      type: res.type, 
+    };
+    setReviewMaterials(prev => [...prev, newMaterial]);
+    toast.success("Arquivo adicionado com sucesso!");
   };
   const removeReviewMaterial = (mId: number) => setReviewMaterials(reviewMaterials.filter(m => m.id !== mId));
   
@@ -169,6 +207,38 @@ function EditQuizPageContent() {
                         <Button variant="ghost" size="icon" onClick={() => removeReviewMaterial(m.id)} disabled={isSaving} className="hover:bg-red-500/10 rounded-full"><Trash2 size={16} className="text-red-400" /></Button>
                     </div>
                 )})}</div>
+                 <UploadDropzone
+                  endpoint="activityAttachment"
+                  onClientUploadComplete={(res) => {
+                    if (res) {
+                      addReviewMaterialFromUpload(res[0]);
+                    }
+                  }}
+                  onUploadError={(error: Error) => {
+                    toast.error(`Falha no upload: ${error.message}`);
+                  }}
+                  config={{
+                    mode: "auto",
+                  }}
+                  content={{
+                    label: "Arraste e solte ou clique para selecionar um arquivo",
+                    button: "Selecionar",
+                    allowedContent: "Imagens, PDFs, etc. (até 4MB)",
+                  }}
+                  appearance={{
+                    container: {
+                      border: "2px dashedrgba(169, 171, 175, 0.12)",
+                      backgroundColor: "#1a202c",
+                    },
+                    label: {
+                      color: "#a0aec0",
+                    },
+                    button: {
+                      backgroundColor: "#4a5568",
+                      color: "#e2e8f0",
+                    },
+                  }}
+                />
             </div>
 
             {questions.map((q, index) => (
@@ -192,7 +262,8 @@ function EditQuizPageContent() {
                         )
                     })}
                 </div>
-            </div>))}
+            </div>))
+            }
 
             <footer className="flex justify-between items-center mt-6">
                 <Button onClick={addQuestion} variant="outline" className="gap-2 font-semibold bg-white/10 border-white/20 backdrop-blur-md hover:bg-white/20" disabled={isSaving}><Plus size={16} />Adicionar Questão</Button>

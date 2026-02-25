@@ -65,17 +65,34 @@ function ReviewPageContent() {
         if (!id) return;
         getActivityById(id)
             .then(data => {
-                const materials = (data.reviewMaterials as any[] || []).map(m => {
-                    const lowerUrl = m.url.toLowerCase();
-                    let type: ReviewMaterial['type'] = 'link';
-                    if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) { type = 'youtube'; }
-                    else if (lowerUrl.endsWith('.pdf')) { type = 'pdf'; }
-                    else if (lowerUrl.endsWith('.png') || lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.gif') || lowerUrl.endsWith('.webp')) { type = 'image'; }
-                    return { ...m, type };
+                const dbMaterials = (data.reviewMaterials as any[]) || []; // Aceita qualquer tipo de array
+                const parsedMaterials = dbMaterials.map(material => {
+                     try {
+                        // Se o material já for um objeto, retorna direto.
+                        if (typeof material === 'object' && material !== null && material.url) {
+                            return material;
+                        }
+                        // Tenta parsear se for uma string JSON.
+                        return JSON.parse(material);
+                    } catch (e) {
+                        // Se falhar (não é JSON), trata como uma URL string simples (legado).
+                        const urlString = String(material); // Garante que é uma string
+                        const lowerUrl = urlString.toLowerCase();
+                        if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) {
+                            return { url: urlString, type: 'youtube' };
+                        } else if (lowerUrl.endsWith('.pdf')) {
+                            return { url: urlString, type: 'pdf' };
+                        } else if (lowerUrl.endsWith('.png') || lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.gif') || lowerUrl.endsWith('.webp')) {
+                            return { url: urlString, type: 'image' };
+                        }
+                        return { url: urlString, type: 'link' };
+                    }
                 });
-                setActivity({ ...data, reviewMaterials: materials });
+                setActivity({ ...data, reviewMaterials: parsedMaterials });
             })
-            .catch(err => console.error("Failed to load activity:", err))
+            .catch(err => {
+                console.error("Failed to load activity:", err)
+            })
             .finally(() => setLoading(false));
     }, [id]);
 
@@ -122,7 +139,7 @@ function ReviewPageContent() {
                 {activity.reviewMaterials && activity.reviewMaterials.length > 0 ? (
                     <div className="space-y-8">
                         {activity.reviewMaterials.map((material, index) => {
-                            const { icon: Icon, label } = typeMap[material.type];
+                            const { icon: Icon, label } = typeMap[material.type] || typeMap.link; // Fallback para o ícone de link
                             return (
                                 <section key={index} className={`${cardStyles} p-6 md:p-8`}>
                                     <div className="flex items-center gap-3 mb-4">

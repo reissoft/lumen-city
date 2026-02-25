@@ -91,7 +91,7 @@ export async function generateQuiz(formData: FormData) {
         type: 'QUIZ',
         difficulty: 1, 
         teacherId: teacher.id,
-        payload: { questions: quizData.questions },
+        payload: { questions: quizData.questions, xpMaxReward: 50, goldReward: 10 },
         classes: { 
           connect: classIds.map((id: string) => ({ id }))
         }
@@ -107,7 +107,7 @@ export async function generateQuiz(formData: FormData) {
   redirect(`/teacher/activity/${newActivity.id}/edit?created=true`)
 }
 
-export async function createManualQuiz(title: string, description: string, questions: any[], classIds: string[]) {
+export async function createManualQuiz(title: string, description: string, questions: any[], classIds: string[], xpMaxReward: number = 0, goldReward: number = 0) {
     const teacherEmail = await getCurrentUser();
     let newActivity: Activity;
 
@@ -126,7 +126,7 @@ export async function createManualQuiz(title: string, description: string, quest
                 type: 'QUIZ',
                 difficulty: 1,
                 teacherId: teacher.id,
-                payload: { questions },
+                payload: { questions, xpMaxReward: xpMaxReward || 0, goldReward: goldReward || 0 },
                 classes: {
                     connect: classIds.map((id: string) => ({ id }))
                 }
@@ -157,7 +157,7 @@ export async function getActivityById(id: string) {
   return activity;
 }
 
-export async function updateQuiz(id: string, title: string, description: string, questions: any[], reviewMaterials: {url: string, type: string}[], classIds: string[]) {
+export async function updateQuiz(id: string, title: string, description: string, questions: any[], reviewMaterials: {url: string, type: string}[], classIds: string[], xpMaxReward: number = 0, goldReward: number = 0) {
     if (!id || !title || questions.length === 0) {
         throw new Error("Dados inválidos para atualização.");
     }
@@ -173,6 +173,8 @@ export async function updateQuiz(id: string, title: string, description: string,
                 simpleType = 'pdf';
             } else if (material.type && material.type.startsWith('image/')) {
                 simpleType = 'image';
+            } else if (material.type && material.type.startsWith('audio/')) {
+                simpleType = 'audio';
             }
             return JSON.stringify({ url: material.url, type: simpleType });
         });
@@ -182,7 +184,7 @@ export async function updateQuiz(id: string, title: string, description: string,
             data: {
                 title,
                 description,
-                payload: { questions },
+                payload: { questions, xpMaxReward: xpMaxReward || 0, goldReward: goldReward || 0 },
                 reviewMaterials: materialsAsJsonStrings, // Salva o array de strings normalizadas
                 classes: {
                   set: classIds.map(id => ({ id }))
@@ -240,51 +242,37 @@ export async function submitQuizResult(activityId: string, score: number) {
 
     const activity = await prisma.activity.findUnique({
         where: { id: activityId },
-        select: { difficulty: true }
+        select: { difficulty: true, payload: true }
     });
 
     if (!activity) throw new Error("Atividade não encontrada.");
 
-    const bestPreviousAttempt = await prisma.activityAttempt.findFirst({
-        where: { studentId: student.id, activityId: activityId },
-        orderBy: { score: 'desc' }
-    });
-
-    const previousBestScore = bestPreviousAttempt?.score || 0;
-
-    if (score <= previousBestScore) {
-        await prisma.activityAttempt.create({
-            data: {
-                studentId: student.id,
-                activityId: activityId,
-                score: score,
-                response: {},
-                rewarded: false,
-            }
-        });
-
-        revalidatePath('/student');
-        return {
-            success: true,
-            message: `Você conseguiu ${score}%. Sua melhor pontuação é ${previousBestScore}%. Tente de novo para ganhar mais XP!`,
-            passed: score >= 70
-        };
-    }
-
-    const xpFromNewScore = calculateXp(score, activity.difficulty);
-    const xpFromOldScore = calculateXp(previousBestScore, activity.difficulty);
-    const xpGained = xpFromNewScore - xpFromOldScore;
+    // Obter valores customizados do payload
+    const payload = activity.payload as any;
+    const customXpMaxReward = payload?.xpMaxReward || 0;
+    const customGoldReward = payload?.goldReward || 0;
     
-    const passed = score >= 70;
-    const goldReward = passed ? 10 : 0;
-
-    const newTotalXp = student.xp + xpGained;
+    // Determinar XP ganho: usar customizado OU dificuldade (não ambos!)
+    let totalXpGained = 0;
+    if (customXpMaxReward > 0) {
+        // Se tiver XP customizado, usar apenas esse (proporcional ao score)
+        totalXpGained = Math.round((score / 100) * customXpMaxReward);
+    } else {
+        // Senão, usar XP de dificuldade
+        totalXpGained = calculateXp(score, activity.difficulty);
+    }
+    
+    // Ouro sempre proporcional se configurado
+    const goldProportional = customGoldReward > 0 ? Math.round((score / 100) * customGoldReward) : 0;
+    
+    const newTotalXp = student.xp + totalXpGained;
     
     let newLevel = student.level;
     while (newTotalXp >= getTotalXpForLevelStart(newLevel + 1)) {
         newLevel++;
     }
     
+    // Registrar tentativa e atualizar student
     await prisma.$transaction([
         prisma.activityAttempt.create({
             data: {
@@ -302,10 +290,10 @@ export async function submitQuizResult(activityId: string, score: number) {
                 level: newLevel,
                 resources: {
                     upsert: {
-                        create: { gold: goldReward },
+                        create: { gold: goldProportional },
                         update: {
                             gold: {
-                                increment: goldReward
+                                increment: goldProportional
                             }
                         }
                     }
@@ -316,15 +304,16 @@ export async function submitQuizResult(activityId: string, score: number) {
 
     revalidatePath('/student');
     
-    let rewardMessage = `Parabéns! Você superou sua pontuação e ganhou +${xpGained} XP!`;
-    if (goldReward > 0) {
-        rewardMessage += ` E também +${goldReward} de Ouro!`;
+    let rewardMessage = `Resultado: ${score}% | Ganhou +${totalXpGained} XP`;
+    if (goldProportional > 0) {
+        rewardMessage += ` e +${goldProportional} Ouro`;
     }
+    rewardMessage += `!`;
 
     return {
         success: true,
         message: rewardMessage,
-        passed: passed
+        passed: score >= 70
     };
 }
 

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ArrowLeft, Plus, Trash2, Save, Loader2, Link as LinkIcon, Users, BookOpen, Check, FileText, Image as ImageIcon, Youtube } from "lucide-react"
+import { ArrowLeft, Plus, Trash2, Save, Loader2, Link as LinkIcon, Users, BookOpen, Check, FileText, Image as ImageIcon, Youtube, Music } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 import { getActivityById, updateQuiz } from "@/app/actions"
 import { getTeacherClasses } from "@/app/teacher/create-activity/actions"
@@ -40,6 +40,8 @@ function EditQuizPageContent() {
   const [allTeacherClasses, setAllTeacherClasses] = useState<ClassState[]>([])
   const [selectedClasses, setSelectedClasses] = useState<string[]>([])
   const [newLink, setNewLink] = useState("");
+  const [xpMaxReward, setXpMaxReward] = useState(0)
+  const [goldReward, setGoldReward] = useState(0)
   const [loading, setLoading] = useState(true)
   const [isSaving, startTransition] = useTransition()
 
@@ -61,24 +63,27 @@ function EditQuizPageContent() {
         const activityQuestions = (activity.payload as any)?.questions || []
         setQuestions(activityQuestions.map((q: any, index: number) => ({ id: Date.now() + index, text: q.text, options: q.options.map((opt: string, i: number) => ({ id: i + 1, text: opt })), correctAnswerId: q.correct + 1 })));
         
+        // Carregar valores customizados de XP e Gold
+        const payload = activity.payload as any;
+        setXpMaxReward(payload?.xpMaxReward || 0);
+        setGoldReward(payload?.goldReward || 0);
+        
         const dbMaterials = (activity.reviewMaterials as any[]) || [];
         const parsedMaterials = dbMaterials.map((material, index) => {
             let materialObject;
             try {
-                // Se o material já for um objeto, usa direto.
                 if (typeof material === 'object' && material !== null && material.url) {
                     materialObject = material;
                 } else {
-                    // Tenta parsear se for uma string JSON.
                     materialObject = JSON.parse(material);
                 }
             } catch (e) {
-                // Se falhar, trata como uma URL string simples (legado).
                 const urlString = String(material);
                 const lowerUrl = urlString.toLowerCase();
                 let type = 'link';
                 if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) { type = 'youtube'; }
                 else if (lowerUrl.endsWith('.pdf')) { type = 'pdf'; }
+                else if (lowerUrl.endsWith('.mp3') || lowerUrl.endsWith('.wav') || lowerUrl.endsWith('.ogg')) { type = 'audio'; }
                 else if (lowerUrl.endsWith('.png') || lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.gif') || lowerUrl.endsWith('.webp')) { type = 'image'; }
                 materialObject = { url: urlString, type };
             }
@@ -122,16 +127,26 @@ function EditQuizPageContent() {
     let type: ReviewMaterialState['type'] = 'link';
     if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) { type = 'youtube'; }
     else if (lowerUrl.endsWith('.pdf')) { type = 'pdf'; }
+    else if (lowerUrl.endsWith('.mp3') || lowerUrl.endsWith('.wav') || lowerUrl.endsWith('.ogg')) { type = 'audio'; }
     else if (lowerUrl.endsWith('.png') || lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.gif') || lowerUrl.endsWith('.webp')) { type = 'image'; }
 
     setReviewMaterials([...reviewMaterials, { id: Date.now(), url: newLink, type }]);
     setNewLink("");
   };
   const addReviewMaterialFromUpload = (res: { url: string; type: string; }) => {
+    let simpleType = res.type;
+    if (res.type === 'application/pdf') {
+        simpleType = 'pdf';
+    } else if (res.type.startsWith('image/')) {
+        simpleType = 'image';
+    } else if (res.type.startsWith('audio/')) {
+        simpleType = 'audio';
+    }
+
     const newMaterial: ReviewMaterialState = {
       id: Date.now(),
       url: res.url,
-      type: res.type, 
+      type: simpleType as ReviewMaterialState['type'],
     };
     setReviewMaterials(prev => [...prev, newMaterial]);
     toast.success("Arquivo adicionado com sucesso!");
@@ -148,7 +163,7 @@ function EditQuizPageContent() {
 
     startTransition(async () => {
       try {
-        await updateQuiz(id, title, description, formattedQuestions, materialsToSave, selectedClasses);
+        await updateQuiz(id, title, description, formattedQuestions, materialsToSave, selectedClasses, xpMaxReward, goldReward);
         toast.success("Atividade salva com sucesso!")
         router.push('/teacher');
       } catch (error) {
@@ -157,7 +172,7 @@ function EditQuizPageContent() {
     });
   }
 
-  const materialIcons: { [key: string]: React.ElementType } = { youtube: Youtube, pdf: FileText, image: ImageIcon, link: LinkIcon };
+  const materialIcons: { [key: string]: React.ElementType } = { youtube: Youtube, pdf: FileText, image: ImageIcon, audio: Music, link: LinkIcon };
 
   if (loading) return (
     <div className="h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 text-white">
@@ -180,6 +195,46 @@ function EditQuizPageContent() {
                 <h2 className="text-xl font-bold text-white">Informações Gerais</h2>
                 <div className="space-y-2"><Label htmlFor="quiz-title" className={labelStyles}>Título da Atividade</Label><Input id="quiz-title" value={title} onChange={(e) => setTitle(e.target.value)} disabled={isSaving} className={inputStyles} placeholder="Ex: Conquista da América"/></div>
                 <div className="space-y-2"><Label htmlFor="quiz-description" className={labelStyles}>Descrição</Label><Textarea id="quiz-description" value={description} onChange={(e) => setDescription(e.target.value)} disabled={isSaving} className={cn(inputStyles, 'min-h-[80px]')} placeholder="Um breve resumo sobre o conteúdo desta missão."/></div>
+                
+                <div className="grid md:grid-cols-2 gap-6 pt-4 border-t border-white/10">
+                    <div className="space-y-2">
+                        <Label htmlFor="xp-reward" className={labelStyles}>XP Máximo a Ganhar 🎯</Label>
+                        <div className="flex items-center gap-2">
+                            <Input 
+                                id="xp-reward" 
+                                type="number" 
+                                min="0" 
+                                max="1000" 
+                                value={xpMaxReward} 
+                                onChange={(e) => setXpMaxReward(Math.max(0, parseInt(e.target.value) || 0))} 
+                                disabled={isSaving} 
+                                className={inputStyles} 
+                                placeholder="0 (sem limite)"
+                            />
+                            <span className="text-sm text-white/60 whitespace-nowrap">0 = desativado</span>
+                        </div>
+                        <p className="text-xs text-white/50">Quando configurado, o aluno ganha XP proporcional ao score (ex: 80% de 100 XP = 80 XP)</p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <Label htmlFor="gold-reward" className={labelStyles}>Ouro ao Completar 💰</Label>
+                        <div className="flex items-center gap-2">
+                            <Input 
+                                id="gold-reward" 
+                                type="number" 
+                                min="0" 
+                                max="1000" 
+                                value={goldReward} 
+                                onChange={(e) => setGoldReward(Math.max(0, parseInt(e.target.value) || 0))} 
+                                disabled={isSaving} 
+                                className={inputStyles} 
+                                placeholder="0 (padrão: 10)"
+                            />
+                            <span className="text-sm text-white/60 whitespace-nowrap">0 = padrão</span>
+                        </div>
+                        <p className="text-xs text-white/50">Quando configurado, o aluno ganha esse valor de ouro ao passar (70%+)</p>
+                    </div>
+                </div>
             </div>
 
             <div className={`${cardStyles} p-6 md:p-8 space-y-4`}>
@@ -223,19 +278,19 @@ function EditQuizPageContent() {
                   content={{
                     label: "Arraste e solte ou clique para selecionar um arquivo",
                     button: "Selecionar",
-                    allowedContent: "Imagens, PDFs, etc. (até 4MB)",
+                    allowedContent: "Imagens, PDFs, Audios, etc. (até 4MB)",
                   }}
                   appearance={{
                     container: {
                       border: "2px dashedrgba(169, 171, 175, 0.12)",
-                      backgroundColor: "#1a202c",
+                      backgroundColor: "#682e95",
                     },
                     label: {
                       color: "#a0aec0",
                     },
                     button: {
-                      backgroundColor: "#4a5568",
-                      color: "#e2e8f0",
+                      backgroundColor: "#ffffff",
+                      color: "#201b3c",
                     },
                   }}
                 />

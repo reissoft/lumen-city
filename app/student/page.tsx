@@ -126,6 +126,7 @@ export default async function StudentHub() {
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-white/70 mt-2">
                   <div className="flex items-center gap-1.5 font-medium"><Users size={14} />{className}</div>
                   <div className="flex items-center gap-1.5 font-medium"><Coins size={14} className="text-yellow-400"/>{goldAmount} Moedas</div>
+                  <div className="flex items-center gap-1.5 font-medium text-cyan-400"><Star size={14} className="fill-cyan-400" />{student.xp} XP Total</div>
                 </div>
               </div>
             </div>
@@ -201,6 +202,23 @@ export default async function StudentHub() {
                     </header>
                     <div className="px-6 flex-grow">
                         <p className="text-sm text-white/60 line-clamp-2 h-10 flex-grow">{activity.description}</p>
+                        
+                        {((activity.payload as any)?.xpMaxReward > 0 || (activity.payload as any)?.goldReward > 0) && (
+                            <div className="flex gap-3 mt-4 pt-3 border-t border-white/10">
+                                {(activity.payload as any)?.xpMaxReward > 0 && (
+                                    <div className="flex items-center gap-1.5 text-sm">
+                                        <span className="text-lg">🎯</span>
+                                        <span className="text-white/70">XP: <span className="font-bold text-cyan-300">{(activity.payload as any).xpMaxReward}</span></span>
+                                    </div>
+                                )}
+                                {(activity.payload as any)?.goldReward > 0 && (
+                                    <div className="flex items-center gap-1.5 text-sm">
+                                        <span className="text-lg">💰</span>
+                                        <span className="text-white/70">Ouro: <span className="font-bold text-yellow-300">{(activity.payload as any).goldReward}</span></span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                     <footer className="p-6 pt-4 mt-auto">
                       <Link href={activityPath} className="w-full">

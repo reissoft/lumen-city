@@ -5,11 +5,11 @@ import { useEffect, useState, Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { getActivityById } from '@/app/actions';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Loader2, Link as LinkIcon, Youtube, FileText, Image as ImageIcon, ExternalLink } from 'lucide-react';
+import { ArrowRight, Loader2, Link as LinkIcon, Youtube, FileText, Image as ImageIcon, ExternalLink, Music } from 'lucide-react';
 
 interface ReviewMaterial {
   url: string;
-  type: 'youtube' | 'link' | 'pdf' | 'image';
+  type: 'youtube' | 'link' | 'pdf' | 'image' | 'audio';
 }
 
 interface Activity {
@@ -52,6 +52,17 @@ function ImageEmbed({ url }: { url: string }) {
     );
 }
 
+function AudioEmbed({ url }: { url: string }) {
+    return (
+        <div className="w-full">
+            <audio controls className="w-full rounded-lg">
+                <source src={url} />
+                Seu navegador não suporta o elemento de áudio.
+            </audio>
+        </div>
+    );
+}
+
 function ReviewPageContent() {
     const params = useParams();
     const router = useRouter();
@@ -82,6 +93,8 @@ function ReviewPageContent() {
                             return { url: urlString, type: 'youtube' };
                         } else if (lowerUrl.endsWith('.pdf')) {
                             return { url: urlString, type: 'pdf' };
+                        } else if (lowerUrl.endsWith('.mp3') || lowerUrl.endsWith('.wav') || lowerUrl.endsWith('.ogg')) {
+                            return { url: urlString, type: 'audio' };
                         } else if (lowerUrl.endsWith('.png') || lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.gif') || lowerUrl.endsWith('.webp')) {
                             return { url: urlString, type: 'image' };
                         }
@@ -122,6 +135,7 @@ function ReviewPageContent() {
         youtube: { icon: Youtube, label: "Vídeo do YouTube" },
         pdf: { icon: FileText, label: "Documento PDF" },
         image: { icon: ImageIcon, label: "Imagem" },
+        audio: { icon: Music, label: "Áudio" },
         link: { icon: LinkIcon, label: "Link Externo" }
     }
 
@@ -149,6 +163,7 @@ function ReviewPageContent() {
                                     {material.type === 'youtube' && <YouTubeEmbed url={material.url} />}
                                     {material.type === 'pdf' && <PDFEmbed url={material.url} />}
                                     {material.type === 'image' && <ImageEmbed url={material.url} />}
+                                    {material.type === 'audio' && <AudioEmbed url={material.url} />}
                                     {material.type === 'link' && (
                                         <a href={material.url} target="_blank" rel="noopener noreferrer" className="block p-6 bg-white/5 rounded-2xl hover:bg-white/10 border-2 border-white/10 hover:border-blue-400/50 transition-all group">
                                             <div className="flex justify-between items-center">

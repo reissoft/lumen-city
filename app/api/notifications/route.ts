@@ -34,6 +34,7 @@ export async function GET() {
   }
 
   try {
+    // @ts-ignore
     const notifications = await prisma.notification.findMany({
       where: {
         read: false,
@@ -71,6 +72,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     try {
+      // @ts-ignore
         await prisma.notification.updateMany({
             where: {
                 read: false,

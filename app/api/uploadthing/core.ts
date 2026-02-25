@@ -11,15 +11,25 @@ export const ourFileRouter = {
   
   activityAttachment: f({
     image: { maxFileSize: "4MB" },
-    pdf: { maxFileSize: "16MB" },
+    pdf: { maxFileSize: "4MB" },
+    audio: { maxFileSize: "4MB" }, // Adicionado suporte para áudio
   })
     .onUploadComplete(async ({ file }) => {
-      console.log("Upload de anexo de atividade completo! URL:", file.url);
+      console.log("Upload de anexo de atividade completo! URL:", file.url, "Tipo:", file.type);
       
-      // Simplifica o tipo de arquivo antes de retornar
-      const fileType = file.type.startsWith("image/") ? "image" : (file.type === "application/pdf" ? "pdf" : "link");
+      // Lógica aprimorada para simplificar o tipo de arquivo
+      let simpleType: string;
+      if (file.type.startsWith("image/")) {
+        simpleType = "image";
+      } else if (file.type === "application/pdf") {
+        simpleType = "pdf";
+      } else if (file.type.startsWith("audio/")) {
+        simpleType = "audio";
+      } else {
+        simpleType = "link"; // Fallback para outros tipos
+      }
 
-      return { url: file.url, type: fileType };
+      return { url: file.url, type: simpleType };
     }),
 
 } satisfies FileRouter;

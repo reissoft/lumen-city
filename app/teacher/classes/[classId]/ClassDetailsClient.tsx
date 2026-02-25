@@ -1,13 +1,22 @@
-// app/teacher/classes/[id]/ClassDetailsClient.tsx
+// app/teacher/classes/[classId]/ClassDetailsClient.tsx
 'use client';
 
+import { useState } from 'react';
+import { useRouter } from "next/navigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, User } from "lucide-react";
+import { ArrowLeft, User, Search } from "lucide-react";
 import { PageData } from "./page"; 
 import Link from "next/link";
+import { Input } from '@/components/ui/input';
 
 export default function ClassDetailsClient({ classData }: { classData: PageData['classData'] }) {
+    const router = useRouter();
+    const [nameFilter, setNameFilter] = useState('');
+
+    const filteredStudents = classData.students.filter(student => 
+        student.name.toLowerCase().includes(nameFilter.toLowerCase())
+    );
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 text-white">
@@ -18,10 +27,23 @@ export default function ClassDetailsClient({ classData }: { classData: PageData[
                     <ArrowLeft size={16} /> Voltar para Turmas
                 </Link>
 
-                <header className="mb-10">
+                <header className="mb-6">
                     <h1 className="text-4xl font-bold">{classData.name}</h1>
                     <p className="text-white/60">Visualize os alunos da sua turma.</p>
                 </header>
+
+                <div className="mb-8 max-w-sm">
+                    <div className="relative">
+                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" />
+                        <Input 
+                            type="text"
+                            placeholder="Filtrar por nome..."
+                            value={nameFilter}
+                            onChange={(e) => setNameFilter(e.target.value)}
+                            className="bg-white/10 border-white/20 backdrop-blur-md text-white placeholder:text-white/50 pl-10"
+                        />
+                    </div>
+                </div>
 
                 <main className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl shadow-lg overflow-hidden">
                     <Table>
@@ -33,9 +55,13 @@ export default function ClassDetailsClient({ classData }: { classData: PageData[
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {classData.students.length > 0 ? (
-                                classData.students.map(student => (
-                                    <TableRow key={student.id} className="border-b-white/10 hover:bg-white/5">
+                            {filteredStudents.length > 0 ? (
+                                filteredStudents.map(student => (
+                                    <TableRow 
+                                        key={student.id} 
+                                        className="border-b-white/10 hover:bg-white/10 transition-colors cursor-pointer"
+                                        onClick={() => router.push(`/teacher/classes/${classData.id}/student/${student.id}`)}
+                                    >
                                         <TableCell className="font-medium text-white flex items-center gap-3">
                                             <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
                                                 <User size={16} className="text-white/60"/>
@@ -51,7 +77,7 @@ export default function ClassDetailsClient({ classData }: { classData: PageData[
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={3} className="text-center h-48 text-white/50">
-                                        Nenhum aluno nesta turma ainda.
+                                        {nameFilter ? "Nenhum aluno encontrado com este nome." : "Nenhum aluno nesta turma ainda."}
                                     </TableCell>
                                 </TableRow>
                             )}

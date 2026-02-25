@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft, Plus, Trash2, Save, Loader2, Check } from "lucide-react"
 import { createManualQuiz } from "@/app/actions"
 import { Textarea } from "@/components/ui/textarea"
+import { cn } from "@/lib/utils"
 
 interface Question {
   id: number
@@ -27,6 +28,8 @@ function ManualQuizCreatorContent() {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [classIds, setClassIds] = useState<string[]>([])
+  const [xpMaxReward, setXpMaxReward] = useState(0)
+  const [goldReward, setGoldReward] = useState(0)
   const [questions, setQuestions] = useState<Question[]>([
     {
       id: Date.now(),
@@ -94,7 +97,7 @@ function ManualQuizCreatorContent() {
         options: q.options.map(opt => opt.text),
         correct: q.options.findIndex(opt => opt.id === q.correctAnswerId),
       }));
-      createManualQuiz(title, description, formattedQuestions, classIds);
+      createManualQuiz(title, description, formattedQuestions, classIds, xpMaxReward, goldReward);
     });
   }
 
@@ -119,6 +122,46 @@ function ManualQuizCreatorContent() {
                 <div>
                     <Label htmlFor="quiz-description" className="block text-md font-bold text-white mb-2">Descrição (Opcional)</Label>
                     <Textarea id="quiz-description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Uma breve explicação sobre o quiz..." className={`${inputStyles} min-h-[80px]`}/>
+                </div>
+                
+                <div className="grid md:grid-cols-2 gap-6 pt-4 border-t border-white/10">
+                    <div className="space-y-2">
+                        <Label htmlFor="xp-reward" className="text-sm font-semibold text-white/80">XP Máximo a Ganhar 🎯</Label>
+                        <div className="flex items-center gap-2">
+                            <Input 
+                                id="xp-reward" 
+                                type="number" 
+                                min="0" 
+                                max="1000" 
+                                value={xpMaxReward} 
+                                onChange={(e) => setXpMaxReward(Math.max(0, parseInt(e.target.value) || 0))} 
+                                disabled={isSaving} 
+                                className={inputStyles} 
+                                placeholder="0 (sem limite)"
+                            />
+                            <span className="text-sm text-white/60 whitespace-nowrap">0 = desativado</span>
+                        </div>
+                        <p className="text-xs text-white/50">Quando configurado, o aluno ganha XP proporcional ao score (ex: 80% de 100 XP = 80 XP)</p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <Label htmlFor="gold-reward" className="text-sm font-semibold text-white/80">Ouro ao Completar 💰</Label>
+                        <div className="flex items-center gap-2">
+                            <Input 
+                                id="gold-reward" 
+                                type="number" 
+                                min="0" 
+                                max="1000" 
+                                value={goldReward} 
+                                onChange={(e) => setGoldReward(Math.max(0, parseInt(e.target.value) || 0))} 
+                                disabled={isSaving} 
+                                className={inputStyles} 
+                                placeholder="0 (padrão: 10)"
+                            />
+                            <span className="text-sm text-white/60 whitespace-nowrap">0 = padrão</span>
+                        </div>
+                        <p className="text-xs text-white/50">Quando configurado, o aluno ganha esse valor de ouro ao passar (70%+)</p>
+                    </div>
                 </div>
             </section>
 

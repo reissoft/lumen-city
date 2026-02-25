@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ArrowLeft, Plus, Trash2, Save, Loader2, Link as LinkIcon, Users, BookOpen, Check, FileText, Image as ImageIcon, Youtube } from "lucide-react"
+import { ArrowLeft, Plus, Trash2, Save, Loader2, Link as LinkIcon, Users, BookOpen, Check, FileText, Image as ImageIcon, Youtube, Music } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 import { getActivityById, updateQuiz } from "@/app/actions"
 import { getTeacherClasses } from "@/app/teacher/create-activity/actions"
@@ -65,20 +65,18 @@ function EditQuizPageContent() {
         const parsedMaterials = dbMaterials.map((material, index) => {
             let materialObject;
             try {
-                // Se o material já for um objeto, usa direto.
                 if (typeof material === 'object' && material !== null && material.url) {
                     materialObject = material;
                 } else {
-                    // Tenta parsear se for uma string JSON.
                     materialObject = JSON.parse(material);
                 }
             } catch (e) {
-                // Se falhar, trata como uma URL string simples (legado).
                 const urlString = String(material);
                 const lowerUrl = urlString.toLowerCase();
                 let type = 'link';
                 if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) { type = 'youtube'; }
                 else if (lowerUrl.endsWith('.pdf')) { type = 'pdf'; }
+                else if (lowerUrl.endsWith('.mp3') || lowerUrl.endsWith('.wav') || lowerUrl.endsWith('.ogg')) { type = 'audio'; }
                 else if (lowerUrl.endsWith('.png') || lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.gif') || lowerUrl.endsWith('.webp')) { type = 'image'; }
                 materialObject = { url: urlString, type };
             }
@@ -122,16 +120,26 @@ function EditQuizPageContent() {
     let type: ReviewMaterialState['type'] = 'link';
     if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) { type = 'youtube'; }
     else if (lowerUrl.endsWith('.pdf')) { type = 'pdf'; }
+    else if (lowerUrl.endsWith('.mp3') || lowerUrl.endsWith('.wav') || lowerUrl.endsWith('.ogg')) { type = 'audio'; }
     else if (lowerUrl.endsWith('.png') || lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.gif') || lowerUrl.endsWith('.webp')) { type = 'image'; }
 
     setReviewMaterials([...reviewMaterials, { id: Date.now(), url: newLink, type }]);
     setNewLink("");
   };
   const addReviewMaterialFromUpload = (res: { url: string; type: string; }) => {
+    let simpleType = res.type;
+    if (res.type === 'application/pdf') {
+        simpleType = 'pdf';
+    } else if (res.type.startsWith('image/')) {
+        simpleType = 'image';
+    } else if (res.type.startsWith('audio/')) {
+        simpleType = 'audio';
+    }
+
     const newMaterial: ReviewMaterialState = {
       id: Date.now(),
       url: res.url,
-      type: res.type, 
+      type: simpleType as ReviewMaterialState['type'],
     };
     setReviewMaterials(prev => [...prev, newMaterial]);
     toast.success("Arquivo adicionado com sucesso!");
@@ -157,7 +165,7 @@ function EditQuizPageContent() {
     });
   }
 
-  const materialIcons: { [key: string]: React.ElementType } = { youtube: Youtube, pdf: FileText, image: ImageIcon, link: LinkIcon };
+  const materialIcons: { [key: string]: React.ElementType } = { youtube: Youtube, pdf: FileText, image: ImageIcon, audio: Music, link: LinkIcon };
 
   if (loading) return (
     <div className="h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 text-white">
@@ -223,19 +231,19 @@ function EditQuizPageContent() {
                   content={{
                     label: "Arraste e solte ou clique para selecionar um arquivo",
                     button: "Selecionar",
-                    allowedContent: "Imagens, PDFs, etc. (até 4MB)",
+                    allowedContent: "Imagens, PDFs, Audios, etc. (até 4MB)",
                   }}
                   appearance={{
                     container: {
                       border: "2px dashedrgba(169, 171, 175, 0.12)",
-                      backgroundColor: "#1a202c",
+                      backgroundColor: "#682e95",
                     },
                     label: {
                       color: "#a0aec0",
                     },
                     button: {
-                      backgroundColor: "#4a5568",
-                      color: "#e2e8f0",
+                      backgroundColor: "#ffffff",
+                      color: "#201b3c",
                     },
                   }}
                 />

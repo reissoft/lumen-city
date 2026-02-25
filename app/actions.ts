@@ -173,6 +173,8 @@ export async function updateQuiz(id: string, title: string, description: string,
                 simpleType = 'pdf';
             } else if (material.type && material.type.startsWith('image/')) {
                 simpleType = 'image';
+            } else if (material.type && material.type.startsWith('audio/')) {
+                simpleType = 'audio';
             }
             return JSON.stringify({ url: material.url, type: simpleType });
         });

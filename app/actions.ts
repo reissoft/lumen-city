@@ -157,7 +157,7 @@ export async function getActivityById(id: string) {
   return activity;
 }
 
-export async function updateQuiz(id: string, title: string, description: string, questions: any[], reviewMaterials: any[], classIds: string[]) {
+export async function updateQuiz(id: string, title: string, description: string, questions: any[], reviewMaterials: {url: string, type: string}[], classIds: string[]) {
     if (!id || !title || questions.length === 0) {
         throw new Error("Dados inválidos para atualização.");
     }
@@ -166,13 +166,24 @@ export async function updateQuiz(id: string, title: string, description: string,
     }
 
     try {
+        // Normaliza o tipo e transforma o array de objetos em um array de strings JSON
+        const materialsAsJsonStrings = reviewMaterials.map(material => {
+            let simpleType = material.type;
+            if (material.type === 'application/pdf') {
+                simpleType = 'pdf';
+            } else if (material.type && material.type.startsWith('image/')) {
+                simpleType = 'image';
+            }
+            return JSON.stringify({ url: material.url, type: simpleType });
+        });
+
         await prisma.activity.update({
             where: { id },
             data: {
                 title,
                 description,
                 payload: { questions },
-                reviewMaterials: reviewMaterials,
+                reviewMaterials: materialsAsJsonStrings, // Salva o array de strings normalizadas
                 classes: {
                   set: classIds.map(id => ({ id }))
                 }

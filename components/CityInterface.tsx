@@ -28,7 +28,8 @@ interface BuildingData {
 
 let inEditMode = false;
 
-export default function CityInterface({ student, buildings: initialBuildings }: { student: any, buildings: any[] }) {
+export default function CityInterface({ student, buildings: initialBuildings, readOnly = false }: { student: any, buildings: any[], readOnly?: boolean }) {
+  const canEdit = !readOnly;
   const [localBuildings, setLocalBuildings] = useState<BuildingData[]>(initialBuildings || []);
   const [activeBuild, setActiveBuild] = useState<string | null>(null)
   const [activeCategory, setActiveCategory] = useState<BuildingCategory>('construction')
@@ -68,6 +69,15 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
 
   const handleTileClick = useCallback(async (x: number, y: number) => {
     const clickedBuilding = localBuildings.find(b => b.x === x && b.y === y);
+    if (!canEdit) {
+      // in readonly mode just allow selecting to see info
+      if (clickedBuilding) {
+        setSelectedBuildingId(clickedBuilding.id);
+      } else {
+        setSelectedBuildingId(null);
+      }
+      return;
+    }
     if (activeBuild) {
       if (clickedBuilding) { alert("Local ocupado!"); return; }
       setIsBuilding(true);
@@ -82,7 +92,7 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
     } else {
       if(!inEditMode) setSelectedBuildingId(null);
     }
-  }, [activeBuild, localBuildings]);
+  }, [activeBuild, localBuildings, canEdit]);
 
   const handleRotate = async () => {
     if (!selectedBuildingId) return;
@@ -154,7 +164,13 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
                 </div>
             </div>
             
-            <div 
+            {/* display a small notice if viewing someone else's city */}
+        {readOnly && (
+            <div className="absolute top-0 left-0 w-full bg-red-600 text-white text-center py-1 z-40 font-semibold">
+                Cidade de {student.name} (visualização – somente leitura)
+            </div>
+        )}
+        <div 
                 onPointerEnter={() => setPointerOverUI(true)}
                 onPointerLeave={() => setPointerOverUI(false)}
                 className="absolute top-0 left-0 w-full p-2 md:p-6 pointer-events-auto z-10"
@@ -190,7 +206,7 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
                 </div>
             </div>
 
-            {selectedBuildingId && selectedConfig && !activeBuild && (
+            {selectedBuildingId && selectedConfig && !activeBuild && canEdit && (
                 inEditMode = true,
                 <div 
                     onPointerEnter={() => setPointerOverUI(true)}
@@ -226,7 +242,7 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
                 </div>
             )}
 
-            {!selectedBuildingId && !activeBuild && (
+            {!selectedBuildingId && !activeBuild && canEdit && (
               <div
                 className="absolute bottom-2 md:bottom-4 right-2 md:right-4 z-30 pointer-events-auto"
                 onPointerEnter={() => setPointerOverUI(true)}
@@ -243,7 +259,7 @@ export default function CityInterface({ student, buildings: initialBuildings }: 
               </div>
             )}
 
-            {isBottomBarVisible && !selectedBuildingId && (
+            {isBottomBarVisible && !selectedBuildingId && canEdit && (
                 <div 
                 onPointerEnter={() => setPointerOverUI(true)}
                 onPointerLeave={() => setPointerOverUI(false)}

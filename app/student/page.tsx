@@ -45,23 +45,28 @@ async function getStudentData() {
         }
     });
 
-    if (!student) {
-         return { student: null, activities: [], attemptsMap: new Map(), ranking: [] };
-    }
+        if (!student) {
+          return { student: null, activities: [], attemptsMap: new Map(), ranking: [], classmates: [] };
+        }
     
     return getStudentDataByStudent(student);
 }
 
 async function getStudentDataByStudent(student: any) {
     const studentClassId = student.class?.id; 
-{/* @ts-ignore */}
-    let ranking = [];
+    /* New: pull classmates list for modal */
+    let ranking: { id: string; name: string; xp: number }[] = [];
+    let classmates: { id: string; name: string }[] = [];
     if (studentClassId) { 
         ranking = await prisma.student.findMany({
             where: { classId: studentClassId },
             orderBy: { xp: 'desc' },
             select: { id: true, name: true, xp: true, },
             take: 5,
+        });
+        classmates = await prisma.student.findMany({
+            where: { classId: studentClassId },
+            select: { id: true, name: true }
         });
     }
 
@@ -90,15 +95,18 @@ async function getStudentDataByStudent(student: any) {
             attemptsMap.set(attempt.activityId, attempt.score);
         }
     });
-{/* @ts-ignore */}
-    return { student, activities, attemptsMap, ranking };
+    /* @ts-ignore */
+    return { student, activities, attemptsMap, ranking, classmates };
 }
 
 const cardStyles = `bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl shadow-lg transition-all`;
 
 
+// we import the modal component that will run on the client
+import FriendCityModal from './FriendCityModal';
+
 export default async function StudentHub() {
-  const { student, activities, attemptsMap, ranking } = await getStudentData()
+  const { student, activities, attemptsMap, ranking, classmates } = await getStudentData()
   
   if (!student) return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 to-blue-900 text-white p-4">
@@ -152,16 +160,21 @@ export default async function StudentHub() {
         </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <Link href="/student/city" className="group lg:col-span-2">
+          <div className="group lg:col-span-2">
             <div className={`${cardStyles} h-full p-8 flex flex-col justify-between items-start relative overflow-hidden hover:border-blue-500/50`}>
                 <div className="absolute -top-10 -right-10 text-white/5"><Building size={180}/></div>
                 <header>
                     <h3 className="text-2xl font-bold flex items-center gap-3 text-white"><MapIcon /> Minha Cidade</h3>
                     <p className="text-white/60 my-3">Gerencie seus prédios, colete recursos e expanda seu império.</p>
                 </header>
-                <Button className="font-bold bg-white/10 border-white/20 backdrop-blur-md hover:bg-white/20 transition-colors group-hover:bg-blue-500 group-hover:border-blue-500/50">Entrar na Cidade</Button>
+                <div className="flex gap-2">
+                  <Link href="/student/city">
+                    <Button className="font-bold bg-white/10 border-white/20 backdrop-blur-md hover:bg-white/20 transition-colors group-hover:bg-blue-500 group-hover:border-blue-500/50">Entrar na Cidade</Button>
+                  </Link>
+                  <FriendCityModal classmates={classmates.filter(c=>c.id !== student.id)} />
+                </div>
             </div>
-          </Link>
+          </div>
           
            <aside className={`${cardStyles} p-6`}>
                 <h3 className="font-bold text-lg flex items-center gap-2 text-white mb-4"><Trophy className="text-yellow-400" /> Ranking da Turma</h3>

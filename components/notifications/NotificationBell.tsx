@@ -96,15 +96,22 @@ export default function NotificationBell() {
             {notifications.length > 0 ? (
               notifications.map((notification) => {
                 const sender = notification.message.senderTeacher || notification.message.senderStudent;
-                const senderName = sender?.name || 'Remetente desconhecido';
+                const senderName = sender?.name || 'Sistema';
                 const senderId = sender?.id;
 
-                if (!senderId) return null;
-
+                // show even if senderId is missing (system)
                 return (
                   <div 
                     key={notification.id} 
-                    onClick={() => handleNotificationClick(senderId)} 
+                    onClick={() => {
+                      if (senderId) {
+                        handleNotificationClick(senderId);
+                      } else {
+                        // go to system conversation
+                        setIsOpen(false);
+                        router.push('/messaging?system=true');
+                      }
+                    }}
                     className="px-4 py-3 hover:bg-gray-100 cursor-pointer"
                   >
                     <p className="text-sm text-gray-600">

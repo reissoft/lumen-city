@@ -10,6 +10,7 @@ interface Message {
   id: string;
   content: string;
   createdAt: string;
+  isSystem?: boolean;
   senderTeacher: { id: string; name: string | null } | null;
   senderStudent: { id: string; name: string | null } | null;
   senderTeacherId: string | null;
@@ -51,11 +52,19 @@ export default function MessageWindow({ contact, currentUser, onBack }: MessageW
       setMessages([]);
 
       try {
-        // A requisição para a API está correta, enviando IDs genéricos
-        const response = await axios.get(`/api/messages?senderId=${currentUser.id}&contactId=${contact.id}`);
+        let url;
+        if (contact.id === 'system') {
+          url = `/api/messages?system=true`;
+          console.log('📨 fetching system messages from:', url);
+        } else {
+          url = `/api/messages?senderId=${currentUser.id}&contactId=${contact.id}`;
+          console.log('📨 fetching regular messages from:', url);
+        }
+        const response = await axios.get(url);
+        console.log('📨 received messages:', response.data);
         setMessages(response.data);
       } catch (error) {
-        console.error('Error fetching messages:', error);
+        console.error('❌ Error fetching messages:', error);
       } finally {
         setIsLoading(false);
       }
@@ -73,7 +82,6 @@ export default function MessageWindow({ contact, currentUser, onBack }: MessageW
   const handleSendMessage = async () => {
     if (newMessage.trim() === '') return;
     try {
-      // O corpo da requisição está correto, enviando IDs genéricos
       const response = await axios.post('/api/messages', {
         senderId: currentUser.id,
         recipientId: contact.id,
@@ -107,13 +115,15 @@ export default function MessageWindow({ contact, currentUser, onBack }: MessageW
         ) : (
             messages.map((message) => {
             // CORREÇÃO: Lógica de renderização revertida para o schema original
-            const isCurrentUser = (message.senderTeacherId === currentUser.id) || (message.senderStudentId === currentUser.id);
+            // versão 2: qualquer mensagem sem remetente também é tratada como sistema
+            const isSystemMsg = message.isSystem || (!message.senderTeacherId && !message.senderStudentId);
+            const isCurrentUser = !isSystemMsg && ((message.senderTeacherId === currentUser.id) || (message.senderStudentId === currentUser.id));
             const sender = message.senderTeacher || message.senderStudent;
-            const senderName = sender?.name || 'Usuário desconhecido';
+            const senderName = isSystemMsg ? 'Sistema' : (sender?.name || 'Usuário desconhecido');
 
             return (
                 <div key={message.id} className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'} mb-4`}>
-                <div className={`rounded-2xl px-4 py-2 max-w-md shadow-md ${isCurrentUser ? 'bg-blue-600/80 text-white' : 'bg-black/20 backdrop-blur-sm'}`}>
+                <div className={`rounded-2xl px-4 py-2 max-w-md shadow-md ${isCurrentUser ? 'bg-blue-600/80 text-white' : isSystemMsg ? 'bg-yellow-500/20 text-yellow-700' : 'bg-black/20 backdrop-blur-sm'}`}>
                     {!isCurrentUser && (
                     <p className="text-xs text-white/70 font-bold">{senderName}</p>
                     )}
@@ -129,26 +139,33 @@ export default function MessageWindow({ contact, currentUser, onBack }: MessageW
         <div ref={messagesEndRef} />
       </main>
 
-      <footer className="bg-black/10 p-4 border-t border-white/10">
-        <div className="flex items-center gap-3">
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-            placeholder="Digite sua mensagem..."
-            className="flex-1 bg-white/5 border-2 border-white/20 rounded-full px-5 py-3 text-base placeholder:text-white/50 focus:ring-0 focus:border-blue-400 transition-colors"
-          />
-          <Button
-            onClick={handleSendMessage}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full w-14 h-14 flex-shrink-0 text-base font-bold hover:scale-105 transition-transform"
-            size="icon"
-            disabled={!newMessage.trim()}
-          >
-            <Send className="w-6 h-6" />
-          </Button>
-        </div>
-      </footer>
+      {/* disable reply if any message is a system notice */}
+      {messages.length > 0 && messages.every(msg => msg.isSystem) ? (
+        <footer className="bg-black/10 p-4 border-t border-white/10 text-white/60 text-center">
+          Mensagens do sistema não podem ser respondidas.
+        </footer>
+      ) : (
+        <footer className="bg-black/10 p-4 border-t border-white/10">
+          <div className="flex items-center gap-3">
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+              placeholder="Digite sua mensagem..."
+              className="flex-1 bg-white/5 border-2 border-white/20 rounded-full px-5 py-3 text-base placeholder:text-white/50 focus:ring-0 focus:border-blue-400 transition-colors"
+            />
+            <Button
+              onClick={handleSendMessage}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full w-14 h-14 flex-shrink-0 text-base font-bold hover:scale-105 transition-transform"
+              size="icon"
+              disabled={!newMessage.trim()}
+            >
+              <Send className="w-6 h-6" />
+            </Button>
+          </div>
+        </footer>
+      )}
     </div>
   );
 }

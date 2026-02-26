@@ -24,6 +24,7 @@ interface ContactListProps {
 
 export default function ContactList({ onSelectContact, selectedContactId, currentUser, unreadMessages, isModerating = false }: ContactListProps) {
   const [contacts, setContacts] = useState<{ teachers: Contact[]; students: Contact[] }>({ teachers: [], students: [] });
+  // we'll inject a pseudo-contact for system messages if needed
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -96,6 +97,8 @@ export default function ContactList({ onSelectContact, selectedContactId, curren
         <p className="text-white/50 px-2">Carregando...</p>
       ) : (
         <div className="space-y-4">
+          {/* system contact always shown first */}
+          {renderContact({ id: 'system', name: 'Sistema', role: 'teacher' })}
           {contacts.teachers.length > 0 && (
             <div>
               <h3 className="font-bold text-white/40 text-sm uppercase px-2 mb-2">Professores</h3>

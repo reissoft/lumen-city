@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ContactList from './ContactList';
 import MessageWindow from './MessageWindow';
 
@@ -21,9 +21,10 @@ interface MessagingInterfaceProps {
   currentUser: CurrentUser;
   initialUnreadMessages: Record<string, number>;
   isModerating?: boolean; // MODIFICAÇÃO: Adiciona a prop opcional
+  initialSystem?: boolean; // abrir conversa com sistema automaticamente
 }
 
-export default function MessagingInterface({ currentUser, initialUnreadMessages, isModerating = false }: MessagingInterfaceProps) {
+export default function MessagingInterface({ currentUser, initialUnreadMessages, isModerating = false, initialSystem = false }: MessagingInterfaceProps) {
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [unreadMessages, setUnreadMessages] = useState(initialUnreadMessages);
 
@@ -37,6 +38,13 @@ export default function MessagingInterface({ currentUser, initialUnreadMessages,
       });
     }
   };
+
+  // handle initial system open
+  useEffect(() => {
+    if (initialSystem) {
+      setSelectedContact({ id: 'system', name: 'Sistema', role: 'teacher' });
+    }
+  }, [initialSystem]);
 
   return (
     <div className="flex h-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg overflow-hidden">

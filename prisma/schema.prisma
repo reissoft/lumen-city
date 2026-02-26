@@ -124,6 +124,7 @@ model Message {
   content   String
   createdAt DateTime @default(now())
   read      Boolean  @default(false)
+  isSystem  Boolean  @default(false)   // indica mensagem gerada pelo sistema
 
   senderTeacherId   String?
   senderTeacher     Teacher? @relation("TeacherSentMessages", fields: [senderTeacherId], references: [id], onDelete: SetNull)

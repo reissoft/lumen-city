@@ -8,6 +8,7 @@ import { redirect } from 'next/navigation'
 import { cookies } from "next/headers"
 import bcrypt from 'bcryptjs'
 import { BUILDING_CONFIG, BuildingType } from '@/app/config/buildings'
+import { sendSystemMessage } from './actions/systemMessages'
 
 const prisma = new PrismaClient()
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
@@ -97,6 +98,16 @@ export async function generateQuiz(formData: FormData) {
         }
       }
     });
+
+    // depois de criar a atividade, enviar notificação para todos os alunos das turmas
+    const students = await prisma.student.findMany({
+      where: { classId: { in: classIds } },
+      select: { id: true, name: true }
+    });
+    students.forEach(s => {
+        const msg = `Nova atividade disponível: "${topic}"`;
+        sendSystemMessage(s.id, 'student', msg).catch(console.error);
+    });
     
   } catch (error) {
     console.error("Erro na geração com IA:", error)
@@ -131,6 +142,15 @@ export async function createManualQuiz(title: string, description: string, quest
                     connect: classIds.map((id: string) => ({ id }))
                 }
             },
+        });
+        // notificar alunos de cada classe selecionada
+        const students = await prisma.student.findMany({
+            where: { classId: { in: classIds } },
+            select: { id: true }
+        });
+        students.forEach(s => {
+            const msg = `Nova atividade disponível: "${title}"`;
+            sendSystemMessage(s.id, 'student', msg).catch(console.error);
         });
 
     } catch (error) {
@@ -235,14 +255,14 @@ export async function submitQuizResult(activityId: string, score: number) {
 
     const student = await prisma.student.findUnique({
         where: { username: userIdentifier }, // Busca pelo username
-        select: { id: true, xp: true, level: true, resources: true }
+        select: { id: true, name: true, xp: true, level: true, resources: true }
     });
 
     if (!student) throw new Error("Estudante não encontrado.");
 
     const activity = await prisma.activity.findUnique({
         where: { id: activityId },
-        select: { difficulty: true, payload: true }
+        select: { difficulty: true, payload: true, title: true, teacherId: true }
     });
 
     if (!activity) throw new Error("Atividade não encontrada.");
@@ -301,6 +321,16 @@ export async function submitQuizResult(activityId: string, score: number) {
             }
         })
     ]);
+    
+    // depois de salvar a tentativa, avisar o professor da atividade
+    if (activity && (activity as any).teacherId) {
+        const teacherId = (activity as any).teacherId;
+        const studentName = student.name;
+        const activityTitle = activity.title;
+        const msg = `O aluno ${studentName} concluiu a atividade "${activityTitle}" com ${score}%`;
+        // não aguardamos, é fire-and-forget
+        sendSystemMessage(teacherId, 'teacher', msg).catch(console.error);
+    }
 
     revalidatePath('/student');
     

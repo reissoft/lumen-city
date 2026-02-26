@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
-import ActivityStatsClient from './page-client';
+import ActivityStatsClient from './ActivityStatsClient';
 
 const prisma = new PrismaClient();
 

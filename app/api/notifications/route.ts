@@ -34,6 +34,12 @@ export async function GET() {
   }
 
   try {
+    // se o modelo notification ainda não estiver gerado, retornamos vazio
+    if (!('notification' in prisma) || typeof (prisma as any).notification?.findMany !== 'function') {
+      console.warn('Prisma client missing notification model');
+      return NextResponse.json([]);
+    }
+
     // @ts-ignore
     const notifications = await prisma.notification.findMany({
       where: {

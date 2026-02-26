@@ -50,20 +50,33 @@ async function getViewUser(loggedInUser: any, moderateAsId?: string) {
 // Função para buscar mensagens não lidas
 async function getUnreadMessages(userId: string, userRole: string) {
     const recipientCondition = userRole === 'student' ? { recipientStudentId: userId } : { recipientTeacherId: userId };
-    // @ts-ignore
-    const notifications = await prisma.notification.findMany({
-        where: { ...recipientCondition, read: false, message: {} },
-        select: { message: { select: { senderStudentId: true, senderTeacherId: true } } }
-    });
-    // @ts-ignore
-    return notifications.reduce((acc, notif) => {
-        if (!notif.message) return acc;
-        const senderId = notif.message.senderStudentId || notif.message.senderTeacherId;
-        if (senderId) {
-            acc[senderId] = (acc[senderId] || 0) + 1;
-        }
-        return acc;
-    }, {} as Record<string, number>);
+
+    if (!prisma || !('notification' in prisma) || typeof (prisma as any).notification?.findMany !== 'function') {
+        console.warn('Prisma client missing notification model, returning empty unread count');
+        return {};
+    }
+
+    try {
+        // @ts-ignore
+        const notifications = await prisma.notification.findMany({
+            where: { ...recipientCondition, read: false, message: {} },
+            select: { message: { select: { senderStudentId: true, senderTeacherId: true } } }
+        });
+        // accumulate counts per sender; use key 'system' for messages without sender
+        return notifications.reduce((acc, notif) => {
+            if (!notif.message) return acc;
+            const senderId = notif.message.senderStudentId || notif.message.senderTeacherId;
+            if (senderId) {
+                acc[senderId] = (acc[senderId] || 0) + 1;
+            } else {
+                acc['system'] = (acc['system'] || 0) + 1;
+            }
+            return acc;
+        }, {} as Record<string, number>);
+    } catch (error) {
+        console.error('Erro ao buscar notificações não lidas:', error);
+        return {};
+    }
 }
 
 export default async function MessagingPage({ searchParams }: { searchParams: { [key: string]: string | undefined } }) {
@@ -73,6 +86,7 @@ export default async function MessagingPage({ searchParams }: { searchParams: { 
   }
 
   const moderateAsId = searchParams.moderateAs;
+  const systemMode = searchParams.system === 'true';
   let backUrl = '/';
   let viewUser = loggedInUser;
   let isModerating = false;
@@ -110,11 +124,12 @@ export default async function MessagingPage({ searchParams }: { searchParams: { 
       </Link>
 
       <div className="w-full max-w-7xl h-[calc(100vh-80px)] z-10 mt-10">
-        {/* MODIFICAÇÃO: Passa a prop isModerating para o componente */}
+        {/* MODIFICAÇÃO: Passa as props para o componente */}
         <MessagingInterface 
             currentUser={viewUser} 
             initialUnreadMessages={unreadMessages} 
             isModerating={isModerating}
+            initialSystem={systemMode}
         />
       </div>
     </div>

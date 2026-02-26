@@ -15,7 +15,8 @@ interface ReviewMaterial {
 interface Activity {
   id: string;
   title: string;
-  expiresAt?: string | null;
+  // the backend returns a Date object for expiresAt, but we often treat it as string in the UI
+  expiresAt?: string | Date | null;
   reviewMaterials?: ReviewMaterial[];
 }
 
@@ -102,7 +103,9 @@ function ReviewPageContent() {
                         return { url: urlString, type: 'link' };
                     }
                 });
-                setActivity({ ...data, reviewMaterials: parsedMaterials });
+                // Convert expiresAt to string if it's a Date, to satisfy the Activity interface
+                const normalizedExpires = data.expiresAt ? String(data.expiresAt) : null;
+                setActivity({ ...data, reviewMaterials: parsedMaterials, expiresAt: normalizedExpires });
             })
             .catch(err => {
                 console.error("Failed to load activity:", err)

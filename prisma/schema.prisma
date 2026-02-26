@@ -101,6 +101,8 @@ model Activity {
   teacher         Teacher      @relation(fields: [teacherId], references: [id])
   classes         Class[]
   attempts        ActivityAttempt[]
+  // Data opcional que determina até quando a atividade pode ser realizada pelos alunos
+  expiresAt       DateTime?
   createdAt       DateTime     @default(now())
 }
 

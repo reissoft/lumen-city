@@ -35,6 +35,7 @@ function EditQuizPageContent() {
   // --- Estados ---
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
+  const [expiresAt, setExpiresAt] = useState<string>("")
   const [questions, setQuestions] = useState<QuestionState[]>([])
   const [reviewMaterials, setReviewMaterials] = useState<ReviewMaterialState[]>([])
   const [allTeacherClasses, setAllTeacherClasses] = useState<ClassState[]>([])
@@ -60,6 +61,9 @@ function EditQuizPageContent() {
     ]).then(([activity, teacherClasses]) => {
         setTitle(activity.title)
         setDescription(activity.description || "")
+        if (activity.expiresAt) {
+            setExpiresAt(new Date(activity.expiresAt).toISOString().slice(0,10));
+        }
         const activityQuestions = (activity.payload as any)?.questions || []
         setQuestions(activityQuestions.map((q: any, index: number) => ({ id: Date.now() + index, text: q.text, options: q.options.map((opt: string, i: number) => ({ id: i + 1, text: opt })), correctAnswerId: q.correct + 1 })));
         
@@ -163,7 +167,7 @@ function EditQuizPageContent() {
 
     startTransition(async () => {
       try {
-        await updateQuiz(id, title, description, formattedQuestions, materialsToSave, selectedClasses, xpMaxReward, goldReward);
+        await updateQuiz(id, title, description, formattedQuestions, materialsToSave, selectedClasses, xpMaxReward, goldReward, expiresAt);
         toast.success("Atividade salva com sucesso!")
         router.push('/teacher');
       } catch (error) {
@@ -195,7 +199,10 @@ function EditQuizPageContent() {
                 <h2 className="text-xl font-bold text-white">Informações Gerais</h2>
                 <div className="space-y-2"><Label htmlFor="quiz-title" className={labelStyles}>Título da Atividade</Label><Input id="quiz-title" value={title} onChange={(e) => setTitle(e.target.value)} disabled={isSaving} className={inputStyles} placeholder="Ex: Conquista da América"/></div>
                 <div className="space-y-2"><Label htmlFor="quiz-description" className={labelStyles}>Descrição</Label><Textarea id="quiz-description" value={description} onChange={(e) => setDescription(e.target.value)} disabled={isSaving} className={cn(inputStyles, 'min-h-[80px]')} placeholder="Um breve resumo sobre o conteúdo desta missão."/></div>
-                
+                <div className="space-y-2">
+                    <Label htmlFor="expires-at" className={labelStyles}>Data de Expiração</Label>
+                    <Input id="expires-at" type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} disabled={isSaving} className={inputStyles} />
+                </div>
                 <div className="grid md:grid-cols-2 gap-6 pt-4 border-t border-white/10">
                     <div className="space-y-2">
                         <Label htmlFor="xp-reward" className={labelStyles}>XP Máximo a Ganhar 🎯</Label>

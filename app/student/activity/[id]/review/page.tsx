@@ -15,6 +15,7 @@ interface ReviewMaterial {
 interface Activity {
   id: string;
   title: string;
+  expiresAt?: string | null;
   reviewMaterials?: ReviewMaterial[];
 }
 
@@ -109,7 +110,10 @@ function ReviewPageContent() {
             .finally(() => setLoading(false));
     }, [id]);
 
+    const isExpired = activity?.expiresAt ? new Date(activity.expiresAt) < new Date() : false;
+
     const startQuiz = () => {
+        if (isExpired) return;
         const from = searchParams.get('from');
         const baseUrl = `/student/play/${id}`;
         const finalUrl = from ? `${baseUrl}?from=${from}` : baseUrl;
@@ -147,6 +151,9 @@ function ReviewPageContent() {
                 <header className="text-center space-y-2">
                     <p className="font-bold text-blue-300">Material de Estudo</p>
                     <h1 className="text-4xl md:text-5xl font-bold">Revisão para: {activity.title}</h1>
+                    {activity.expiresAt && (
+                        <p className={`text-sm ${isExpired ? 'text-red-400' : 'text-white/50'}`}>{isExpired ? 'Atividade expirada' : `Expira em ${new Date(activity.expiresAt).toLocaleDateString()}`}</p>
+                    )}
                     <p className="text-white/60 max-w-2xl mx-auto">Estude o conteúdo abaixo com atenção. Quando se sentir pronto, avance para o quiz!</p>
                 </header>
 
@@ -187,8 +194,8 @@ function ReviewPageContent() {
                 )}
                 
                 <footer className="text-center pt-6">
-                    <Button onClick={startQuiz} size="lg" className="h-14 px-10 text-lg font-bold gap-3 rounded-full bg-gradient-to-r from-green-400 to-cyan-400 hover:scale-105 transition-transform">
-                        Estou Pronto! <ArrowRight className="h-5 w-5" />
+                    <Button onClick={startQuiz} size="lg" disabled={isExpired} className={`h-14 px-10 text-lg font-bold gap-3 rounded-full ${isExpired ? 'bg-red-500/40 cursor-not-allowed' : 'bg-gradient-to-r from-green-400 to-cyan-400 hover:scale-105'} transition-transform` }>
+                        {isExpired ? 'Expirada' : <>Estou Pronto! <ArrowRight className="h-5 w-5" /></>}
                     </Button>
                 </footer>
             </div>

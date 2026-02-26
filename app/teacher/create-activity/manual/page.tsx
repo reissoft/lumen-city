@@ -27,6 +27,7 @@ function ManualQuizCreatorContent() {
   
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
+  const [expiresAt, setExpiresAt] = useState("")
   const [classIds, setClassIds] = useState<string[]>([])
   const [xpMaxReward, setXpMaxReward] = useState(0)
   const [goldReward, setGoldReward] = useState(0)
@@ -50,6 +51,10 @@ function ManualQuizCreatorContent() {
       } catch (error) {
         console.error("Erro ao processar os IDs das turmas da URL:", error);
       }
+    }
+    const exp = searchParams.get("expiresAt");
+    if (exp) {
+      setExpiresAt(exp);
     }
   }, [searchParams])
 
@@ -97,7 +102,7 @@ function ManualQuizCreatorContent() {
         options: q.options.map(opt => opt.text),
         correct: q.options.findIndex(opt => opt.id === q.correctAnswerId),
       }));
-      createManualQuiz(title, description, formattedQuestions, classIds, xpMaxReward, goldReward);
+      createManualQuiz(title, description, formattedQuestions, classIds, xpMaxReward, goldReward, expiresAt);
     });
   }
 
@@ -122,6 +127,10 @@ function ManualQuizCreatorContent() {
                 <div>
                     <Label htmlFor="quiz-description" className="block text-md font-bold text-white mb-2">Descrição (Opcional)</Label>
                     <Textarea id="quiz-description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Uma breve explicação sobre o quiz..." className={`${inputStyles} min-h-[80px]`}/>
+                </div>
+                <div>
+                    <Label htmlFor="expires-at" className="block text-md font-bold text-white mb-2">Data de Expiração (Opcional)</Label>
+                    <Input id="expires-at" type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} className={inputStyles} />
                 </div>
                 
                 <div className="grid md:grid-cols-2 gap-6 pt-4 border-t border-white/10">

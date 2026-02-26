@@ -23,6 +23,7 @@ type Class = {
 export default function CreateActivityPage() {
   const router = useRouter()
   const [title, setTitle] = useState("")
+  const [expiresAt, setExpiresAt] = useState("")
   const [isGenerating, startTransition] = useTransition()
   
   const [classes, setClasses] = useState<Class[]>([]);
@@ -53,6 +54,7 @@ export default function CreateActivityPage() {
     const formData = new FormData()
     formData.append("topic", title)
     formData.append("classIds", JSON.stringify(selectedClasses));
+    if (expiresAt) formData.append("expiresAt", expiresAt);
 
     if (contextText) {
       formData.append("contextText", contextText)
@@ -102,6 +104,17 @@ export default function CreateActivityPage() {
                         className="w-full bg-white/5 border-2 border-white/20 rounded-lg p-3 text-white placeholder:text-white/50 focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400 transition"
                         disabled={isGenerating}
                     />
+                    <div className="mt-4">
+                      <Label htmlFor="expiresAt" className="block text-sm font-semibold text-white/80 mb-1">Data de Expiração (opcional)</Label>
+                      <Input
+                        id="expiresAt"
+                        type="date"
+                        value={expiresAt}
+                        onChange={(e) => setExpiresAt(e.target.value)}
+                        disabled={isGenerating}
+                        className="w-full bg-white/5 border-2 border-white/20 rounded-lg p-3 text-white placeholder:text-white/50 focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400 transition"
+                      />
+                    </div>
                 </section>
 
                 <section className={`${cardStyles} p-6 md:p-8`}>
@@ -157,7 +170,7 @@ export default function CreateActivityPage() {
                         </header>
                         <footer className="mt-6">
                         <Link 
-                            href={`/teacher/create-activity/manual?title=${encodeURIComponent(title)}&classIds=${JSON.stringify(selectedClasses)}`}
+                            href={`/teacher/create-activity/manual?title=${encodeURIComponent(title)}&classIds=${JSON.stringify(selectedClasses)}${expiresAt ? `&expiresAt=${encodeURIComponent(expiresAt)}` : ''}`}
                             className={`${!canProceed ? 'pointer-events-none' : ''}`}>
                             <Button variant="secondary" className="w-full font-bold bg-white/10 border-white/20 backdrop-blur-md hover:bg-white/20 transition-colors" disabled={!canProceed}>
                             Começar a Criar

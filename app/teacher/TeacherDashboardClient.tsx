@@ -35,6 +35,7 @@ interface Activity {
   description: string | null;
   type: string;
   difficulty: number;
+  expiresAt?: string | null;
   reviewMaterials?: any[] | null;
   payload?: any;
 }
@@ -156,16 +157,22 @@ export default function TeacherDashboardClient({ teacherName, activities, stats 
                   {activities.map((activity) => {
                       const xpMaxReward = activity.payload?.xpMaxReward || 0;
                       const goldReward = activity.payload?.goldReward || 0;
+                      const isExpired = activity.expiresAt && new Date(activity.expiresAt) < new Date();
                       return (
-                      <div key={activity.id} className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl shadow-lg hover:border-blue-500/50 transition-all flex flex-col p-6">
+                      <div key={activity.id} className={`bg-white/5 backdrop-blur-lg border ${isExpired ? 'border-red-500/50' : 'border-white/10'} rounded-3xl shadow-lg hover:border-blue-500/50 transition-all flex flex-col p-6`}>
                           <header className="flex-grow mb-4">
                               <div className="flex justify-between items-start mb-3">
                                   <Badge className="bg-white/10 text-white/80 border-none font-medium">{activity.type}</Badge>
                                   <span className="text-xs text-white/50">Nível {activity.difficulty}</span>
                               </div>
+                              {isExpired && (
+                                <div className="text-xs font-semibold text-red-400">EXPIRADA</div>
+                              )}
                               <h3 className="text-xl font-bold text-white">{activity.title}</h3>
                               <p className="text-sm line-clamp-2 mt-1 text-white/60">{activity.description}</p>
-                              
+                              {activity.expiresAt && (
+                                  <p className="text-xs text-white/50 mt-1">Expira em {new Date(activity.expiresAt).toLocaleDateString()}</p>
+                              )}
                               <div className="flex gap-3 mt-4 pt-4 border-t border-white/10">
                                   {xpMaxReward > 0 && (
                                       <div className="flex items-center gap-1.5 text-sm">

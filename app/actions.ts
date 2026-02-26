@@ -25,6 +25,7 @@ export async function generateQuiz(formData: FormData) {
   const topic = formData.get('topic') as string
   const contextText = formData.get('contextText') as string
   const additionalNotes = formData.get('additionalNotes') as string
+  const expiresAtString = formData.get('expiresAt') as string | null
   const classIdsJSON = formData.get('classIds') as string;
   const classIds = JSON.parse(classIdsJSON);
   
@@ -93,6 +94,8 @@ export async function generateQuiz(formData: FormData) {
         difficulty: 1, 
         teacherId: teacher.id,
         payload: { questions: quizData.questions, xpMaxReward: 50, goldReward: 10 },
+        // @ts-ignore: field added in prisma schema, regenerate types after migrating
+        expiresAt: expiresAtString ? new Date(expiresAtString) : undefined,
         classes: { 
           connect: classIds.map((id: string) => ({ id }))
         }
@@ -118,7 +121,7 @@ export async function generateQuiz(formData: FormData) {
   redirect(`/teacher/activity/${newActivity.id}/edit?created=true`)
 }
 
-export async function createManualQuiz(title: string, description: string, questions: any[], classIds: string[], xpMaxReward: number = 0, goldReward: number = 0) {
+export async function createManualQuiz(title: string, description: string, questions: any[], classIds: string[], xpMaxReward: number = 0, goldReward: number = 0, expiresAt?: string) {
     const teacherEmail = await getCurrentUser();
     let newActivity: Activity;
 
@@ -138,6 +141,8 @@ export async function createManualQuiz(title: string, description: string, quest
                 difficulty: 1,
                 teacherId: teacher.id,
                 payload: { questions, xpMaxReward: xpMaxReward || 0, goldReward: goldReward || 0 },
+                // @ts-ignore: field added in prisma schema, regenerate types after migrating
+                expiresAt: expiresAt ? new Date(expiresAt) : undefined,
                 classes: {
                     connect: classIds.map((id: string) => ({ id }))
                 }
@@ -177,7 +182,7 @@ export async function getActivityById(id: string) {
   return activity;
 }
 
-export async function updateQuiz(id: string, title: string, description: string, questions: any[], reviewMaterials: {url: string, type: string}[], classIds: string[], xpMaxReward: number = 0, goldReward: number = 0) {
+export async function updateQuiz(id: string, title: string, description: string, questions: any[], reviewMaterials: {url: string, type: string}[], classIds: string[], xpMaxReward: number = 0, goldReward: number = 0, expiresAt?: string) {
     if (!id || !title || questions.length === 0) {
         throw new Error("Dados inválidos para atualização.");
     }
@@ -206,6 +211,8 @@ export async function updateQuiz(id: string, title: string, description: string,
                 description,
                 payload: { questions, xpMaxReward: xpMaxReward || 0, goldReward: goldReward || 0 },
                 reviewMaterials: materialsAsJsonStrings, // Salva o array de strings normalizadas
+                // @ts-ignore: field added in prisma schema, regenerate types after migrating
+                expiresAt: expiresAt ? new Date(expiresAt) : null,
                 classes: {
                   set: classIds.map(id => ({ id }))
                 }

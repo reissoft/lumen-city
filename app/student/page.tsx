@@ -1,19 +1,23 @@
 // app/student/page.tsx
+import React, { useState } from "react"
 import { PrismaClient, Activity } from "@prisma/client"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Play, Map as MapIcon, Trophy, Star, LogOut, BookOpen, Coins, Users, Settings, User, Building, Edit } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+import { Play, Map as MapIcon, Trophy, Star, LogOut, BookOpen, Coins, Users, Settings, User, Building, Edit, AlertTriangle } from "lucide-react"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { logout } from "../auth/actions"
 import Image from "next/image"
 // 1. Importar o novo cabeçalho de cliente
 import StudentHeader from './StudentHeader';
+import ActivitiesSection from './ActivitiesSection';
 
 const prisma = new PrismaClient()
 
-type ActivityWithTeacher = Activity & { teacher: { name: string } | null };
+type ActivityWithTeacher = Activity & { teacher: { name: string } | null } & { expiresAt?: string | null };
 
 const getTotalXpForLevelStart = (level: number): number => {
     if (level <= 1) return 0;
@@ -65,13 +69,18 @@ async function getStudentDataByStudent(student: any) {
     
     let activities: ActivityWithTeacher[] = [];
     if (studentClassId) { 
-        activities = await prisma.activity.findMany({
+        const raw = await prisma.activity.findMany({
             where: { classes: { some: { id: studentClassId } } },
             orderBy: { createdAt: 'desc' },
             include: {
                 teacher: { select: { name: true } }
             }
         });
+        // convert Date to string for serialization
+        activities = raw.map(act => ({
+            ...act,
+            expiresAt: act.expiresAt ? act.expiresAt.toISOString() : null
+        } as any));
     }
     
     const attemptsMap = new Map<string, number>();
@@ -86,6 +95,7 @@ async function getStudentDataByStudent(student: any) {
 }
 
 const cardStyles = `bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl shadow-lg transition-all`;
+
 
 export default async function StudentHub() {
   const { student, activities, attemptsMap, ranking } = await getStudentData()
@@ -171,73 +181,7 @@ export default async function StudentHub() {
             </aside>
         </div>
 
-        <section>
-          <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3"><Star className="text-orange-400" fill="currentColor" /> Missões Disponíveis</h2>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {activities.length > 0 ? (
-              activities.map((activity) => {
-                const bestScore = attemptsMap.get(activity.id);
-                const hasReviewMaterials = activity.reviewMaterials && Array.isArray(activity.reviewMaterials) && activity.reviewMaterials.length > 0;
-                const activityPath = hasReviewMaterials ? `/student/activity/${activity.id}/review` : `/student/play/${activity.id}`;
-                const buttonText = hasReviewMaterials ? "Revisar e Jogar" : "Iniciar Missão";
-                const ButtonIcon = hasReviewMaterials ? BookOpen : Play;
-
-                return (
-                  <div key={activity.id} className={`${cardStyles} hover:border-blue-500/50 flex flex-col group`}>
-                    <header className="p-6 pb-4">
-                        <div className="flex justify-between items-start">
-                           <div className="text-xs font-bold uppercase tracking-wider text-white/50">{activity.type}</div>
-                            {bestScore !== undefined && (
-                                <div className="font-semibold flex items-center gap-1 text-green-400 bg-green-500/10 border border-green-500/20 rounded-full px-2 py-0.5 text-xs">
-                                    <Trophy size={12} /> {bestScore}%
-                                </div>
-                            )}
-                        </div>
-                        <h3 className="text-lg mt-2 font-bold line-clamp-2 text-white">{activity.title}</h3>
-                        {activity.teacher?.name && 
-                            <div className="flex items-center gap-1.5 text-sm text-white/60 mt-1">
-                                <Edit size={12}/> por {activity.teacher.name}
-                            </div>
-                        }
-                    </header>
-                    <div className="px-6 flex-grow">
-                        <p className="text-sm text-white/60 line-clamp-2 h-10 flex-grow">{activity.description}</p>
-                        
-                        {((activity.payload as any)?.xpMaxReward > 0 || (activity.payload as any)?.goldReward > 0) && (
-                            <div className="flex gap-3 mt-4 pt-3 border-t border-white/10">
-                                {(activity.payload as any)?.xpMaxReward > 0 && (
-                                    <div className="flex items-center gap-1.5 text-sm">
-                                        <span className="text-lg">🎯</span>
-                                        <span className="text-white/70">XP: <span className="font-bold text-cyan-300">{(activity.payload as any).xpMaxReward}</span></span>
-                                    </div>
-                                )}
-                                {(activity.payload as any)?.goldReward > 0 && (
-                                    <div className="flex items-center gap-1.5 text-sm">
-                                        <span className="text-lg">💰</span>
-                                        <span className="text-white/70">Ouro: <span className="font-bold text-yellow-300">{(activity.payload as any).goldReward}</span></span>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                    <footer className="p-6 pt-4 mt-auto">
-                      <Link href={activityPath} className="w-full">
-                        <Button className={`w-full gap-2 font-bold text-white transition-all ${hasReviewMaterials ? "bg-blue-600 hover:bg-blue-700" : "bg-white/10 group-hover:bg-white/20"}`}>
-                          <ButtonIcon size={16} /> {buttonText}
-                        </Button>
-                      </Link>
-                    </footer>
-                  </div>
-                );
-              })
-            ) : (
-                <div className={`col-span-full ${cardStyles} p-12 text-center text-white/60`}>
-                    <p className="font-bold text-lg">Nenhuma missão disponível!</p>
-                    <p className="text-sm mt-2">Parece que você está em dia. Fale com seu professor para mais atividades.</p>
-                </div>
-            )}
-          </div>
-        </section>
+        <ActivitiesSection activities={activities} attemptsMap={attemptsMap} />
 
       </div>
     </div>

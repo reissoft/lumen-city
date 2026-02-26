@@ -33,6 +33,8 @@ async function getActivities(teacherId: string) {
       description: true,
       type: true,
       difficulty: true,
+      // @ts-ignore - new field from prisma schema; regenerate types after running migrate
+      expiresAt: true,
       reviewMaterials: true,
       payload: true
     }

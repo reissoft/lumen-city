@@ -31,6 +31,10 @@ export async function GET(request: Request, { params }: { params: { id: string }
         return new NextResponse("Este conteúdo não é um quiz válido.", { status: 400 });
     }
 
+    if (activity.expiresAt && new Date(activity.expiresAt) < new Date()) {
+        return NextResponse.json({ error: "Atividade expirada" }, { status: 410 });
+    }
+
     // 4. Extrair e retornar os dados do quiz
     const quizData = {
         title: activity.title,

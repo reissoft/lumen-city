@@ -8,11 +8,15 @@ import { Pencil, Trash2, Search, Mail, KeyRound, ArrowLeft, PlusCircle } from 'l
 
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogFooter } from "@/components/ui/dialog";
 import { AddTeacherForm } from './add-teacher-form';
 import { EditTeacherForm } from './edit-teacher-form';
 import { deleteTeacher, resetAndSendNewPassword } from './actions';
 
 type Teacher = Prisma.TeacherGetPayload<{}>;
+
+// --- ESTILOS REUTILIZÁVEIS ---
+const modalContentStyles = "bg-white/10 backdrop-blur-lg border-2 border-white/20 rounded-3xl shadow-2xl text-white";
 
 // --- COMPONENTES DE MODAL (Estilizados) ---
 function AddTeacherModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void; }) {
@@ -45,8 +49,90 @@ function EditTeacherModal({ teacher, onClose }: { teacher: Teacher | null; onClo
   )
 }
 
+// --- MODAL DE ESTATÍSTICAS DO PROFESSOR ---
+interface TeacherStats {
+    totalCreated: number;
+    totalDone: number;
+    recentCreated: number;
+    recentDone: number;
+    typeStats?: Record<string, { created: number; done: number }>;
+    classStats?: Array<{ name: string; created: number; done: number }>;
+}
+
+function TeacherStatsModal({ teacher, stats, isOpen, onOpenChange }: { teacher: Teacher | null; stats: TeacherStats | null; isOpen: boolean; onOpenChange: (open: boolean) => void; }) {
+    if (!teacher) return null;
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className={`${modalContentStyles} max-h-[80vh] overflow-y-auto`}>
+                <DialogHeader>
+                    <DialogTitle className="text-2xl font-bold">Estatísticas de {teacher.name}</DialogTitle>
+                </DialogHeader>
+                <div className="p-4 text-white space-y-6">
+                    {stats ? (
+                        <>
+                            {/* Estatísticas Gerais */}
+                            <div>
+                                <h3 className="text-lg font-semibold mb-3 text-blue-300">Resumo Geral</h3>
+                                <ul className="space-y-2 bg-white/5 rounded-lg p-3 border border-white/10">
+                                    <li className="flex justify-between"><span>Total de atividades criadas:</span> <strong className="text-green-400">{stats.totalCreated}</strong></li>
+                                    <li className="flex justify-between"><span>Vezes em que alunos realizaram atividades:</span> <strong className="text-green-400">{stats.totalDone}</strong></li>
+                                    <li className="flex justify-between"><span>Criadas nos últimos 30 dias:</span> <strong className="text-yellow-400">{stats.recentCreated}</strong></li>
+                                    <li className="flex justify-between"><span>Vezes em que alunos realizaram atividades nos últimos 30 dias:</span> <strong className="text-yellow-400">{stats.recentDone}</strong></li>
+                                </ul>
+                            </div>
+
+                            {/* Estatísticas por Tipo */}
+                            {stats.typeStats && Object.keys(stats.typeStats).length > 0 && (
+                                <div>
+                                    <h3 className="text-lg font-semibold mb-3 text-blue-300">Por Tipo de Atividade</h3>
+                                    <div className="space-y-2">
+                                        {Object.entries(stats.typeStats).map(([type, data]) => (
+                                            <div key={type} className="bg-white/5 rounded-lg p-3 border border-white/10">
+                                                <div className="font-semibold text-orange-300 capitalize mb-1">{type}</div>
+                                                <div className="text-sm text-white/80 flex justify-between">
+                                                    <span>Criadas: <strong>{data.created}</strong></span>
+                                                    <span>Realizadas: <strong>{data.done}</strong></span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Estatísticas por Turma */}
+                            {stats.classStats && stats.classStats.length > 0 && (
+                                <div>
+                                    <h3 className="text-lg font-semibold mb-3 text-blue-300">Por Turma</h3>
+                                    <div className="space-y-2">
+                                        {stats.classStats.map((cls, idx) => (
+                                            <div key={idx} className="bg-white/5 rounded-lg p-3 border border-white/10">
+                                                <div className="font-semibold text-purple-300 mb-1">{cls.name}</div>
+                                                <div className="text-sm text-white/80 flex justify-between">
+                                                    <span>Atividades: <strong>{cls.created}</strong></span>
+                                                    <span>Realizadas: <strong>{cls.done}</strong></span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <p>Carregando...</p>
+                    )}
+                </div>
+                <DialogFooter className="flex justify-end gap-2">
+                    <DialogClose asChild><Button variant="outline" className="border-white/20 bg-transparent hover:bg-white/10 hover:text-white">Fechar</Button></DialogClose>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+
 // --- ITEM DA LISTA DE PROFESSORES (Estilizado) ---
-function TeacherListItem({ teacher, onEdit }: { teacher: Teacher, onEdit: (teacher: Teacher) => void }) {
+function TeacherListItem({ teacher, onEdit, onNameClick }: { teacher: Teacher, onEdit: (teacher: Teacher) => void, onNameClick: (teacher: Teacher) => void }) {
     const [isDeletePending, startDeleteTransition] = useTransition();
     const [isPasswordPending, startPasswordTransition] = useTransition();
 
@@ -77,7 +163,7 @@ function TeacherListItem({ teacher, onEdit }: { teacher: Teacher, onEdit: (teach
                     {teacher.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1">
-                    <p className="font-semibold text-white">{teacher.name}</p>
+                    <p onClick={() => onNameClick(teacher)} className="font-semibold text-white cursor-pointer hover:underline">{teacher.name}</p>
                     <p className="text-sm text-white/60 flex items-center gap-1.5"><Mail size={14} /> {teacher.email}</p>
                 </div>
             </div>
@@ -107,6 +193,28 @@ export default function TeachersClientPage({ teachers }: AdminTeachersPageProps)
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // stats modal state
+  const [isStatsOpen, setIsStatsOpen] = useState(false);
+  const [statsTeacher, setStatsTeacher] = useState<Teacher | null>(null);
+  const [statsData, setStatsData] = useState<TeacherStats | null>(null);
+
+  const fetchStatsFor = async (teacher: Teacher) => {
+    setStatsTeacher(teacher);
+    setStatsData(null);
+    setIsStatsOpen(true);
+    try {
+        const res = await fetch(`/admin/teachers/${teacher.id}/stats`);
+        if (res.ok) {
+            const json: TeacherStats = await res.json();
+            setStatsData(json);
+        } else {
+            toast.error('Falha ao buscar estatísticas.');
+        }
+    } catch (e) {
+        toast.error('Erro de rede ao buscar estatísticas.');
+    }
+  };
+
   const filteredTeachers = useMemo(() => {
     return teachers.filter(teacher => 
       teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -135,6 +243,7 @@ export default function TeachersClientPage({ teachers }: AdminTeachersPageProps)
 
             <AddTeacherModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
             <EditTeacherModal teacher={editingTeacher} onClose={() => setEditingTeacher(null)} />
+            <TeacherStatsModal teacher={statsTeacher} stats={statsData} isOpen={isStatsOpen} onOpenChange={setIsStatsOpen} />
 
             <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl shadow-lg">
                 <div className="p-5 border-b border-white/10">
@@ -154,7 +263,7 @@ export default function TeachersClientPage({ teachers }: AdminTeachersPageProps)
                     {filteredTeachers.length === 0 ? (
                         <p className="p-10 text-center text-white/50">Nenhum professor encontrado.</p>
                     ) : (
-                        filteredTeachers.map((teacher) => <TeacherListItem key={teacher.id} teacher={teacher} onEdit={setEditingTeacher} />)
+                        filteredTeachers.map((teacher) => <TeacherListItem key={teacher.id} teacher={teacher} onEdit={setEditingTeacher} onNameClick={fetchStatsFor} />)
                     )}
                 </ul>
             </div>

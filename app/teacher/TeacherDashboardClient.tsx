@@ -8,7 +8,7 @@ import Link from "next/link";
 import Image from 'next/image';
 import { toast } from "sonner";
 import {
-  LogOut, Users, CheckCircle2, TrendingUp, GraduationCap, Trash2, Play, Settings, BookCopy, Shield, Pencil, HelpCircle
+  LogOut, Users, CheckCircle2, TrendingUp, GraduationCap, Trash2, Play, Settings, BookCopy, Shield, Pencil, HelpCircle, BarChart3
 } from "lucide-react";
 import { logout } from "../auth/actions";
 import { deleteActivity } from "../actions";
@@ -190,6 +190,11 @@ export default function TeacherDashboardClient({ teacherName, activities, stats 
                               </Button>
                               <Link href={`/teacher/activity/${activity.id}/edit`} className='flex-1'>
                                 <Button variant="outline" className="w-full gap-2 bg-white/10 border-white/20 backdrop-blur-md hover:bg-white/20 transition-colors font-medium"><Pencil size={14}/> Editar</Button>
+                              </Link>
+                              <Link href={`/teacher/activity/${activity.id}/stats`}>
+                                <Button variant="outline" size="icon" className="aspect-square bg-indigo-500/10 border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-300 transition-colors" title="Ver estatísticas">
+                                  <BarChart3 size={16} />
+                                </Button>
                               </Link>
                               <Button 
                                   variant="outline"

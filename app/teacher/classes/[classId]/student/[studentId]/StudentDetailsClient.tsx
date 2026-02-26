@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, CheckCircle, XCircle, Printer } from "lucide-react";
 import { StudentPageData } from './page';
-import Link from "next/link";
+import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -78,14 +78,16 @@ export default function StudentDetailsClient({ data, classId }: { data: StudentP
     const formattedStartDate = format(parseDate(startDate), "dd/MM/yyyy");
     const formattedEndDate = format(parseDate(endDate), "dd/MM/yyyy");
 
+    const router = useRouter();
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-800 text-white" id="page-content">
              <div className="absolute inset-0 bg-cover bg-center" style={{backgroundImage: 'url(/grid.svg)'}}></div>
             <div className="container mx-auto p-4 md:p-8 relative">
 
-                <Link href={`/teacher/classes/${classId}`} id="back-button" className="no-print inline-flex items-center gap-2 bg-white/10 border border-white/20 backdrop-blur-md hover:bg-white/20 rounded-full px-4 py-2 text-sm mb-8 transition-colors">
+                <button onClick={() => router.back()} id="back-button" className="no-print inline-flex items-center gap-2 bg-white/10 border border-white/20 backdrop-blur-md hover:bg-white/20 rounded-full px-4 py-2 text-sm mb-8 transition-colors">
                     <ArrowLeft size={16} /> Voltar para a Turma
-                </Link>
+                </button>
 
                 <header className="mb-10">
                     <h1 className="text-4xl font-bold">{data.student.name}</h1>

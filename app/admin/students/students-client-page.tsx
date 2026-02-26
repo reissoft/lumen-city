@@ -4,7 +4,7 @@ import { useState, useTransition, useMemo } from 'react';
 import Link from 'next/link';
 import { Prisma } from '@prisma/client';
 import { toast } from 'sonner';
-import { Pencil, Trash2, Search, Mail, Phone, ToggleLeft, ToggleRight, UserSquare, ArrowLeft, PlusCircle } from 'lucide-react';
+import { Pencil, Trash2, Search, Mail, Phone, ToggleLeft, ToggleRight, UserSquare, ArrowLeft, PlusCircle, BookOpen } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
@@ -109,6 +109,11 @@ function StudentListItem({ student, onEdit }: { student: StudentWithDetails, onE
               {btn.isPending ? <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div> : <btn.Icon size={18} />}
             </button>
         ))}
+        {student.classId && (
+            <Link href={`/teacher/classes/${student.classId}/student/${student.id}`} className="p-2 rounded-full transition-colors text-indigo-400 hover:bg-white/10" title="Ver atividades">
+                <BookOpen size={18} />
+            </Link>
+        )}
       </div>
     </li>
   );

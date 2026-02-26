@@ -64,7 +64,13 @@ function ViewStudentsModal({ classData, isOpen, onOpenChange }: { classData: Cla
                         <ul className="space-y-2">
                             {classData.students.map(student => (
                                 <li key={student.id} className="flex items-center justify-between rounded-lg bg-white/5 border border-white/10 p-3">
-                                    <span className="font-medium text-white/90">{student.name}</span>
+                                    <Link
+                                        href={`/teacher/classes/${classData.id}/student/${student.id}`}
+                                        className="font-medium text-white/90 hover:underline"
+                                        onClick={() => onOpenChange(false)}
+                                    >
+                                        {student.name}
+                                    </Link>
                                     <span className="text-sm text-white/50">@{student.username}</span>
                                 </li>
                             ))}

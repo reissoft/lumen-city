@@ -156,7 +156,7 @@ export default function VirtualFriend({ studentName }: VirtualFriendProps) {
   ) : (
     <div
       ref={friendRef}
-      className="fixed z-[9999] bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-xl p-3 shadow-xl border border-white/20 backdrop-blur-sm cursor-move select-none"
+      className="fixed z-[9999] text-white rounded-xl p-3 shadow-xl border border-white/20 backdrop-blur-sm cursor-move select-none group"
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
@@ -168,23 +168,23 @@ export default function VirtualFriend({ studentName }: VirtualFriendProps) {
     >
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center">
             <img 
               src={`/friends/${selectedAvatar}.png`} 
               alt={selectedAvatar}
-              className="w-6 h-6 object-contain"
+              className="w-12 h-12 object-contain"
               onError={(e) => {
                 // Fallback to Bot icon if image fails to load
                 e.currentTarget.style.display = 'none'
                 const parent = e.currentTarget.parentElement
                 if (parent) {
-                  parent.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>'
+                  parent.innerHTML = '<svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>'
                 }
               }}
             />
           </div>
           <div>
-            <h3 className="font-bold text-xs">{friendName || 'Amigo Virtual'}</h3>
+            <h3 className="font-bold text-sm">{friendName || 'Amigo Virtual'}</h3>
             <p className="text-[10px] opacity-80">Olá, {studentName}!</p>
           </div>
         </div>
@@ -210,12 +210,8 @@ export default function VirtualFriend({ studentName }: VirtualFriendProps) {
         </div>
       </div>
       
-      <div className="text-[10px] opacity-80 leading-tight">
-        Estou aqui para te ajudar. Clique em mim!
-      </div>
-      
-      <div className="mt-1 flex justify-end">
-        <div className="text-[9px] opacity-60">💡 IA</div>
+      <div className="text-[9px] opacity-0 group-hover:opacity-100 transition-opacity text-center mt-1">
+        💡 IA - Estou aqui para te ajudar. Clique em mim!
       </div>
     </div>
   )

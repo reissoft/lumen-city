@@ -8,6 +8,7 @@ import { MaterialManager } from './managers/MaterialManager'
 import { CameraManager } from './managers/CameraManager'
 import { BuildingManager } from './managers/BuildingManager'
 import { GhostManager } from './managers/GhostManager'
+import { TrafficManager } from './managers/TrafficManager'
 import { SceneSetup } from './setup/SceneSetup'
 
 // Previne erros de SSR
@@ -31,6 +32,7 @@ const CityScene = memo(function CityScene({
   const cameraManagerRef = useRef<CameraManager | null>(null)
   const buildingManagerRef = useRef<BuildingManager | null>(null)
   const ghostManagerRef = useRef<GhostManager | null>(null)
+  const trafficManagerRef = useRef<TrafficManager | null>(null)
   
   // Controle de assets
   const [assetsReady, setAssetsReady] = useState(false)
@@ -98,6 +100,10 @@ const CityScene = memo(function CityScene({
     )
     ghostManagerRef.current = ghostManager
 
+    // Inicializa TrafficManager
+    const trafficManager = new TrafficManager(app)
+    trafficManagerRef.current = trafficManager
+
     // Configuração da cena
     const sceneSetup = new SceneSetup(app)
     sceneSetup.setupScene()
@@ -109,6 +115,7 @@ const CityScene = memo(function CityScene({
     app.on('update', (dt) => {
       cameraManager.update(dt)
       materialManager.updateGhostPulse()
+      trafficManager.update(dt)
     })
 
     // Resize handler
@@ -126,6 +133,10 @@ const CityScene = memo(function CityScene({
 
     return () => {
       window.removeEventListener('resize', resize)
+      const trafficManager = trafficManagerRef.current
+      if (trafficManager) {
+        trafficManager.destroy()
+      }
       app.destroy()
       appRef.current = null
     }
@@ -180,6 +191,12 @@ const CityScene = memo(function CityScene({
 
     // 3. Sincroniza prédios
     buildingManager.syncBuildings(buildings)
+
+    // 4. Atualiza grafo de tráfego
+    const trafficManager = trafficManagerRef.current
+    if (trafficManager) {
+      trafficManager.updateRoadGraph(buildings)
+    }
 
     return () => { 
       app.off('update', updateGhostColor)

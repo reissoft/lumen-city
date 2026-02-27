@@ -6,8 +6,9 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { getActivityById } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Loader2, Link as LinkIcon, Youtube, FileText, Image as ImageIcon, ExternalLink, Music } from 'lucide-react';
-import StudentHeader from '../../StudentHeader';
+//import StudentHeader from '../../StudentHeader';
 import { cookies } from 'next/headers';
+import StudentHeader from '@/app/student/StudentHeader';
 
 interface ReviewMaterial {
   url: string;

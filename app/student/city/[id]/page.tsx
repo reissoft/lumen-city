@@ -4,7 +4,8 @@ import { PrismaClient } from "@prisma/client";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import CityInterface from "@/components/CityInterface";
-import StudentHeader from './StudentHeader';
+//import StudentHeader from './StudentHeader';
+import StudentHeader from '@/app/student/StudentHeader';
 
 const prisma = new PrismaClient();
 

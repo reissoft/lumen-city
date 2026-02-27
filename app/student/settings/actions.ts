@@ -105,6 +105,7 @@ export async function updateVirtualFriendSettings(prevState: any, formData: Form
         await prisma.student.update({
             where: { id: student.id },
             data: {
+                // @ts-ignore
                 virtualFriendName: virtualFriendName,
                 virtualFriendAvatar: virtualFriendAvatar
             },

@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
     await prisma.student.update({
       where: { id: student.id },
       data: {
+        // @ts-ignore
         virtualFriendName: virtualFriendName,
         virtualFriendAvatar: virtualFriendAvatar
       },

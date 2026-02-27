@@ -166,7 +166,7 @@ export default function CityInterface({ student, buildings: initialBuildings, re
             
             {/* display a small notice if viewing someone else's city */}
         {readOnly && (
-            <div className="absolute top-0 left-0 w-full bg-red-600 text-white text-center py-1 z-40 font-semibold">
+            <div className="absolute top-0 left-0 w-full bg-red-500/20 text-white text-center py-1 z-40 font-semibold">
                 Cidade de {student.name} (visualização – somente leitura)
             </div>
         )}

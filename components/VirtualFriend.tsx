@@ -3,11 +3,20 @@
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Button } from '@/components/ui/button'
-import { X, Bot, Sparkles } from 'lucide-react'
+import { X, Bot, Sparkles, Settings, Edit2 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 interface VirtualFriendProps {
   studentName: string
 }
+
+const FRIEND_OPTIONS = [
+  'bear', 'buffalo', 'chick', 'chicken', 'cow', 'crocodile', 'dog', 'duck',
+  'elephant', 'frog', 'giraffe', 'goat', 'gorilla', 'hippo', 'horse', 'monkey',
+  'moose', 'narwhal', 'owl', 'panda', 'parrot', 'penguin', 'pig', 'rabbit',
+  'rhino', 'sloth', 'snake', 'walrus', 'whale', 'zebra'
+]
 
 export default function VirtualFriend({ studentName }: VirtualFriendProps) {
   const [isVisible, setIsVisible] = useState(true)
@@ -15,6 +24,9 @@ export default function VirtualFriend({ studentName }: VirtualFriendProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [mounted, setMounted] = useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [friendName, setFriendName] = useState('')
+  const [selectedAvatar, setSelectedAvatar] = useState('')
   const friendRef = useRef<HTMLDivElement>(null)
 
   // Load saved state from localStorage on mount
@@ -26,18 +38,24 @@ export default function VirtualFriend({ studentName }: VirtualFriendProps) {
         const state = JSON.parse(savedState)
         setIsVisible(state.isVisible)
         setPosition(state.position)
+        setFriendName(state.friendName || '')
+        setSelectedAvatar(state.selectedAvatar || 'bear')
       } catch (e) {
         console.error('Error loading virtual friend state:', e)
       }
+    } else {
+      // Set default values if no saved state
+      setFriendName('Meu Amigo')
+      setSelectedAvatar('bear')
     }
   }, [])
 
   // Save state to localStorage when it changes
   useEffect(() => {
     if (!mounted) return
-    const state = { isVisible, position }
+    const state = { isVisible, position, friendName, selectedAvatar }
     localStorage.setItem('virtualFriendState', JSON.stringify(state))
-  }, [isVisible, position, mounted])
+  }, [isVisible, position, friendName, selectedAvatar, mounted])
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (friendRef.current) {
@@ -83,6 +101,18 @@ export default function VirtualFriend({ studentName }: VirtualFriendProps) {
     setIsVisible(true)
   }
 
+  const handleOpenSettings = () => {
+    setIsSettingsOpen(true)
+  }
+
+  const handleCloseSettings = () => {
+    setIsSettingsOpen(false)
+  }
+
+  const handleSaveSettings = () => {
+    setIsSettingsOpen(false)
+  }
+
   // Não renderiza nada até que o componente esteja montado (evita hidration mismatch)
   if (!mounted) return null
 
@@ -110,22 +140,45 @@ export default function VirtualFriend({ studentName }: VirtualFriendProps) {
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-            <Bot size={18} />
+            <img 
+              src={`/friends/${selectedAvatar}.png`} 
+              alt={selectedAvatar}
+              className="w-6 h-6 object-contain"
+              onError={(e) => {
+                // Fallback to Bot icon if image fails to load
+                e.currentTarget.style.display = 'none'
+                const parent = e.currentTarget.parentElement
+                if (parent) {
+                  parent.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>'
+                }
+              }}
+            />
           </div>
           <div>
-            <h3 className="font-bold text-xs">Amigo Virtual</h3>
+            <h3 className="font-bold text-xs">{friendName || 'Amigo Virtual'}</h3>
             <p className="text-[10px] opacity-80">Olá, {studentName}!</p>
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-white hover:bg-white/20 rounded-full"
-          onClick={handleClose}
-          title="Fechar"
-        >
-          <X size={14} />
-        </Button>
+        <div className="flex gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-white hover:bg-white/20 rounded-full"
+            onClick={handleOpenSettings}
+            title="Configurar Amigo"
+          >
+            <Settings size={14} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-white hover:bg-white/20 rounded-full"
+            onClick={handleClose}
+            title="Fechar"
+          >
+            <X size={14} />
+          </Button>
+        </div>
       </div>
       
       <div className="text-[10px] opacity-80 leading-tight">
@@ -138,6 +191,88 @@ export default function VirtualFriend({ studentName }: VirtualFriendProps) {
     </div>
   )
 
+  // Settings Modal
+  const settingsModal = isSettingsOpen && (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000] flex items-center justify-center p-4">
+      <div className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-2xl p-6 w-full max-w-md shadow-2xl border border-white/20">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold">Configurar Amigo Virtual</h2>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-white hover:bg-white/20 rounded-full"
+            onClick={handleCloseSettings}
+            title="Fechar"
+          >
+            <X size={20} />
+          </Button>
+        </div>
+
+        {/* Name Input */}
+        <div className="mb-6">
+          <Label htmlFor="friendName" className="text-sm font-semibold mb-2 block">Nome do Amigo</Label>
+          <Input
+            id="friendName"
+            value={friendName}
+            onChange={(e) => setFriendName(e.target.value)}
+            className="bg-white/10 border-white/30 text-white placeholder-white/50"
+            placeholder="Digite o nome do seu amigo"
+          />
+        </div>
+
+        {/* Avatar Selection */}
+        <div className="mb-6">
+          <Label className="text-sm font-semibold mb-2 block">Escolha o Avatar</Label>
+          <div className="grid grid-cols-5 gap-2 max-h-40 overflow-y-auto">
+            {FRIEND_OPTIONS.map((avatar) => (
+              <button
+                key={avatar}
+                onClick={() => setSelectedAvatar(avatar)}
+                className={`p-2 rounded-lg border-2 transition-all ${
+                  selectedAvatar === avatar 
+                    ? 'border-white/50 bg-white/20' 
+                    : 'border-white/10 hover:border-white/30 hover:bg-white/10'
+                }`}
+                title={avatar.charAt(0).toUpperCase() + avatar.slice(1)}
+              >
+                <img 
+                  src={`/friends/${avatar}.png`} 
+                  alt={avatar}
+                  className="w-8 h-8 object-contain mx-auto"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none'
+                  }}
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <Button
+            onClick={handleSaveSettings}
+            className="flex-1 bg-white/20 hover:bg-white/30 text-white font-semibold rounded-lg"
+          >
+            Salvar
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleCloseSettings}
+            className="flex-1 border-white/30 text-white hover:bg-white/10 font-semibold rounded-lg"
+          >
+            Cancelar
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+
   // Renderiza o conteúdo usando createPortal, direto na body
-  return createPortal(content, document.body)
+  return createPortal(
+    <>
+      {content}
+      {settingsModal}
+    </>,
+    document.body
+  )
 }

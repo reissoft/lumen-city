@@ -10,8 +10,9 @@ import { updateStudentProfile } from './actions';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Settings } from 'lucide-react';
 import StudentHeader from '../StudentHeader';
+import VirtualFriend from '@/components/VirtualFriend';
 
 const initialState = { error: null, success: null };
 
@@ -70,6 +71,22 @@ export default function StudentSettingsClientPage({ student }: { student: Studen
                     <h1 className="text-4xl font-bold">Minha Conta</h1>
                     <p className="text-white/60">Atualize suas informações pessoais e de segurança.</p>
                 </header>
+
+                {/* Virtual Friend Configuration */}
+                <div className={`${cardStyles} p-6 md:p-8 mb-8`}>
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center">
+                            <Settings size={24} />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold">Amigo Virtual</h2>
+                            <p className="text-white/60 text-sm">Personalize seu amigo virtual com avatar e nome</p>
+                        </div>
+                    </div>
+                    <div className="text-white/60 text-sm">
+                        Clique no botão de configurações no canto superior direito do seu amigo virtual para personalizá-lo.
+                    </div>
+                </div>
 
                 <form action={formAction} className={`${cardStyles} p-6 md:p-8`}>
                     <div className="space-y-6">

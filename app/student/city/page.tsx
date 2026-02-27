@@ -3,7 +3,8 @@
 import { PrismaClient } from "@prisma/client"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
-import CityInterface from "@/components/CityInterface" 
+import CityInterface from "@/components/CityInterface"
+import VirtualFriend from "@/components/VirtualFriend"
 
 const prisma = new PrismaClient()
 
@@ -29,5 +30,10 @@ export default async function CityPage() {
   const buildings = cityData.buildings || []
 
   // Conecta o Backend (Server) com o Frontend Interativo (Client)
-  return <CityInterface student={student} buildings={buildings} />
+  return (
+    <div className="relative">
+      <CityInterface student={student} buildings={buildings} />
+      <VirtualFriend studentName={student.name} />
+    </div>
+  )
 }

@@ -75,6 +75,11 @@ model Student {
   sentMessages     Message[]  @relation("StudentSentMessages")
   receivedMessages Message[]  @relation("StudentReceivedMessages")
   notifications    Notification[]
+  
+  // Virtual Friend Settings
+  virtualFriendName     String?   @default("Meu Amigo")
+  virtualFriendAvatar   String?   @default("bear")
+  virtualFriendPosition Json?     // { x: number, y: number }
 }
 
 model StudentResources {

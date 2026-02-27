@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { updateStudentProfile } from './actions';
+import { updateStudentProfile, updateVirtualFriendSettings } from './actions';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -83,6 +83,7 @@ export default function StudentSettingsClientPage({ student }: { student: Studen
                             <p className="text-white/60 text-sm">Personalize seu amigo virtual com avatar e nome</p>
                         </div>
                     </div>
+                    
                     <div className="text-white/60 text-sm">
                         Clique no botão de configurações no canto superior direito do seu amigo virtual para personalizá-lo.
                     </div>

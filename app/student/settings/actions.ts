@@ -18,6 +18,11 @@ const updateStudentProfileSchema = z.object({
     path: ["name"], 
 });
 
+const updateVirtualFriendSchema = z.object({
+    virtualFriendName: z.string().min(1, "O nome do amigo virtual é obrigatório.").max(50, "O nome deve ter no máximo 50 caracteres."),
+    virtualFriendAvatar: z.string().min(1, "Você deve selecionar um avatar."),
+});
+
 export async function updateStudentProfile(prevState: any, formData: FormData) {
     const sessionUsername = cookies().get('lumen_session')?.value;
     if (!sessionUsername) {
@@ -73,6 +78,43 @@ export async function updateStudentProfile(prevState: any, formData: FormData) {
 
     } catch (error) {
         console.error('Erro ao atualizar perfil do aluno:', error);
+        return { error: 'Ocorreu um erro no servidor. Tente novamente.' };
+    }
+}
+
+export async function updateVirtualFriendSettings(prevState: any, formData: FormData) {
+    const sessionUsername = cookies().get('lumen_session')?.value;
+    if (!sessionUsername) {
+        return { error: 'Aluno não autenticado. Por favor, faça login novamente.' };
+    }
+
+    const validatedFields = updateVirtualFriendSchema.safeParse(Object.fromEntries(formData.entries()));
+
+    if (!validatedFields.success) {
+        return { error: validatedFields.error.flatten().fieldErrors };
+    }
+
+    const { virtualFriendName, virtualFriendAvatar } = validatedFields.data;
+
+    try {
+        const student = await prisma.student.findUnique({ where: { username: sessionUsername } });
+        if (!student) {
+            return { error: 'Aluno não encontrado.' };
+        }
+
+        await prisma.student.update({
+            where: { id: student.id },
+            data: {
+                virtualFriendName: virtualFriendName,
+                virtualFriendAvatar: virtualFriendAvatar
+            },
+        });
+        
+        revalidatePath('/student/settings');
+        return { success: 'Configurações do amigo virtual salvas com sucesso!' };
+
+    } catch (error) {
+        console.error('Erro ao atualizar configurações do amigo virtual:', error);
         return { error: 'Ocorreu um erro no servidor. Tente novamente.' };
     }
 }

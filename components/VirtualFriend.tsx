@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { X, Bot, Sparkles, Settings, Edit2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { toast } from 'sonner'
 
 interface VirtualFriendProps {
   studentName: string
@@ -27,6 +28,7 @@ export default function VirtualFriend({ studentName }: VirtualFriendProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [friendName, setFriendName] = useState('')
   const [selectedAvatar, setSelectedAvatar] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
   const friendRef = useRef<HTMLDivElement>(null)
 
   // Load saved state from localStorage on mount
@@ -109,8 +111,35 @@ export default function VirtualFriend({ studentName }: VirtualFriendProps) {
     setIsSettingsOpen(false)
   }
 
-  const handleSaveSettings = () => {
-    setIsSettingsOpen(false)
+  const handleSaveSettings = async () => {
+    setIsSaving(true)
+    try {
+      // Save to database
+      const response = await fetch('/api/virtual-friend', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          virtualFriendName: friendName,
+          virtualFriendAvatar: selectedAvatar
+        }),
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        toast.success('Configurações do amigo virtual salvas com sucesso!')
+        setIsSettingsOpen(false)
+      } else {
+        toast.error(result.error || 'Erro ao salvar configurações')
+      }
+    } catch (error) {
+      console.error('Error saving virtual friend settings:', error)
+      toast.error('Erro ao salvar configurações')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   // Não renderiza nada até que o componente esteja montado (evita hidration mismatch)

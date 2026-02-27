@@ -156,7 +156,7 @@ export default function VirtualFriend({ studentName }: VirtualFriendProps) {
   ) : (
     <div
       ref={friendRef}
-      className="fixed z-[9999] text-white rounded-xl p-3 shadow-xl border border-white/20 backdrop-blur-sm cursor-move select-none group"
+      className="fixed z-[9999] text-white p-3 cursor-move select-none group"
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
@@ -183,12 +183,12 @@ export default function VirtualFriend({ studentName }: VirtualFriendProps) {
               }}
             />
           </div>
-          <div>
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
             <h3 className="font-bold text-sm">{friendName || 'Amigo Virtual'}</h3>
             <p className="text-[10px] opacity-80">Olá, {studentName}!</p>
           </div>
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <Button
             variant="ghost"
             size="icon"

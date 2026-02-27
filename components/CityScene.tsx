@@ -101,7 +101,7 @@ const CityScene = memo(function CityScene({
     ghostManagerRef.current = ghostManager
 
     // Inicializa TrafficManager
-    const trafficManager = new TrafficManager(app)
+    const trafficManager = new TrafficManager(app, assetManager)
     trafficManagerRef.current = trafficManager
 
     // Configuração da cena

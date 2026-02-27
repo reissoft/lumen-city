@@ -3,6 +3,7 @@ import * as pc from 'playcanvas';
 import { Building } from '../constants';
 import { BUILDING_CONFIG } from '@/app/config/buildings';
 import { OFFSET } from '../constants';
+import { AssetManager } from './AssetManager';
 
 interface RoadConnection {
   x: number;
@@ -24,6 +25,7 @@ interface Car {
   isMoving: boolean;
   lastMoveTime: number;
   moveInterval: number;
+  modelType: string;
 }
 
 export class TrafficManager {
@@ -43,33 +45,23 @@ export class TrafficManager {
   private readonly CAR_SPAWN_INTERVAL = 2000; // ms
   private lastSpawnTime = 0;
 
-  constructor(app: pc.Application) {
+  constructor(app: pc.Application, private assetManager: AssetManager) {
     this.app = app;
     this.setupCarPool();
   }
 
   /**
-   * Configura o pool de carros (cubos)
+   * Configura o pool de carros (modelos 3D)
    */
   private setupCarPool(): void {
     for (let i = 0; i < this.CAR_COUNT; i++) {
       const carEntity = new pc.Entity(`Car-${i}`);
-      carEntity.addComponent('render', { type: 'box' });
       
-      // Material colorido para os carros
-      const material = new pc.StandardMaterial();
-      const colors = [
-        new pc.Color(1, 0, 0), // Vermelho
-        new pc.Color(0, 0, 1), // Azul
-        new pc.Color(1, 1, 0), // Amarelo
-        new pc.Color(0, 1, 0), // Verde
-        new pc.Color(1, 0, 1), // Magenta
-      ];
-      material.diffuse = colors[i % colors.length];
-      material.update();
-      carEntity.render!.material = material;
+      // Carrega modelo 3D baseado no tipo
+      const modelType = this.getRandomModelType();
+      this.loadCarModel(carEntity, modelType);
       
-      carEntity.setLocalScale(0.5, 0.5, 0.5);
+      carEntity.setLocalScale(0.3, 0.3, 0.3); // Escala reduzida para não ficar grande
       carEntity.enabled = false; // Inicialmente desativado
       this.app.root.addChild(carEntity);
       this.carPool.push(carEntity);
@@ -77,20 +69,120 @@ export class TrafficManager {
   }
 
   /**
+   * Carrega modelo 3D de carro usando AssetManager ou carregamento direto
+   */
+  private loadCarModel(entity: pc.Entity, modelType: string): void {
+    // Mapeia o tipo de carro para o caminho do asset
+    const carAssets: Record<string, string> = {
+      'sedan': '/models/cars/sedan.glb',
+      'suv': '/models/cars/suv.glb',
+      'truck': '/models/cars/truck.glb',
+      'van': '/models/cars/van.glb',
+      'hatchback': '/models/cars/hatchback-sports.glb',
+      'sports': '/models/cars/race.glb',
+      'police': '/models/cars/police.glb',
+      'taxi': '/models/cars/taxi.glb',
+      'firetruck': '/models/cars/firetruck.glb',
+      'ambulance': '/models/cars/ambulance.glb',
+      'garbage': '/models/cars/garbage-truck.glb'
+    };
+
+    const modelUrl = carAssets[modelType] || carAssets['sedan'];
+    
+    console.log(`🚗 Carregando modelo ${modelType} de: ${modelUrl}`);
+
+    // Primeiro tenta usar o AssetManager (se o asset já estiver carregado)
+    const assetName = modelUrl.replace('/models/cars/', '').replace('.glb', '');
+    const existingAsset = this.assetManager.getAsset(assetName);
+    
+    if (existingAsset && existingAsset.resource) {
+      console.log(`🚗 Usando asset já carregado: ${assetName}`);
+      this.instantiateCarModel(entity, existingAsset);
+      return;
+    }
+
+    // Se não estiver no AssetManager, carrega manualmente
+    console.log(`🚗 Asset não encontrado, carregando manualmente: ${modelUrl}`);
+    this.loadCarModelManually(entity, modelUrl);
+  }
+
+  /**
+   * Instancia modelo 3D a partir de um asset existente
+   */
+  private instantiateCarModel(entity: pc.Entity, asset: pc.Asset): void {
+    try {
+      const carModel = (asset.resource as any).instantiateRenderEntity({
+        app: this.app,
+      });
+      
+      // Limpa o entity existente e adiciona o modelo como filho
+      while (entity.children.length > 0) {
+        entity.removeChild(entity.children[0]);
+      }
+      entity.addChild(carModel);
+      
+      console.log(`🚗 Modelo carregado com sucesso`);
+    } catch (e) {
+      console.error(`❌ Erro ao instanciar asset:`, e);
+      this.createFallbackCar(entity, 'sedan');
+    }
+  }
+
+  /**
+   * Carrega modelo 3D manualmente
+   */
+  private loadCarModelManually(entity: pc.Entity, modelUrl: string): void {
+    const asset = new pc.Asset('car-model', 'container', { url: modelUrl });
+    this.app.assets.add(asset);
+
+    asset.ready(() => {
+      if (asset.resource) {
+        this.instantiateCarModel(entity, asset);
+      } else {
+        console.log(`🚗 Modelo não carregou, usando fallback`);
+        this.createFallbackCar(entity, 'sedan');
+      }
+    });
+
+    asset.on('error', (err) => {
+      console.log(`🚗 Erro ao carregar modelo:`, err);
+      this.createFallbackCar(entity, 'sedan');
+    });
+
+    this.app.assets.load(asset);
+  }
+
+  /**
+   * Cria carro fallback (cubo colorido) se modelo 3D falhar
+   */
+  private createFallbackCar(entity: pc.Entity, modelType: string): void {
+    // Material colorido baseado no tipo de modelo
+    const material = new pc.StandardMaterial();
+    const colors: Record<string, pc.Color> = {
+      'sedan': new pc.Color(1, 0, 0),     // Vermelho
+      'suv': new pc.Color(0, 0, 1),       // Azul
+      'truck': new pc.Color(1, 1, 0),     // Amarelo
+      'van': new pc.Color(0, 1, 0),       // Verde
+      'hatchback': new pc.Color(1, 0, 1)  // Magenta
+    };
+    
+    material.diffuse = colors[modelType] || colors['sedan'];
+    material.update();
+    
+    entity.addComponent('render', { type: 'box' });
+    entity.render!.material = material;
+  }
+
+  /**
    * Atualiza o grafo de navegação com base nas ruas existentes
    */
   updateRoadGraph(buildings: Building[]): void {
-    console.log("🔄 Atualizando grafo de tráfego...");
-    console.log("🏗️ Total de prédios no jogo:", buildings.length);
-    
     this.roadGraph.clear();
     
     // Filtra apenas peças de rua
     const roads = buildings.filter(b => this.roadTypes.includes(b.type));
-    console.log("🛣️ Peças de rua detectadas:", roads.length);
     
     if (roads.length === 0) {
-      console.log("⚠️ Nenhuma rua encontrada para criar tráfego!");
       return;
     }
     
@@ -100,13 +192,8 @@ export class TrafficManager {
       if (node) {
         const key = `${road.x},${road.y}`;
         this.roadGraph.set(key, node);
-        console.log(`📍 Criado nó de rua: ${road.type} em (${road.x}, ${road.y}) com ${node.connections.length} conexões`);
-      } else {
-        console.log(`❌ Falha ao criar nó para ${road.type} em (${road.x}, ${road.y})`);
       }
     });
-
-    console.log(`📊 Grafo criado com ${this.roadGraph.size} nós de rua`);
 
     // Conecta nós adjacentes
     this.connectAdjacentRoads();
@@ -201,22 +288,17 @@ export class TrafficManager {
     
     // Encontra um nó de estrada aleatório
     const roadNodes = Array.from(this.roadGraph.values());
-    console.log(`🚗 Tentando spawnar carro... Grafo tem ${roadNodes.length} nós`);
     
     if (roadNodes.length === 0) {
-      console.log("❌ Nenhum nó de rua disponível para spawnar carro");
       return;
     }
 
     const startNode = roadNodes[Math.floor(Math.random() * roadNodes.length)];
-    console.log(`📍 Spawando carro no nó: ${startNode.type} em (${startNode.x}, ${startNode.y})`);
     
     const car = this.getAvailableCar();
     
     if (car) {
       this.setupCar(car, startNode);
-    } else {
-      console.log("❌ Nenhum carro disponível no pool");
     }
   }
 
@@ -234,10 +316,19 @@ export class TrafficManager {
       speed: this.CAR_SPEED + Math.random() * 0.05,
       isMoving: false,
       lastMoveTime: Date.now(),
-      moveInterval: 1000 + Math.random() * 1000 // Entre 1 e 2 segundos
+      moveInterval: 1000 + Math.random() * 1000, // Entre 1 e 2 segundos
+      modelType: this.getRandomModelType()
     };
 
     return car;
+  }
+
+  /**
+   * Obtém um tipo de modelo aleatório
+   */
+  private getRandomModelType(): string {
+    const modelTypes = ['sedan', 'suv', 'truck', 'van', 'hatchback'];
+    return modelTypes[Math.floor(Math.random() * modelTypes.length)];
   }
 
   /**
@@ -245,23 +336,18 @@ export class TrafficManager {
    */
   private setupCar(car: Car, startNode: RoadNode): void {
     car.entity.enabled = true;
-    
+    //console.log(`🚗 Spawnando carro do tipo ${car.modelType} na posição (${startNode.x}, ${startNode.y})`);
     // Usa a mesma fórmula de posicionamento do BuildingManager
     const worldX = startNode.x * 2 - OFFSET;
     const worldZ = startNode.y * 2 - OFFSET;
-    car.entity.setPosition(worldX, 0.6, worldZ);
-    
+    //console.log(`🚗 Posicionando carro em: (${worldX}, 0.6, ${worldZ})`);
+    car.entity.setPosition(worldX, 0.1, worldZ);
+    car.entity.setLocalScale(0.0, 0.0, 0.0); // Escala reduzida para não ficar grande
     // Gera um caminho aleatório
     car.currentPath = this.generateRandomPath(startNode, 5);
+    //console.log(`🚗 Caminho gerado com ${car.currentPath.length} nós`);
     car.currentTargetIndex = 0;
     car.isMoving = true;
-    
-    console.log(`🚗 Carro spawnado em (${startNode.x}, ${startNode.y}) -> PlayCanvas (${worldX.toFixed(2)}, 0.6, ${worldZ.toFixed(2)}) com caminho de ${car.currentPath.length} nós`);
-    car.currentPath.forEach((node, index) => {
-      const nodeWorldX = node.x * 2 - OFFSET;
-      const nodeWorldZ = node.y * 2 - OFFSET;
-      console.log(`  🛤️ Nó ${index}: ${node.type} em (${node.x}, ${node.y}) -> PlayCanvas (${nodeWorldX.toFixed(2)}, ${nodeWorldZ.toFixed(2)})`);
-    });
     
     this.cars.push(car);
   }
@@ -272,10 +358,17 @@ export class TrafficManager {
   private generateRandomPath(startNode: RoadNode, length: number): RoadNode[] {
     const path: RoadNode[] = [startNode];
     let currentNode = startNode;
-
+    
     for (let i = 0; i < length; i++) {
       const nextNode = this.getRandomConnectedNode(currentNode);
       if (nextNode) {
+        // Verifica se o próximo nó já está no caminho (evita loops)
+        const alreadyInPath = path.some(node => node.x === nextNode.x && node.y === nextNode.y);
+        
+        if (alreadyInPath) {
+          continue;
+        }
+        
         path.push(nextNode);
         currentNode = nextNode;
       } else {
@@ -341,21 +434,17 @@ export class TrafficManager {
 
     const targetNode = car.currentPath[car.currentTargetIndex];
     if (!targetNode) {
-      console.log("❌ Carro sem targetNode válido");
       return;
     }
 
     // Usa a mesma fórmula de posicionamento do BuildingManager
     const targetWorldX = targetNode.x * 2 - OFFSET;
     const targetWorldZ = targetNode.y * 2 - OFFSET;
-    const targetPos = new pc.Vec3(targetWorldX, 0.6, targetWorldZ);
-    
-    console.log(`🚗 DEBUG: Movimento em Grid - Nó ${car.currentTargetIndex}/${car.currentPath.length}`);
-    console.log(`🚗 DEBUG: Target Grid (${targetNode.x}, ${targetNode.y}) -> PlayCanvas (${targetWorldX.toFixed(2)}, 0.6, ${targetWorldZ.toFixed(2)})`);
+    const targetPos = new pc.Vec3(targetWorldX, 0.1, targetWorldZ);
     
     // Sistema Simplificado: Move instantaneamente para o próximo nó
     car.entity.setPosition(targetPos);
-    
+    car.entity.setLocalScale(0.4, 0.4, 0.4);
     // Atualiza o tempo do último movimento
     car.lastMoveTime = now;
     
@@ -364,29 +453,21 @@ export class TrafficManager {
       const nextNode = car.currentPath[car.currentTargetIndex + 1];
       const nextWorldX = nextNode.x * 2 - OFFSET;
       const nextWorldZ = nextNode.y * 2 - OFFSET;
-      const nextPos = new pc.Vec3(nextWorldX, 0.6, nextWorldZ);
+      const nextPos = new pc.Vec3(nextWorldX, 0.1, nextWorldZ);
       
       // Calcula direção para o próximo nó
       const direction = nextPos.sub(targetPos).normalize();
       const angle = Math.atan2(direction.x, direction.z);
-      car.entity.setEulerAngles(0, -angle * (180 / Math.PI), 0);
-      
-      console.log(`🚗 DEBUG: Próximo nó: Grid (${nextNode.x}, ${nextNode.y}) -> PlayCanvas (${nextWorldX.toFixed(2)}, 0.6, ${nextWorldZ.toFixed(2)})`);
-      console.log(`🚗 DEBUG: Direção: (${direction.x.toFixed(2)}, ${direction.z.toFixed(2)})`);
-      console.log(`🚗 DEBUG: Intervalo de movimento: ${car.moveInterval}ms`);
+      // Corrige a orientação (os carros estavam andando de ré)
+      car.entity.setEulerAngles(0, (-angle * (180 / Math.PI)) + 180, 0);
     }
-    
-    console.log(`📍 Carro movido para: (${targetWorldX.toFixed(2)}, 0.6, ${targetWorldZ.toFixed(2)})`);
     
     // Vai para o próximo nó
     car.currentTargetIndex++;
     
     if (car.currentTargetIndex >= car.currentPath.length) {
       // Chegou ao fim do caminho
-      console.log("🏁 Carro chegou ao fim do caminho");
       car.isMoving = false;
-    } else {
-      console.log(`🚗 DEBUG: Próximo alvo será nó ${car.currentTargetIndex}`);
     }
   }
 

@@ -327,7 +327,10 @@ export class TrafficManager {
    * Obtém um tipo de modelo aleatório
    */
   private getRandomModelType(): string {
-    const modelTypes = ['sedan', 'suv', 'truck', 'van', 'hatchback'];
+    const modelTypes = [
+      'sedan', 'suv', 'truck', 'van', 'hatchback',
+      'sports', 'police', 'taxi', 'firetruck', 'ambulance', 'garbage'
+    ];
     return modelTypes[Math.floor(Math.random() * modelTypes.length)];
   }
 

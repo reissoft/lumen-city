@@ -199,9 +199,18 @@ export default function CityInterface({ student, buildings: initialBuildings, re
                         onClick={toggleFullscreen}
                         variant="ghost"
                         size="icon"
-                        className="bg-slate-900/80 hover:bg-slate-800 text-white backdrop-blur rounded-full w-10 h-10 md:w-12 md:h-12 absolute top-2 right-2 md:top-6 md:right-6"
+                        className="bg-slate-900/80 hover:bg-slate-800 text-white backdrop-blur rounded-full w-10 h-10 md:w-12 md:h-12 absolute top-2 right-2 md:top-6 md:right-16"
                     >
                         {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+                    </Button>
+                    <Button 
+                        onClick={() => window.history.back()}
+                        variant="ghost"
+                        size="icon"
+                        className="bg-slate-900/80 hover:bg-slate-800 text-white backdrop-blur rounded-full w-10 h-10 md:w-12 md:h-12 absolute top-2 right-14 md:top-6 md:right-2"
+                        title="Sair da cidade"
+                    >
+                        <X size={20} />
                     </Button>
                 </div>
             </div>

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Loader2 } from 'lucide-react';
+import StudentHeader from '../StudentHeader';
 
 const initialState = { error: null, success: null };
 
@@ -59,6 +60,8 @@ export default function StudentSettingsClientPage({ student }: { student: Studen
             <div className="absolute inset-0 bg-cover bg-center" style={{backgroundImage: 'url(/grid.svg)'}}></div>
             <div className="container mx-auto p-4 md:p-8 relative max-w-3xl">
                 
+                <StudentHeader studentName={student.name || 'Aluno(a)'} />
+
                 <Link href="/student" className="inline-flex items-center gap-2 bg-white/10 border border-white/20 backdrop-blur-md hover:bg-white/20 rounded-full px-4 py-2 text-sm mb-8 transition-colors">
                     <ArrowLeft size={16} /> Voltar ao Painel
                 </Link>

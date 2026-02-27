@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut, Settings } from "lucide-react";
 import { logout } from "../auth/actions";
 import NotificationBell from '@/components/notifications/NotificationBell';
+import VirtualFriend from '@/components/VirtualFriend';
 
 export default function StudentHeader({ studentName }: { studentName: string }) {
   return (
@@ -26,6 +27,7 @@ export default function StudentHeader({ studentName }: { studentName: string }) 
                 </Button>
             </form>
         </div>
+        <VirtualFriend studentName={studentName} />
     </header>
   );
 }

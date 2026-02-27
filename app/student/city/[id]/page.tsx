@@ -4,6 +4,7 @@ import { PrismaClient } from "@prisma/client";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import CityInterface from "@/components/CityInterface";
+import StudentHeader from './StudentHeader';
 
 const prisma = new PrismaClient();
 
@@ -29,7 +30,7 @@ export default async function FriendCityPage({ params }: PageProps) {
     // fetch viewer information so we can confirm they are in same class
     const viewer = await prisma.student.findUnique({
         where: { username: cookies().get('lumen_session')?.value || '' },
-        select: { classId: true }
+        select: { classId: true, name: true }
     });
 
     const friend = await prisma.student.findUnique({
@@ -51,6 +52,7 @@ export default async function FriendCityPage({ params }: PageProps) {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 text-white">
+            <StudentHeader studentName={viewer?.name || 'Aluno(a)'} />
             <CityInterface student={friend} buildings={buildings} readOnly />
         </div>
     );

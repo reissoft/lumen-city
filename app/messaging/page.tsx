@@ -6,6 +6,7 @@ import MessagingInterface from "@/components/messaging/MessagingInterface";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import StudentHeader from '@/app/student/StudentHeader';
 
 const SESSION_COOKIE_NAME = 'lumen_session';
 const ROLE_COOKIE_NAME = 'lumen_role';
@@ -122,6 +123,11 @@ export default async function MessagingPage({ searchParams }: { searchParams: { 
           {isModerating ? 'Voltar para Seleção' : 'Voltar ao Painel'}
         </Button>
       </Link>
+
+      {/* Only show virtual friend for students */}
+      {loggedInUser.role === 'student' && (
+        <StudentHeader studentName={loggedInUser.name || 'Aluno(a)'} />
+      )}
 
       <div className="w-full max-w-7xl h-[calc(100vh-80px)] z-10 mt-10">
         {/* MODIFICAÇÃO: Passa as props para o componente */}

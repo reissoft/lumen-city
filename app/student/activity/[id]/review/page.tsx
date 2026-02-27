@@ -6,6 +6,8 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { getActivityById } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Loader2, Link as LinkIcon, Youtube, FileText, Image as ImageIcon, ExternalLink, Music } from 'lucide-react';
+import StudentHeader from '../../StudentHeader';
+import { cookies } from 'next/headers';
 
 interface ReviewMaterial {
   url: string;
@@ -150,6 +152,9 @@ function ReviewPageContent() {
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 text-white">
             <div className="absolute inset-0 bg-cover bg-center" style={{backgroundImage: 'url(/grid.svg)'}}></div>
             <div className="container mx-auto max-w-4xl p-4 md:p-8 relative space-y-10">
+
+                {/* Virtual friend appears here with high z-index */}
+                <StudentHeader studentName="Aluno(a)" />
 
                 <header className="text-center space-y-2">
                     <p className="font-bold text-blue-300">Material de Estudo</p>

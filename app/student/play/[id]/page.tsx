@@ -9,6 +9,8 @@ import { Check, X, Trophy, ArrowRight, AlertTriangle, ChevronLeft, Loader2 } fro
 import { submitQuizResult } from "@/app/actions"
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import StudentHeader from '../../StudentHeader';
+import { cookies } from 'next/headers';
 
 // Types
 interface Question {
@@ -158,6 +160,7 @@ export default function PlayQuizPage({ params }: { params: { id: string } }) {
       
       {/* -- HEADER -- */}
       <header className={`${cardStyles} w-full max-w-4xl z-10 p-4`}>
+          <StudentHeader studentName="Aluno(a)" />
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
               <h1 className='truncate text-lg font-bold flex-1'>{quizData.title}</h1>
               <div className="flex items-center gap-4 text-white/70 font-semibold">

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Button } from '@/components/ui/button'
-import { X, Bot, Sparkles, Settings, Edit2 } from 'lucide-react'
+import { X, Bot, Sparkles, Settings, Edit2, Send } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
@@ -29,6 +29,9 @@ export default function VirtualFriend({ studentName }: VirtualFriendProps) {
   const [friendName, setFriendName] = useState('')
   const [selectedAvatar, setSelectedAvatar] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [isTextInputOpen, setIsTextInputOpen] = useState(false)
+  const [textInputValue, setTextInputValue] = useState('')
+  const [textInputRef, setTextInputRef] = useState<HTMLInputElement | null>(null)
   const friendRef = useRef<HTMLDivElement>(null)
 
   // Load saved state from localStorage on mount
@@ -58,6 +61,13 @@ export default function VirtualFriend({ studentName }: VirtualFriendProps) {
     const state = { isVisible, position, friendName, selectedAvatar }
     localStorage.setItem('virtualFriendState', JSON.stringify(state))
   }, [isVisible, position, friendName, selectedAvatar, mounted])
+
+  // Focus text input when it opens
+  useEffect(() => {
+    if (isTextInputOpen && textInputRef) {
+      textInputRef.focus()
+    }
+  }, [isTextInputOpen, textInputRef])
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (friendRef.current) {
@@ -210,9 +220,48 @@ export default function VirtualFriend({ studentName }: VirtualFriendProps) {
         </div>
       </div>
       
-      <div className="text-[9px] opacity-0 group-hover:opacity-100 transition-opacity text-center mt-1">
+      <div 
+        className="text-[9px] opacity-0 group-hover:opacity-100 transition-opacity text-center mt-1 cursor-pointer hover:text-yellow-300"
+        onClick={() => setIsTextInputOpen(!isTextInputOpen)}
+      >
         💡 IA - Estou aqui para te ajudar. Clique em mim!
       </div>
+
+      {/* Text Input Field */}
+      {isTextInputOpen && (
+        <div
+          className="mt-2 opacity-100 transition-opacity pointer-events-auto flex gap-1"
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <Input
+            ref={setTextInputRef}
+            value={textInputValue}
+            onChange={(e) => setTextInputValue(e.target.value)}
+            placeholder="Digite sua mensagem..."
+            className="bg-white/10 border-white/30 text-white placeholder-white/50 text-xs flex-1"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                // Handle message submission
+                console.log('Message sent:', textInputValue);
+                setTextInputValue('');
+              }
+            }}
+          />
+          <Button
+            onClick={() => {
+              // Handle message submission
+              console.log('Message sent:', textInputValue);
+              setTextInputValue('');
+              setIsTextInputOpen(false);
+            }}
+            className="bg-white/20 hover:bg-white/30 text-white rounded-lg px-2"
+            size="sm"
+            title="Enviar mensagem"
+          >
+            <Send size={14} />
+          </Button>
+        </div>
+      )}
     </div>
   )
 

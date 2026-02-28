@@ -11,6 +11,7 @@ import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import StudentHeader from '../../StudentHeader';
 import { cookies } from 'next/headers';
+import VirtualFriend from '@/components/VirtualFriend';
 
 // Types
 interface Question {
@@ -101,6 +102,45 @@ export default function PlayQuizPage({ params }: { params: { id: string } }) {
   
   const returnPath = searchParams.get('from') === 'teacher' ? '/teacher' : '/student';
   const finalScore = useMemo(() => quizData ? Math.round((score / quizData.questions.length) * 100) : 0, [score, quizData]);
+
+  // Contexto da página de quiz do aluno
+  const pageContext = {
+    page: 'student/play/quiz',
+    student: {
+      name: 'Aluno(a)', // Será passado pelo componente pai
+      level: 1, // Será passado pelo componente pai
+      xp: 0, // Será passado pelo componente pai
+      gold: 0, // Será passado pelo componente pai
+      className: 'Carregando...' // Será passado pelo componente pai
+    },
+    pageData: {
+      quiz: {
+        title: quizData?.title || 'Quiz',
+        questions: quizData?.questions.length || 0,
+        difficulty: 'Médio', // Poderia ser obtido do backend
+        currentQuestion: currentQ + 1,
+        totalQuestions: quizData?.questions.length || 0,
+        currentScore: score,
+        maxScore: quizData?.questions.length || 0
+      },
+      progress: {
+        questionProgress: quizData ? ((currentQ + 1) / quizData.questions.length) * 100 : 0,
+        scoreProgress: quizData ? (score / quizData.questions.length) * 100 : 0
+      },
+      tips: [
+        'Leia atentamente cada pergunta antes de responder.',
+        'Pense em todas as opções antes de escolher.',
+        'Se não souber a resposta, tente eliminar as opções erradas.',
+        'Mantenha a calma e concentração durante o quiz.'
+      ]
+    },
+    availableActions: [
+      'Responder Pergunta',
+      'Verificar Resposta',
+      'Próxima Pergunta',
+      'Voltar ao Painel'
+    ]
+  };
 
   // --- RENDER STATES ---
   if (loading && !gameOver) {
@@ -248,6 +288,9 @@ export default function PlayQuizPage({ params }: { params: { id: string } }) {
               </div>
           </div>
       </footer>
+
+      {/* VirtualFriend na página de quiz */}
+      <VirtualFriend studentName="Aluno(a)" pageContext={pageContext} />
     </div>
   )
 }

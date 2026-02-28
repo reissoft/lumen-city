@@ -189,7 +189,7 @@ export default function StudentSettingsClientPage({ student }: { student: Studen
                     </div>
                 </div>
 
-                <VirtualFriend studentName={student.name || 'Aluno(a)'} pageContext={pageContext} />
+                <VirtualFriend studentName={student.name || 'Aluno(a)'} pageContext={pageContext} delay={500} />
 
                 <form action={formAction} className={`${cardStyles} p-6 md:p-8`}>
                     <div className="space-y-6">

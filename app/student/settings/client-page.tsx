@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Loader2, Settings } from 'lucide-react';
 import StudentHeader from '../StudentHeader';
 import VirtualFriend from '@/components/VirtualFriend';
+import { useState } from 'react';
 
 const initialState = { error: null, success: null };
 
@@ -35,6 +36,73 @@ interface StudentData {
 }
 
 export default function StudentSettingsClientPage({ student }: { student: StudentData }) {
+    // Estado para armazenar os dados reais do aluno
+    const [studentData, setStudentData] = useState({
+        level: 1,
+        xp: 0,
+        gold: 0,
+        className: 'Carregando...',
+        activitiesAvailable: 0,
+        activitiesCompleted: 0,
+        levelProgress: 0,
+        rankingPosition: 0
+    });
+
+    // Função para calcular o nível correto a partir do XP
+    const getCorrectLevelFromXp = (xp: number): number => {
+        if (xp < 100) return 1;
+        const level = Math.floor(0.5 + 0.1 * Math.sqrt(25 + 2 * xp));
+        return level;
+    };
+
+    // Função para calcular o progresso do nível
+    const getLevelProgress = (xp: number, level: number): number => {
+        const getTotalXpForLevelStart = (level: number): number => {
+            if (level <= 1) return 0;
+            const n = level - 1;
+            const a1 = 100;
+            const an = n * 100;
+            return (n * (a1 + an)) / 2;
+        };
+
+        const xpForCurrentLevelStart = getTotalXpForLevelStart(level);
+        const xpForNextLevelStart = getTotalXpForLevelStart(level + 1);
+        const xpNeededForThisLevel = xpForNextLevelStart - xpForCurrentLevelStart;
+        const currentLevelProgress = xp - xpForCurrentLevelStart;
+        return xpNeededForThisLevel > 0 ? (currentLevelProgress / xpNeededForThisLevel) * 100 : 100;
+    };
+
+    // Carregar dados do aluno quando o componente for montado
+    useEffect(() => {
+        const loadStudentData = async () => {
+            try {
+                // Fazer requisição para obter os dados do aluno
+                const response = await fetch('/api/student-data');
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    const level = getCorrectLevelFromXp(data.xp);
+                    const levelProgress = getLevelProgress(data.xp, level);
+                    
+                    setStudentData({
+                        level,
+                        xp: data.xp,
+                        gold: data.gold || 0,
+                        className: data.className || 'Sem turma',
+                        activitiesAvailable: data.activitiesAvailable || 0,
+                        activitiesCompleted: data.activitiesCompleted || 0,
+                        levelProgress,
+                        rankingPosition: data.rankingPosition || 0
+                    });
+                }
+            } catch (error) {
+                console.error('Erro ao carregar dados do aluno:', error);
+            }
+        };
+
+        loadStudentData();
+    }, []);
+
     {/* @ts-ignore */}
     const [state, formAction] = useFormState(updateStudentProfile, initialState);
 
@@ -54,6 +122,38 @@ export default function StudentSettingsClientPage({ student }: { student: Studen
             return state.error[fieldName][0];
         }
         return null;
+    };
+
+    // Contexto da página de configurações do aluno
+    const pageContext = {
+        page: 'student/settings/client-page',
+        student: {
+            name: student.name || 'Aluno(a)'
+        },
+        pageData: {
+            account: {
+                username: student.username || 'N/A',
+                email: student.email || 'N/A'
+            },
+            virtualFriend: {
+                name: 'Meu Amigo', // Será atualizado quando houver integração com o banco
+                avatar: 'bear' // Será atualizado quando houver integração com o banco
+            },
+            actions: [
+                'Atualizar informações pessoais',
+                'Alterar senha',
+                'Voltar ao painel principal'
+            ],
+            tips: [
+                'Mantenha seu e-mail atualizado para receber notificações importantes.',
+                'Escolha uma senha forte e única para proteger sua conta.',
+                'Revise suas informações regularmente para manter tudo atualizado.'
+            ]
+        },
+        availableActions: [
+            'Salvar Alterações',
+            'Voltar ao Painel'
+        ]
     };
 
     return (
@@ -88,6 +188,8 @@ export default function StudentSettingsClientPage({ student }: { student: Studen
                         Clique no botão de configurações no canto superior direito do seu amigo virtual para personalizá-lo.
                     </div>
                 </div>
+
+                <VirtualFriend studentName={student.name || 'Aluno(a)'} pageContext={pageContext} />
 
                 <form action={formAction} className={`${cardStyles} p-6 md:p-8`}>
                     <div className="space-y-6">

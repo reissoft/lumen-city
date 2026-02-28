@@ -11,9 +11,7 @@ import VirtualFriend from '@/components/VirtualFriend';
 
 const SESSION_COOKIE_NAME = 'lumen_session';
 const ROLE_COOKIE_NAME = 'lumen_role';
-
 const prisma = new PrismaClient();
-
 // Função para obter o usuário logado (pode ser admin, professor ou aluno)
 async function getLoggedInUser() {
   const session = cookies().get(SESSION_COOKIE_NAME)?.value;

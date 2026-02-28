@@ -14,6 +14,7 @@ const ROLE_COOKIE_NAME = 'lumen_role';
 const prisma = new PrismaClient();
 // Função para obter o usuário logado (pode ser admin, professor ou aluno)
 async function getLoggedInUser() {
+  console.log('Verificando sessão do usuário para acesso à página de mensagens...');
   const session = cookies().get(SESSION_COOKIE_NAME)?.value;
   const role = cookies().get(ROLE_COOKIE_NAME)?.value;
 

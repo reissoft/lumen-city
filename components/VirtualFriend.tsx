@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Button } from '@/components/ui/button'
-import { X, Bot, Sparkles, Settings, Edit2, Send } from 'lucide-react'
+import { X, Bot, Sparkles, Settings, Edit2, Send, MessageSquare } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
@@ -32,6 +32,8 @@ export default function VirtualFriend({ studentName }: VirtualFriendProps) {
   const [isTextInputOpen, setIsTextInputOpen] = useState(false)
   const [textInputValue, setTextInputValue] = useState('')
   const [textInputRef, setTextInputRef] = useState<HTMLInputElement | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [aiResponse, setAiResponse] = useState<string | null>(null)
   const friendRef = useRef<HTMLDivElement>(null)
 
   // Load saved state from localStorage on mount
@@ -152,6 +154,41 @@ export default function VirtualFriend({ studentName }: VirtualFriendProps) {
     }
   }
 
+  // Função para enviar mensagem ao AI
+  const handleSendMessage = async (message: string) => {
+    if (!message.trim()) return
+
+    setIsProcessing(true)
+    setAiResponse(null)
+
+    try {
+      // Envia a mensagem para a API do Virtual Friend
+      const response = await fetch('/api/virtual-friend', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message.trim(),
+          studentName: studentName
+        }),
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        setAiResponse(result.response || 'Desculpe, não consegui processar sua mensagem.')
+      } else {
+        setAiResponse('Desculpe, ocorreu um erro ao processar sua mensagem.')
+      }
+    } catch (error) {
+      console.error('Error sending message to AI:', error)
+      setAiResponse('Desculpe, ocorreu um erro ao processar sua mensagem.')
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
   // Não renderiza nada até que o componente esteja montado (evita hidration mismatch)
   if (!mounted) return null
 
@@ -241,25 +278,27 @@ export default function VirtualFriend({ studentName }: VirtualFriendProps) {
             className="bg-white/10 border-white/30 text-white placeholder-white/50 text-xs flex-1"
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
-                // Handle message submission
-                console.log('Message sent:', textInputValue);
-                setTextInputValue('');
+                handleSendMessage(textInputValue);
               }
             }}
           />
           <Button
-            onClick={() => {
-              // Handle message submission
-              console.log('Message sent:', textInputValue);
-              setTextInputValue('');
-              setIsTextInputOpen(false);
-            }}
+            onClick={() => handleSendMessage(textInputValue)}
+            disabled={isProcessing}
             className="bg-white/20 hover:bg-white/30 text-white rounded-lg px-2"
             size="sm"
             title="Enviar mensagem"
           >
-            <Send size={14} />
+            {isProcessing ? <MessageSquare size={14} className="animate-spin" /> : <Send size={14} />}
           </Button>
+        </div>
+      )}
+
+      {/* AI Response */}
+      {aiResponse && (
+        <div className="mt-2 p-2 bg-white/10 rounded-lg text-xs text-white border border-white/20">
+          <div className="text-[10px] text-white/60 mb-1">🤖 {friendName || 'Amigo Virtual'}</div>
+          <div>{aiResponse}</div>
         </div>
       )}
     </div>

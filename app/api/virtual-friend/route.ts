@@ -12,6 +12,13 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    
+    // Se for uma mensagem para o AI
+    if (body.message && body.studentName) {
+      return await handleAIMessage(body.message, body.studentName);
+    }
+
+    // Caso contrário, trata como configuração do amigo virtual
     const { virtualFriendName, virtualFriendAvatar } = body;
 
     // Validate input
@@ -52,5 +59,70 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error updating virtual friend settings:', error);
     return NextResponse.json({ error: 'Ocorreu um erro no servidor. Tente novamente.' }, { status: 500 });
+  }
+}
+
+// Função para lidar com mensagens do AI
+async function handleAIMessage(message: string, studentName: string) {
+  try {
+    // Aqui você pode integrar com o Groq ou outra API de IA
+    // Por enquanto, vamos retornar uma resposta simulada
+    
+    const systemPrompt = `Você é um assistente educacional amigável chamado ${studentName}'s Friend. 
+    Responda de forma curta, educativa e encorajadora, como se fosse um amigo virtual que ajuda com dúvidas escolares.
+    Seja simpático e use emojis quando apropriado. Responda em português.`;
+
+    // Simulação de chamada à API de IA
+    // Na prática, você substituiria isso pela chamada real ao Groq
+    const aiResponse = await simulateAIResponse(message, systemPrompt);
+
+    return NextResponse.json({ 
+      response: aiResponse,
+      success: true 
+    });
+
+  } catch (error) {
+    console.error('Error processing AI message:', error);
+    return NextResponse.json({ 
+      response: 'Desculpe, ocorreu um erro ao processar sua mensagem.',
+      success: false 
+    });
+  }
+}
+
+// Função simulada para resposta da IA
+// Na prática, você substituiria isso pela chamada real ao Groq
+async function simulateAIResponse(message: string, systemPrompt: string): Promise<string> {
+  // Simulação de processamento
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  // Respostas simuladas baseadas no tipo de mensagem
+  const lowerMessage = message.toLowerCase();
+
+  if (lowerMessage.includes('ajuda') || lowerMessage.includes('ajudar')) {
+    return 'Claro! Estou aqui para te ajudar! 🤗 O que você precisa?';
+  } else if (lowerMessage.includes('matemática') || lowerMessage.includes('matematica')) {
+    return 'Matemática é incrível! 🧮 Qual conceito você está estudando? Posso te explicar de forma divertida!';
+  } else if (lowerMessage.includes('história') || lowerMessage.includes('historia')) {
+    return 'História é uma viagem no tempo! 🕰️ Qual período ou evento você quer saber mais?';
+  } else if (lowerMessage.includes('ciências') || lowerMessage.includes('ciencia')) {
+    return 'Ciências são fascinantes! 🔬 Qual tema você quer explorar?';
+  } else if (lowerMessage.includes('obrigado') || lowerMessage.includes('obg')) {
+    return 'De nada! 😊 Sempre que precisar, estou aqui!';
+  } else if (lowerMessage.includes('tchau') || lowerMessage.includes('até logo')) {
+    return 'Até logo! 👋 Volte sempre que precisar!';
+  } else {
+    return `Entendi sua mensagem: "${message}".
+
+Estou aqui para te ajudar com estudos! 📚
+
+Pergunte-me sobre:
+• Matemática 🧮
+• História 🕰️  
+• Ciências 🔬
+• Português 📖
+• Qualquer dúvida escolar! 💡
+
+O que você gostaria de saber?`;
   }
 }

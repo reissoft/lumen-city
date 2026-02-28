@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { cookies } from 'next/headers';
+import Groq from 'groq-sdk'
 
 const prisma = new PrismaClient();
 
@@ -14,8 +15,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     // Se for uma mensagem para o AI
-    if (body.message && body.studentName) {
-      return await handleAIMessage(body.message, body.studentName);
+    if (body.message && body.studentName && body.friendName) {
+      return await handleAIMessage(body.message, body.studentName,body.friendName);
     }
 
     // Caso contrário, trata como configuração do amigo virtual
@@ -63,18 +64,29 @@ export async function POST(request: NextRequest) {
 }
 
 // Função para lidar com mensagens do AI
-async function handleAIMessage(message: string, studentName: string) {
+async function handleAIMessage(message: string, studentName: string, friendName: string) {
   try {
     // Aqui você pode integrar com o Groq ou outra API de IA
     // Por enquanto, vamos retornar uma resposta simulada
     
-    const systemPrompt = `Você é um assistente educacional amigável chamado ${studentName}'s Friend. 
+    const systemPrompt = `Você é um assistente educacional amigável chamado ${friendName} , nome do aluno é ${studentName}'. 
     Responda de forma curta, educativa e encorajadora, como se fosse um amigo virtual que ajuda com dúvidas escolares.
+    Importante, se ele perguntar diretamente sobre respostas de atividade, você deve recusar educadamente, dizendo que não pode ajudar com isso, mas que pode explicar os conceitos relacionados para ajudar a entender melhor.
     Seja simpático e use emojis quando apropriado. Responda em português.`;
-
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
     // Simulação de chamada à API de IA
     // Na prática, você substituiria isso pela chamada real ao Groq
-    const aiResponse = await simulateAIResponse(message, systemPrompt);
+const completion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: message }
+      ],
+      temperature: 0.5,
+     // response_format: { type: "json_object" } 
+    });
+console.log("Resposta da IA:", completion);
+    const aiResponse = completion.choices[0]?.message?.content || "Desculpe, não consegui processar sua mensagem.";
 
     return NextResponse.json({ 
       response: aiResponse,

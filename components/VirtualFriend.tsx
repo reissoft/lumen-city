@@ -170,7 +170,8 @@ export default function VirtualFriend({ studentName }: VirtualFriendProps) {
         },
         body: JSON.stringify({
           message: message.trim(),
-          studentName: studentName
+          studentName: studentName,
+          friendName: friendName
         }),
       })
 

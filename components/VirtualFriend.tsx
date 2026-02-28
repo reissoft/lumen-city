@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 
 interface VirtualFriendProps {
   studentName: string
+  pageContext?: any
 }
 
 const FRIEND_OPTIONS = [
@@ -19,7 +20,7 @@ const FRIEND_OPTIONS = [
   'rhino', 'sloth', 'snake', 'walrus', 'whale', 'zebra'
 ]
 
-export default function VirtualFriend({ studentName }: VirtualFriendProps) {
+export default function VirtualFriend({ studentName, pageContext }: VirtualFriendProps) {
   const [isVisible, setIsVisible] = useState(true)
   const [position, setPosition] = useState({ x: 100, y: 100 })
   const [isDragging, setIsDragging] = useState(false)
@@ -162,7 +163,7 @@ export default function VirtualFriend({ studentName }: VirtualFriendProps) {
     setAiResponse(null)
 
     try {
-      // Envia a mensagem para a API do Virtual Friend
+      // Envia a mensagem para a API do Virtual Friend com o contexto completo
       const response = await fetch('/api/virtual-friend', {
         method: 'POST',
         headers: {
@@ -171,7 +172,13 @@ export default function VirtualFriend({ studentName }: VirtualFriendProps) {
         body: JSON.stringify({
           message: message.trim(),
           studentName: studentName,
-          friendName: friendName
+          friendName: friendName,
+          pageContext: pageContext || {
+            pathname: window.location.pathname,
+            pageData: {
+              // Contexto padrão se não for fornecido
+            }
+          }
         }),
       })
 

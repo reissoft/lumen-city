@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     
     // Se for uma mensagem para o AI
     if (body.message && body.studentName && body.friendName) {
-      return await handleAIMessage(body.message, body.studentName,body.friendName);
+      return await handleAIMessage(body.message, body.studentName, body.friendName, body.pageContext);
     }
 
     // Caso contrário, trata como configuração do amigo virtual
@@ -63,16 +63,130 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Função para construir o systemPrompt baseado no contexto da página
+function buildSystemPrompt(friendName: string, studentName: string, pageContext?: any): string {
+  let prompt = `Você é um assistente educacional amigável chamado ${friendName}, ajudando o aluno ${studentName}. `;
+  
+  if (pageContext) {
+    // Adicionar contexto da página ao prompt
+    prompt += `\n\nCONTEXTO DA PÁGINA ATUAL:\n`;
+    
+    // Informações do aluno
+    if (pageContext.student) {
+      prompt += `• Aluno: ${pageContext.student.name}\n`;
+      prompt += `• Nível: ${pageContext.student.level}\n`;
+      prompt += `• XP: ${pageContext.student.xp}\n`;
+      prompt += `• Ouro: ${pageContext.student.gold}\n`;
+      prompt += `• Turma: ${pageContext.student.className}\n\n`;
+    }
+    
+    
+    // Dados específicos da página (se houver dados estruturados)
+    if (pageContext.pageData) {
+      prompt += `• Página: ${pageContext.page}\n`;
+      
+      // Dados específicos por tipo de página
+      if (pageContext.page === 'student/page') {
+        const activities = pageContext.pageData.activities;
+        const progress = pageContext.pageData.progress;
+        const ranking = pageContext.pageData.ranking;
+        
+        prompt += `\nDADOS DA PÁGINA PRINCIPAL:\n`;
+        prompt += `• Atividades disponíveis: ${activities?.available || 0}\n`;
+        prompt += `• Atividades concluídas: ${activities?.completed || 0}\n`;
+        prompt += `• Progresso do nível: ${progress?.levelProgress || 0}%\n`;
+        prompt += `• Posição no ranking: ${ranking?.position || 'N/A'}\n`;
+        prompt += `• Dicas rápidas: ${pageContext.pageData.tips?.join(', ') || 'Nenhuma'}\n`;
+      }
+      
+      else if (pageContext.page === 'student/city/page') {
+        const city = pageContext.pageData.city;
+        const missions = pageContext.pageData.missions;
+        
+        prompt += `\nDADOS DA CIDADE:\n`;
+        prompt += `• Prédios: ${city?.buildings || 0}\n`;
+        prompt += `• Recursos: ${city?.resources?.gold || 0} ouro, ${city?.resources?.materials || 0} materiais\n`;
+        prompt += `• Nível da cidade: ${city?.level || 0}\n`;
+        prompt += `• Missões disponíveis: ${missions?.available || 0}\n`;
+        prompt += `• Missões concluídas: ${missions?.completed || 0}\n`;
+      }
+      
+      else if (pageContext.page === 'messaging/page') {
+        const messages = pageContext.pageData.messages;
+        const notifications = pageContext.pageData.notifications;
+        
+        prompt += `\nDADOS DE MENSAGENS:\n`;
+        prompt += `• Mensagens não lidas: ${messages?.unread || 0}\n`;
+        prompt += `• Contatos recentes: ${messages?.recentContacts || 0}\n`;
+        prompt += `• Última mensagem: ${messages?.lastMessage || 'Nenhuma'}\n`;
+        prompt += `• Notificações totais: ${notifications?.total || 0}\n`;
+        prompt += `• Notificações do sistema: ${notifications?.system || 0}\n`;
+      }
+      
+      else if (pageContext.page === 'student/settings/client-page') {
+        const account = pageContext.pageData.account;
+        const virtualFriend = pageContext.pageData.virtualFriend;
+        
+        prompt += `\nDADOS DE CONFIGURAÇÕES:\n`;
+        prompt += `• Nome de usuário: ${account?.username || 'N/A'}\n`;
+        prompt += `• Email: ${account?.email || 'N/A'}\n`;
+        prompt += `• Nome do amigo virtual: ${virtualFriend?.name || 'N/A'}\n`;
+        prompt += `• Avatar do amigo virtual: ${virtualFriend?.avatar || 'N/A'}\n`;
+      }
+      
+      else if (pageContext.page === 'student/activity/[id]/review/page') {
+        const activity = pageContext.pageData.activity;
+        const progress = pageContext.pageData.progress;
+        
+        prompt += `\nDADOS DE REVISÃO DE ATIVIDADE:\n`;
+        prompt += `• Título: ${activity?.title || 'N/A'}\n`;
+        prompt += `• Tipo: ${activity?.type || 'N/A'}\n`;
+        prompt += `• Dificuldade: ${activity?.difficulty || 'N/A'}\n`;
+        prompt += `• Materiais disponíveis: ${activity?.materials?.count || 0}\n`;
+        prompt += `• Tempo estimado: ${activity?.estimatedTime || 'N/A'} minutos\n`;
+        prompt += `• Melhor pontuação: ${progress?.bestScore || 0}%\n`;
+      }
+      
+      else if (pageContext.page.includes('student/play/')) {
+        const quiz = pageContext.pageData.quiz;
+        const performance = pageContext.pageData.performance;
+        
+        prompt += `\nDADOS DO QUIZ:\n`;
+        prompt += `• Título: ${quiz?.title || 'N/A'}\n`;
+        prompt += `• Perguntas: ${quiz?.questions || 0}\n`;
+        prompt += `• Dificuldade: ${quiz?.difficulty || 'N/A'}\n`;
+        prompt += `• Tempo limite: ${quiz?.timeLimit || 'N/A'} minutos\n`;
+        prompt += `• Pontuação atual: ${performance?.currentScore || 0}%\n`;
+        prompt += `• Pontuação máxima: ${performance?.maxScore || 0}%\n`;
+      }
+      
+      // Ações disponíveis
+      if (pageContext.pageData.availableActions) {
+        prompt += `\nAÇÕES DISPONÍVEIS:\n`;
+        pageContext.pageData.availableActions.forEach((action: string, index: number) => {
+          prompt += `• ${index + 1}. ${action}\n`;
+        });
+      }
+    }
+  }
+  
+  prompt += `\n\nINSTRUÇÕES:\n`;
+  prompt += `Responda de forma curta, educativa e encorajadora, como se fosse um amigo virtual que ajuda com dúvidas escolares.\n`;
+  prompt += `Importante: se o aluno perguntar diretamente sobre respostas de atividade, você deve recusar educadamente, dizendo que não pode ajudar com isso, mas que pode explicar os conceitos relacionados para ajudar a entender melhor.\n`;
+  prompt += `Seja simpático e use emojis quando apropriado. Responda em português.\n`;
+  prompt += `Use o contexto da página para dar respostas mais relevantes e personalizadas.\n`;
+  
+  return prompt;
+}
+
 // Função para lidar com mensagens do AI
-async function handleAIMessage(message: string, studentName: string, friendName: string) {
+async function handleAIMessage(message: string, studentName: string, friendName: string, pageContext?: any) {
   try {
     // Aqui você pode integrar com o Groq ou outra API de IA
     // Por enquanto, vamos retornar uma resposta simulada
     
-    const systemPrompt = `Você é um assistente educacional amigável chamado ${friendName} , nome do aluno é ${studentName}'. 
-    Responda de forma curta, educativa e encorajadora, como se fosse um amigo virtual que ajuda com dúvidas escolares.
-    Importante, se ele perguntar diretamente sobre respostas de atividade, você deve recusar educadamente, dizendo que não pode ajudar com isso, mas que pode explicar os conceitos relacionados para ajudar a entender melhor.
-    Seja simpático e use emojis quando apropriado. Responda em português.`;
+    // Construir o systemPrompt com base no contexto da página
+    const systemPrompt = buildSystemPrompt(friendName, studentName, pageContext);
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
     // Simulação de chamada à API de IA
     // Na prática, você substituiria isso pela chamada real ao Groq
@@ -85,7 +199,7 @@ const completion = await groq.chat.completions.create({
       temperature: 0.5,
      // response_format: { type: "json_object" } 
     });
-console.log("Resposta da IA:", completion);
+//console.log("Resposta da IA:", completion);
     const aiResponse = completion.choices[0]?.message?.content || "Desculpe, não consegui processar sua mensagem.";
 
     return NextResponse.json({ 

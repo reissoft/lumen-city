@@ -289,7 +289,7 @@ export default function VirtualFriend({ studentName, pageContext }: VirtualFrien
               setIsTyping(e.target.value.length > 0);
             }}
             placeholder="Digite sua mensagem..."
-            className="bg-white/10 border-white/30 text-white placeholder-white/50 text-xs flex-1"
+            className="bg-white border-gray-300 text-gray-900 placeholder-gray-500 text-xs flex-1"
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 handleSendMessage(textInputValue);
@@ -310,8 +310,8 @@ export default function VirtualFriend({ studentName, pageContext }: VirtualFrien
 
       {/* AI Response */}
       {aiResponse && !isTyping && (
-        <div className="mt-2 p-2 bg-white/10 rounded-lg text-xs text-white border border-white/20">
-          <div className="text-[10px] text-white/60 mb-1">🤖 {friendName || 'Amigo Virtual'}</div>
+        <div className="mt-2 p-2 bg-white rounded-lg text-xs text-gray-900 border border-gray-300 shadow-lg">
+          <div className="text-[10px] text-gray-600 mb-1 font-semibold">🤖 {friendName || 'Amigo Virtual'}</div>
           <div>{aiResponse}</div>
         </div>
       )}

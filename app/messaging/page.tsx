@@ -160,7 +160,10 @@ export default async function MessagingPage({ searchParams }: { searchParams: { 
             initialSystem={systemMode}
         />
       </div>
-      <VirtualFriend studentName="Aluno(a)" pageContext={pageContext} delay={500} />
+      {loggedInUser.role === 'student' && (
+        <VirtualFriend studentName="Aluno(a)" pageContext={pageContext} delay={500} />
+      )}
+      
     </div>
   );
 }

@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       'bear', 'buffalo', 'chick', 'chicken', 'cow', 'crocodile', 'dog', 'duck',
       'elephant', 'frog', 'giraffe', 'goat', 'gorilla', 'hippo', 'horse', 'monkey',
       'moose', 'narwhal', 'owl', 'panda', 'parrot', 'penguin', 'pig', 'rabbit',
-      'rhino', 'sloth', 'snake', 'walrus', 'whale', 'zebra'
+      'rhino', 'sloth', 'snake', 'walrus', 'whale', 'zebra', 'cat'
     ];
 
     if (!FRIEND_OPTIONS.includes(virtualFriendAvatar)) {

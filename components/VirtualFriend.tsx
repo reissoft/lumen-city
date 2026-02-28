@@ -17,7 +17,7 @@ const FRIEND_OPTIONS = [
   'bear', 'buffalo', 'chick', 'chicken', 'cow', 'crocodile', 'dog', 'duck',
   'elephant', 'frog', 'giraffe', 'goat', 'gorilla', 'hippo', 'horse', 'monkey',
   'moose', 'narwhal', 'owl', 'panda', 'parrot', 'penguin', 'pig', 'rabbit',
-  'rhino', 'sloth', 'snake', 'walrus', 'whale', 'zebra'
+  'rhino', 'sloth', 'snake', 'walrus', 'whale', 'zebra','cat'
 ]
 
 export default function VirtualFriend({ studentName, pageContext }: VirtualFriendProps) {
@@ -42,6 +42,17 @@ export default function VirtualFriend({ studentName, pageContext }: VirtualFrien
   // Load saved state from localStorage on mount
   useEffect(() => {
     setMounted(true)
+    
+    // Remove any existing VirtualFriend instances
+    const existingVirtualFriends = document.querySelectorAll('.fixed.z-\\[9999\\]')
+    console.log('🔍 VirtualFriend: Verificando instâncias existentes...', existingVirtualFriends.length)
+    existingVirtualFriends.forEach(el => {
+      if (el !== friendRef.current) {
+        console.log('🗑️ VirtualFriend: Removendo instância duplicada')
+        el.remove()
+      }
+    })
+    
     const savedState = localStorage.getItem('virtualFriendState')
     if (savedState) {
       try {

@@ -28,8 +28,8 @@ export default function VirtualFriend({ studentName, pageContext, delay }: Virtu
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [mounted, setMounted] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const [friendName, setFriendName] = useState('')
-  const [selectedAvatar, setSelectedAvatar] = useState('')
+  const [friendName, setFriendName] = useState('Meu Amigo') // Default imediato
+  const [selectedAvatar, setSelectedAvatar] = useState('empty') // Default imediato
   const [isSaving, setIsSaving] = useState(false)
   const [isTextInputOpen, setIsTextInputOpen] = useState(false)
   const [textInputValue, setTextInputValue] = useState('')
@@ -38,21 +38,21 @@ export default function VirtualFriend({ studentName, pageContext, delay }: Virtu
   const [aiResponse, setAiResponse] = useState<string | null>(null)
   const [isTyping, setIsTyping] = useState(false)
   const [isHovering, setIsHovering] = useState(false)
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true)
   const friendRef = useRef<HTMLDivElement>(null)
 
   // Delay visibility based on prop
   useEffect(() => {
     if (typeof delay === 'number' && delay > 0) {
       const timer = setTimeout(() => {
-        // Remove any existing VirtualFriend instances
-    const existingVirtualFriends = document.querySelectorAll('.fixed.z-\\[9999\\]')
-    console.log('🔍 VirtualFriend: Verificando instâncias existentes...', existingVirtualFriends.length)
-    existingVirtualFriends.forEach(el => {
-      if (el !== friendRef.current) {
-        console.log('🗑️ VirtualFriend: Tornando instância duplicada invisível')
-        ;(el as HTMLElement).style.display = 'none'
-      }
-    })
+        const existingVirtualFriends = document.querySelectorAll('.fixed.z-\\[9999\\]')
+        console.log('🔍 VirtualFriend: Verificando instâncias existentes...', existingVirtualFriends.length)
+        existingVirtualFriends.forEach(el => {
+          if (el !== friendRef.current) {
+            console.log('🗑️ VirtualFriend: Tornando instância duplicada invisível')
+            ;(el as HTMLElement).style.display = 'none'
+          }
+        })
         setMounted(true)
       }, delay)
       return () => clearTimeout(timer)
@@ -63,34 +63,55 @@ export default function VirtualFriend({ studentName, pageContext, delay }: Virtu
 
   
 
-  // Load saved state from localStorage on mount
+  // Load UI state from localStorage and load settings from database on mount
   useEffect(() => {
-    
-    
-    const savedState = localStorage.getItem('virtualFriendState')
-    if (savedState) {
+    const loadVirtualFriendSettings = async () => {
       try {
-        const state = JSON.parse(savedState)
-        setIsVisible(state.isVisible)
-        setPosition(state.position)
-        setFriendName(state.friendName || '')
-        setSelectedAvatar(state.selectedAvatar || 'bear')
-      } catch (e) {
-        console.error('Error loading virtual friend state:', e)
-      }
-    } else {
-      // Set default values if no saved state
-      setFriendName('Meu Amigo')
-      setSelectedAvatar('bear')
-    }
-  }, [])
+        // Load UI state from localStorage
+        const savedUIState = localStorage.getItem('virtualFriendUIState')
+        if (savedUIState) {
+          try {
+            const uiState = JSON.parse(savedUIState)
+            setIsVisible(uiState.isVisible)
+            setPosition(uiState.position)
+          } catch (e) {
+            console.error('Error loading UI state:', e)
+          }
+        }
 
-  // Save state to localStorage when it changes
+        // Load friend settings from database
+        const response = await fetch('/api/virtual-friend')
+        if (response.ok) {
+          const data = await response.json()
+          console.log('✅ Dados carregados do banco:', data)
+          setFriendName(data.friendName || 'Meu Amigo')
+          setSelectedAvatar(data.selectedAvatar || 'empty')
+          // Posição pode vir do banco se existir, senão usa a do localStorage
+         
+        } else {
+          console.warn('⚠️ Erro ao buscar do banco, usando defaults')
+          setFriendName('Meu Amigo')
+          setSelectedAvatar('empty')
+        }
+      } catch (error) {
+        console.error('❌ Error loading virtual friend settings:', error)
+        // Já têm defaults, não precisa fazer nada aqui
+        setFriendName('Meu Amigo')
+        setSelectedAvatar('empty')
+      } finally {
+        setIsLoadingSettings(false)
+      }
+    }
+
+    loadVirtualFriendSettings()
+  }, [mounted])
+
+  // Save UI state to localStorage (only visibility and position)
   useEffect(() => {
     if (!mounted) return
-    const state = { isVisible, position, friendName, selectedAvatar }
-    localStorage.setItem('virtualFriendState', JSON.stringify(state))
-  }, [isVisible, position, friendName, selectedAvatar, mounted])
+    const uiState = { isVisible, position }
+    localStorage.setItem('virtualFriendUIState', JSON.stringify(uiState))
+  }, [isVisible, position, mounted])
 
   // Focus text input when it opens
   useEffect(() => {
@@ -162,7 +183,8 @@ export default function VirtualFriend({ studentName, pageContext, delay }: Virtu
         },
         body: JSON.stringify({
           virtualFriendName: friendName,
-          virtualFriendAvatar: selectedAvatar
+          virtualFriendAvatar: selectedAvatar,
+          position: position
         }),
       })
 

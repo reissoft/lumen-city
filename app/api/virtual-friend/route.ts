@@ -5,6 +5,39 @@ import Groq from 'groq-sdk'
 
 const prisma = new PrismaClient();
 
+// GET endpoint para buscar configurações do Virtual Friend do banco
+export async function GET(request: NextRequest) {
+  try {
+    const sessionUsername = cookies().get('lumen_session')?.value;
+    if (!sessionUsername) {
+      return NextResponse.json({ error: 'Aluno não autenticado.' }, { status: 401 });
+    }
+
+    const student = await prisma.student.findUnique({
+      where: { username: sessionUsername },
+      select: {
+        virtualFriendName: true,
+        virtualFriendAvatar: true,
+        virtualFriendPosition: true
+      }
+    });
+
+    if (!student) {
+      return NextResponse.json({ error: 'Aluno não encontrado.' }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      friendName: student.virtualFriendName || 'Meu Amigo',
+      selectedAvatar: student.virtualFriendAvatar || 'bear',
+      position: student.virtualFriendPosition || { x: 100, y: 100 }
+    });
+
+  } catch (error) {
+    console.error('Error fetching virtual friend settings:', error);
+    return NextResponse.json({ error: 'Erro ao buscar configurações.' }, { status: 500 });
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const sessionUsername = cookies().get('lumen_session')?.value;
@@ -51,7 +84,8 @@ export async function POST(request: NextRequest) {
       data: {
         // @ts-ignore
         virtualFriendName: virtualFriendName,
-        virtualFriendAvatar: virtualFriendAvatar
+        virtualFriendAvatar: virtualFriendAvatar,
+        virtualFriendPosition: body.position || { x: 100, y: 100 }
       },
     });
 

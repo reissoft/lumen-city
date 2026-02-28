@@ -36,6 +36,7 @@ export default function VirtualFriend({ studentName, pageContext }: VirtualFrien
   const [isProcessing, setIsProcessing] = useState(false)
   const [aiResponse, setAiResponse] = useState<string | null>(null)
   const [isTyping, setIsTyping] = useState(false)
+  const [isHovering, setIsHovering] = useState(false)
   const friendRef = useRef<HTMLDivElement>(null)
 
   // Load saved state from localStorage on mount
@@ -223,6 +224,8 @@ export default function VirtualFriend({ studentName, pageContext }: VirtualFrien
         pointerEvents: 'auto'
       }}
       onMouseDown={handleMouseDown}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
     >
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
@@ -276,7 +279,7 @@ export default function VirtualFriend({ studentName, pageContext }: VirtualFrien
       </div>
 
       {/* Text Input Field */}
-      {isTextInputOpen && (
+      {isTextInputOpen && isHovering && (
         <div
           className="mt-2 opacity-100 transition-opacity pointer-events-auto flex gap-1"
           onMouseDown={(e) => e.stopPropagation()}
@@ -309,7 +312,7 @@ export default function VirtualFriend({ studentName, pageContext }: VirtualFrien
       )}
 
       {/* AI Response */}
-      {aiResponse && !isTyping && (
+      {aiResponse && !isTyping && isHovering && (
         <div className="mt-2 p-2 bg-white rounded-lg text-xs text-gray-900 border border-gray-300 shadow-lg max-w-xs">
           <div className="text-[10px] text-gray-600 mb-1 font-semibold">🤖 {friendName || 'Amigo Virtual'}</div>
           <div>{aiResponse}</div>

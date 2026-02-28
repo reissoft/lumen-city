@@ -35,6 +35,7 @@ export default function VirtualFriend({ studentName, pageContext }: VirtualFrien
   const [textInputRef, setTextInputRef] = useState<HTMLInputElement | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [aiResponse, setAiResponse] = useState<string | null>(null)
+  const [isTyping, setIsTyping] = useState(false)
   const friendRef = useRef<HTMLDivElement>(null)
 
   // Load saved state from localStorage on mount
@@ -161,6 +162,8 @@ export default function VirtualFriend({ studentName, pageContext }: VirtualFrien
 
     setIsProcessing(true)
     setAiResponse(null)
+    setTextInputValue('') // Limpa o campo de texto
+    setIsTyping(false) // Reseta o estado de digitação
 
     try {
       // Envia a mensagem para a API do Virtual Friend com o contexto completo
@@ -281,7 +284,10 @@ export default function VirtualFriend({ studentName, pageContext }: VirtualFrien
           <Input
             ref={setTextInputRef}
             value={textInputValue}
-            onChange={(e) => setTextInputValue(e.target.value)}
+            onChange={(e) => {
+              setTextInputValue(e.target.value);
+              setIsTyping(e.target.value.length > 0);
+            }}
             placeholder="Digite sua mensagem..."
             className="bg-white/10 border-white/30 text-white placeholder-white/50 text-xs flex-1"
             onKeyDown={(e) => {
@@ -303,7 +309,7 @@ export default function VirtualFriend({ studentName, pageContext }: VirtualFrien
       )}
 
       {/* AI Response */}
-      {aiResponse && (
+      {aiResponse && !isTyping && (
         <div className="mt-2 p-2 bg-white/10 rounded-lg text-xs text-white border border-white/20">
           <div className="text-[10px] text-white/60 mb-1">🤖 {friendName || 'Amigo Virtual'}</div>
           <div>{aiResponse}</div>

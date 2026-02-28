@@ -97,7 +97,9 @@ export async function GET(request: NextRequest) {
       activitiesAvailable,
       activitiesCompleted,
       levelProgress: Math.round(levelProgress),
-      rankingPosition
+      rankingPosition,
+      virtualFriendName: student.virtualFriendName || 'Meu Amigo',
+      virtualFriendAvatar: student.virtualFriendAvatar || 'bear'
     });
 
   } catch (error) {

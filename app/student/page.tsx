@@ -55,13 +55,13 @@ async function getStudentData() {
 async function getStudentDataByStudent(student: any) {
     const studentClassId = student.class?.id; 
     /* New: pull classmates list for modal */
-    let ranking: { id: string; name: string; xp: number }[] = [];
+    let ranking: { id: string; name: string; xp: number; virtualFriendAvatar: string | null }[] = [];
     let classmates: { id: string; name: string }[] = [];
     if (studentClassId) { 
         ranking = await prisma.student.findMany({
             where: { classId: studentClassId },
             orderBy: { xp: 'desc' },
-            select: { id: true, name: true, xp: true, },
+            select: { id: true, name: true, xp: true, virtualFriendAvatar: true },
             take: 5,
         });
         classmates = await prisma.student.findMany({
@@ -183,7 +183,16 @@ export default async function StudentHub() {
                     ranking.map((rankedStudent, index) => (
                     <div key={rankedStudent.id} className={`flex items-center gap-3 text-sm rounded-lg ${rankedStudent.id === student.id ? 'bg-blue-500/20 p-2 -m-2' : ''}`}>
                         <span className={`w-6 text-center font-bold ${index === 0 ? "text-yellow-300" : (index === 1 ? "text-slate-300" : (index === 2 ? "text-orange-400" : "text-white/50"))}`}>#{index + 1}</span>
-                        <span className={`flex-1 text-white/90 ${rankedStudent.id === student.id ? 'font-bold' : ''}`}>{rankedStudent.name}</span>
+                        <div className="flex items-center gap-3 flex-1">
+                            <div className="w-8 h-8 rounded-full overflow-hidden shadow-lg">
+                                <img 
+                                    src={`/friends/${rankedStudent.virtualFriendAvatar || 'bear'}.png`} 
+                                    alt="Avatar"
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                            <span className={`text-white/90 ${rankedStudent.id === student.id ? 'font-bold' : ''}`}>{rankedStudent.name}</span>
+                        </div>
                         <span className="text-white/70 font-semibold">{rankedStudent.xp} XP</span>
                     </div>
                     ))

@@ -290,7 +290,7 @@ export default function PlayQuizPage({ params }: { params: { id: string } }) {
       </footer>
 
       {/* VirtualFriend na página de quiz */}
-      <VirtualFriend studentName="Aluno(a)" pageContext={pageContext} />
+      <VirtualFriend studentName="Aluno(a)" pageContext={pageContext} delay={500} />
     </div>
   )
 }

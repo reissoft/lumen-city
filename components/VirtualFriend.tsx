@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 interface VirtualFriendProps {
   studentName: string
   pageContext?: any
+  delay?: number
 }
 
 const FRIEND_OPTIONS = [
@@ -20,7 +21,7 @@ const FRIEND_OPTIONS = [
   'rhino', 'sloth', 'snake', 'walrus', 'whale', 'zebra','cat'
 ]
 
-export default function VirtualFriend({ studentName, pageContext }: VirtualFriendProps) {
+export default function VirtualFriend({ studentName, pageContext, delay }: VirtualFriendProps) {
   const [isVisible, setIsVisible] = useState(true)
   const [position, setPosition] = useState({ x: 100, y: 100 })
   const [isDragging, setIsDragging] = useState(false)
@@ -39,19 +40,32 @@ export default function VirtualFriend({ studentName, pageContext }: VirtualFrien
   const [isHovering, setIsHovering] = useState(false)
   const friendRef = useRef<HTMLDivElement>(null)
 
-  // Load saved state from localStorage on mount
+  // Delay visibility based on prop
   useEffect(() => {
-    setMounted(true)
-    
-    // Remove any existing VirtualFriend instances
+    if (typeof delay === 'number' && delay > 0) {
+      const timer = setTimeout(() => {
+        // Remove any existing VirtualFriend instances
     const existingVirtualFriends = document.querySelectorAll('.fixed.z-\\[9999\\]')
     console.log('🔍 VirtualFriend: Verificando instâncias existentes...', existingVirtualFriends.length)
     existingVirtualFriends.forEach(el => {
       if (el !== friendRef.current) {
-        console.log('🗑️ VirtualFriend: Removendo instância duplicada')
-        el.remove()
+        console.log('🗑️ VirtualFriend: Tornando instância duplicada invisível')
+        ;(el as HTMLElement).style.display = 'none'
       }
     })
+        setMounted(true)
+      }, delay)
+      return () => clearTimeout(timer)
+    } else {
+      setMounted(true)
+    }
+  }, [delay])
+
+  
+
+  // Load saved state from localStorage on mount
+  useEffect(() => {
+    
     
     const savedState = localStorage.getItem('virtualFriendState')
     if (savedState) {

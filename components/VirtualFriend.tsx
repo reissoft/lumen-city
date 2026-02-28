@@ -310,7 +310,7 @@ export default function VirtualFriend({ studentName, pageContext }: VirtualFrien
 
       {/* AI Response */}
       {aiResponse && !isTyping && (
-        <div className="mt-2 p-2 bg-white rounded-lg text-xs text-gray-900 border border-gray-300 shadow-lg">
+        <div className="mt-2 p-2 bg-white rounded-lg text-xs text-gray-900 border border-gray-300 shadow-lg max-w-xs">
           <div className="text-[10px] text-gray-600 mb-1 font-semibold">🤖 {friendName || 'Amigo Virtual'}</div>
           <div>{aiResponse}</div>
         </div>

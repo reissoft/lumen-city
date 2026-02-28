@@ -112,14 +112,14 @@ export class SceneSetup {
    */
   private setupFog(): void {
     const scene = this.app.scene as any;
-    scene.fog.type = pc.FOG_LINEAR;
-    scene.fog.color = new pc.Color(
+    //scene.fog.type = pc.FOG_LINEAR;
+   /* scene.fog.color = new pc.Color(
       FOG_CONFIG.color.r,
       FOG_CONFIG.color.g,
       FOG_CONFIG.color.b
     );
     scene.fog.start = FOG_CONFIG.start;
-    scene.fog.end = FOG_CONFIG.end;
+    scene.fog.end = FOG_CONFIG.end;*/
     scene.updateShaders = true;
   }
 

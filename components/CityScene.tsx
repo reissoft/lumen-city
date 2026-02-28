@@ -10,9 +10,21 @@ import { BuildingManager } from './managers/BuildingManager'
 import { GhostManager } from './managers/GhostManager'
 import { TrafficManager } from './managers/TrafficManager'
 import { SceneSetup } from './setup/SceneSetup'
+import { DEVICETYPE_WEBGL1 } from 'playcanvas'
 
 // Previne erros de SSR
 if (typeof window !== 'undefined') {}
+
+// Função para detectar WebGL
+const checkWebGLSupport = () => {
+  try {
+    const canvas = document.createElement('canvas')
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+    return !!gl
+  } catch (e) {
+    return false
+  }
+}
 
 const CityScene = memo(function CityScene({ 
   buildings, 
@@ -36,11 +48,25 @@ const CityScene = memo(function CityScene({
   
   // Controle de assets
   const [assetsReady, setAssetsReady] = useState(false)
+  const [webglSupported, setWebglSupported] = useState(true)
+  const [webglError, setWebglError] = useState<string | null>(null)
+
+  // --- EFEITO 0: VERIFICAÇÃO DE WEBGL ---
+  useEffect(() => {
+    const isSupported = checkWebGLSupport()
+    setWebglSupported(isSupported)
+    
+    if (!isSupported) {
+      setWebglError("Seu navegador não suporta WebGL. Por favor, atualize seu navegador ou use um navegador compatível.")
+      console.error("WebGL não suportado")
+    }
+  }, [])
 
   // --- EFEITO 1: INICIALIZAÇÃO DA ENGINE (Roda 1 vez) ---
   useEffect(() => {
     if (!canvasRef.current) return
     if (appRef.current) return
+    if (!webglSupported) return
 
     console.log("🚀 Iniciando Engine V6 (Callbacks Públicos)...")
 
@@ -52,7 +78,8 @@ const CityScene = memo(function CityScene({
       graphicsDeviceOptions: {
           antialias: true,
           powerPreference: 'high-performance',
-          alpha: false
+          alpha: false,
+          deviceTypes: ['webgl1',DEVICETYPE_WEBGL1]
       }
     })
     
@@ -140,7 +167,7 @@ const CityScene = memo(function CityScene({
       app.destroy()
       appRef.current = null
     }
-  }, []) 
+  }, [webglSupported])
 
   // --- EFEITO 2: ATUALIZA CALLBACKS (Sempre que props mudam) ---
   useEffect(() => {
@@ -202,6 +229,24 @@ const CityScene = memo(function CityScene({
       app.off('update', updateGhostColor)
     }
   }, [buildings, activeBuild, assetsReady])
+
+  // Renderiza fallback se WebGL não for suportado
+  if (!webglSupported) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-gray-900 text-white">
+        <div className="text-center p-8">
+          <div className="text-6xl mb-4">🎮</div>
+          <h2 className="text-2xl font-bold mb-2">WebGL não suportado</h2>
+          <p className="text-gray-400 mb-6">{webglError}</p>
+          <div className="space-y-2 text-sm text-gray-500">
+            <p>• Verifique se o WebGL está habilitado nas configurações do seu navegador</p>
+            <p>• Atualize seu navegador para a versão mais recente</p>
+            <p>• Tente usar navegadores como Chrome, Firefox, Edge ou Safari</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <canvas 

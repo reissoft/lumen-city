@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import StudentHeader from '@/app/student/StudentHeader';
+import VirtualFriend from '@/components/VirtualFriend';
 
 const SESSION_COOKIE_NAME = 'lumen_session';
 const ROLE_COOKIE_NAME = 'lumen_role';
@@ -113,6 +114,27 @@ export default async function MessagingPage({ searchParams }: { searchParams: { 
   // Busca mensagens não lidas para o usuário que está sendo visualizado
   const unreadMessages = await getUnreadMessages(viewUser.id, viewUser.role);
 
+  // Contexto da página de mensagens
+  const pageContext = {
+    page: 'messaging',
+    user: {
+      name: viewUser.name || 'Usuário',
+      role: viewUser.role,
+      schoolId: viewUser.schoolId
+    },
+    pageData: {
+      messages: unreadMessages,
+      isModerating: isModerating,
+      systemMode: systemMode
+    },
+    availableActions: [
+      'Enviar Mensagem',
+      'Visualizar Conversas',
+      'Marcar como Lida',
+      'Voltar ao Painel'
+    ]
+  };
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-gray-900 text-white p-4 relative">
       <div className="absolute inset-0 bg-cover bg-center" style={{backgroundImage: 'url(/grid.svg)'}}></div>
@@ -138,6 +160,7 @@ export default async function MessagingPage({ searchParams }: { searchParams: { 
             initialSystem={systemMode}
         />
       </div>
+      <VirtualFriend studentName="Aluno(a)" pageContext={pageContext} delay={500} />
     </div>
   );
 }

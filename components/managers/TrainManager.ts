@@ -268,6 +268,9 @@ export class TrainManager {
    * Spawna trens aleatoriamente nos trilhos
    */
   spawnTrains(): void {
+    if (this.trains.length >= 1) {
+      return; 
+    }
     const now = Date.now();
     if (now - this.lastSpawnTime < this.TRAIN_SPAWN_INTERVAL) return;
     

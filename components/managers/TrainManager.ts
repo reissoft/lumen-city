@@ -18,7 +18,7 @@ interface RailNode {
 }
 
 interface Train {
-  entities: pc.Entity[]; // NOVO: Array de partes [Locomotiva, Vagão 1, Vagão 2]
+  entities: pc.Entity[];
   currentPath: RailNode[];
   currentTargetIndex: number;
   speed: number;
@@ -32,35 +32,44 @@ export class TrainManager {
   private railGraph: Map<string, RailNode> = new Map();
   private trains: Train[] = [];
   
-  // NOVO: O Pool agora guarda arrays de entidades
   private trainPool: pc.Entity[][] = []; 
   private railTypes: string[] = ['rail_trilho'];
 
   // Configurações do Trem Longo
-  private readonly TRAIN_COUNT = 1; // Apenas 1 trem na cidade por vez
-  private readonly TRAIN_LENGTH = 3; // 1 Locomotiva + 2 Vagões
-  private readonly TRAIN_SPAWN_INTERVAL = 5000;
-  private lastSpawnTime = 0;
+  private readonly TRAIN_COUNT = 1;
+  private readonly TRAIN_LENGTH = 3; 
+  
+  // NOVO: Controle de tempo dinâmico
+  private nextSpawnTime = 0;
 
   constructor(app: pc.Application, private assetManager: AssetManager) {
     this.app = app;
     this.setupTrainPool();
+    this.scheduleNextSpawn(); // Inicia o primeiro cronômetro
   }
 
   /**
-   * Configura o pool criando a composição completa (Locomotiva + Vagões)
+   * Sorteia um tempo aleatório para o próximo trem nascer (entre 5s e 20s)
    */
+  private scheduleNextSpawn(): void {
+    const minDelay = 5000; // 5 segundos
+    const maxDelay = 20000; // 20 segundos
+    const delay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
+    
+    this.nextSpawnTime = Date.now() + delay;
+    console.log(`⏱️ Próximo trem programado para daqui a ${(delay / 1000).toFixed(1)} segundos.`);
+  }
+
   private setupTrainPool(): void {
     for (let i = 0; i < this.TRAIN_COUNT; i++) {
       const trainEntities: pc.Entity[] = [];
-      // Define a ordem: Primeiro locomotiva, depois os vagões
       const types = ['locomotive', 'passenger', 'passenger']; 
 
       for (let j = 0; j < this.TRAIN_LENGTH; j++) {
         const entity = new pc.Entity(`Train-${i}-Car-${j}`);
         this.loadTrainModel(entity, types[j]);
         entity.setLocalScale(0.8, 0.8, 0.8);
-        entity.enabled = false; // Começam invisíveis
+        entity.enabled = false;
         this.app.root.addChild(entity);
         trainEntities.push(entity);
       }
@@ -125,7 +134,7 @@ export class TrainManager {
   }
 
   private createRailNode(rail: Building): RailNode | null {
-    return { x: rail.x, y: rail.y, connections: [], type: rail.type }; // Connections base ignoradas no modo magnético
+    return { x: rail.x, y: rail.y, connections: [], type: rail.type }; 
   }
 
   private connectAdjacentRails(): void {
@@ -145,12 +154,16 @@ export class TrainManager {
   spawnTrains(): void {
     if (this.trains.length >= 1) return; 
 
-    const now = Date.now();
-    if (now - this.lastSpawnTime < this.TRAIN_SPAWN_INTERVAL) return;
-    this.lastSpawnTime = now;
+    // NOVO: Verifica se já deu o tempo aleatório sorteado
+    if (Date.now() < this.nextSpawnTime) return;
     
     const connectedNodes = Array.from(this.railGraph.values()).filter(n => n.linkedNodes && n.linkedNodes.length > 0);
-    if (connectedNodes.length === 0) return;
+    
+    // Se não tiver trilhos na cidade, empurra o cronômetro para frente para não nascer instantaneamente quando o jogador construir
+    if (connectedNodes.length === 0) {
+      this.scheduleNextSpawn();
+      return;
+    }
     
     const tipNodes = connectedNodes.filter(n => n.linkedNodes!.length === 1);
     const startNode = tipNodes.length > 0 
@@ -158,11 +171,14 @@ export class TrainManager {
       : connectedNodes[Math.floor(Math.random() * connectedNodes.length)];
     
     const train = this.getAvailableTrain();
-    if (train) this.setupTrain(train, startNode);
+    if (train) {
+      this.setupTrain(train, startNode);
+    } else {
+      this.scheduleNextSpawn();
+    }
   }
 
   private getAvailableTrain(): Train | null {
-    // Procura um pool onde a locomotiva (índice 0) está desativada
     const availableEntities = this.trainPool.find(entities => !entities[0].enabled);
     if (!availableEntities) return null;
 
@@ -173,12 +189,12 @@ export class TrainManager {
       speed: 0.1,
       isMoving: false,
       lastMoveTime: Date.now(),
-      moveInterval: 1500 // Deixei um pouco mais rápido (1.5s) pra ver a cobrinha andar melhor!
+      moveInterval: 1500
     };
   }
 
   private setupTrain(train: Train, startNode: RailNode): void {
-    train.currentPath = this.generateRandomPath(startNode, 20); // Caminho longo pro trem caber
+    train.currentPath = this.generateRandomPath(startNode, 20); 
     train.currentTargetIndex = 0;
     train.isMoving = true;
     this.trains.push(train);
@@ -213,15 +229,15 @@ export class TrainManager {
       if (!train.isMoving || train.currentPath.length === 0) {
         this.removeTrain(train);
         this.trains.splice(i, 1);
+        
+        // NOVO: Apenas sorteia o próximo tempo DEPOIS que o trem some da tela
+        this.scheduleNextSpawn();
         continue;
       }
       this.updateTrainMovement(train, dt);
     }
   }
 
-  /**
-   * O CÉREBRO DA COBRINHA (SNAKE LOGIC)
-   */
   private updateTrainMovement(train: Train, dt: number): void {
     const now = Date.now();
     if (now - train.lastMoveTime < train.moveInterval) return;
@@ -229,14 +245,12 @@ export class TrainManager {
 
     const currentIndex = train.currentTargetIndex;
 
-    // Atualiza cada vagão baseado na sua posição na fila
     for (let i = 0; i < train.entities.length; i++) {
       const entity = train.entities[i];
-      // A Locomotiva (i=0) está em currentIndex. Vagão 1 (i=1) está 1 passo atrás.
       const nodeIndex = currentIndex - i; 
 
       if (nodeIndex >= 0 && nodeIndex < train.currentPath.length) {
-        entity.enabled = true; // O vagão surge quando entra no trilho
+        entity.enabled = true; 
         
         const targetNode = train.currentPath[nodeIndex];
         const worldX = targetNode.x * 2 - OFFSET;
@@ -245,7 +259,6 @@ export class TrainManager {
         
         entity.setPosition(targetPos);
 
-        // Rotação: Olha para o próximo nó que ESSE vagão vai visitar
         if (nodeIndex + 1 < train.currentPath.length) {
           const nextNode = train.currentPath[nodeIndex + 1];
           const nextWorldX = nextNode.x * 2 - OFFSET;
@@ -254,19 +267,15 @@ export class TrainManager {
           
           const direction = nextPos.sub(targetPos).normalize();
           const angle = Math.atan2(direction.x, direction.z);
-          // O vagão vira para o lado certo seguindo quem tá na frente
           entity.setEulerAngles(0, -angle * (180 / Math.PI), 0);
         }
       } else {
-        // Se o índice for negativo, o vagão ainda não entrou no mapa
-        // Se for maior que o caminho, ele já saiu
         entity.enabled = false; 
       }
     }
 
     train.currentTargetIndex++;
 
-    // O trem só para de se mover quando o ÚLTIMO vagão sair do caminho final
     if (currentIndex - train.entities.length + 1 >= train.currentPath.length) {
       train.isMoving = false;
     }

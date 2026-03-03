@@ -9,6 +9,7 @@ import { CameraManager } from './managers/CameraManager'
 import { BuildingManager } from './managers/BuildingManager'
 import { GhostManager } from './managers/GhostManager'
 import { TrafficManager } from './managers/TrafficManager'
+import { TrainManager } from './managers/TrainManager'
 import { SceneSetup } from './setup/SceneSetup'
 import { DEVICETYPE_WEBGL1 } from 'playcanvas'
 
@@ -45,6 +46,7 @@ const CityScene = memo(function CityScene({
   const buildingManagerRef = useRef<BuildingManager | null>(null)
   const ghostManagerRef = useRef<GhostManager | null>(null)
   const trafficManagerRef = useRef<TrafficManager | null>(null)
+  const trainManagerRef = useRef<TrainManager | null>(null)
   
   // Controle de assets
   const [assetsReady, setAssetsReady] = useState(false)
@@ -131,6 +133,10 @@ const CityScene = memo(function CityScene({
     const trafficManager = new TrafficManager(app, assetManager)
     trafficManagerRef.current = trafficManager
 
+    // Inicializa TrainManager
+    const trainManager = new TrainManager(app, assetManager)
+    trainManagerRef.current = trainManager
+
     // Configuração da cena
     const sceneSetup = new SceneSetup(app)
     sceneSetup.setupScene()
@@ -143,6 +149,7 @@ const CityScene = memo(function CityScene({
       cameraManager.update(dt)
       materialManager.updateGhostPulse()
       trafficManager.update(dt)
+      trainManager.update(dt)
     })
 
     // Resize handler
@@ -163,6 +170,10 @@ const CityScene = memo(function CityScene({
       const trafficManager = trafficManagerRef.current
       if (trafficManager) {
         trafficManager.destroy()
+      }
+      const trainManager = trainManagerRef.current
+      if (trainManager) {
+        trainManager.destroy()
       }
       app.destroy()
       appRef.current = null
@@ -223,6 +234,12 @@ const CityScene = memo(function CityScene({
     const trafficManager = trafficManagerRef.current
     if (trafficManager) {
       trafficManager.updateRoadGraph(buildings)
+    }
+
+    // 5. Atualiza grafo de trilhos
+    const trainManager = trainManagerRef.current
+    if (trainManager) {
+      trainManager.updateRailGraph(buildings)
     }
 
     return () => { 

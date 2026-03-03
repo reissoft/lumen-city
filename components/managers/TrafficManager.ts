@@ -38,6 +38,10 @@ export class TrafficManager {
     'road_intersection', 'road_split', 'road_side', 'road_driveway_single',
     'road_driveway_double', 'road_end', 'road_end_round'
   ];
+  
+  private railTypes: string[] = [
+    'rail_trilho'
+  ];
 
   // Configurações de tráfego
   private readonly CAR_COUNT = 15;

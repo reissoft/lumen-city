@@ -15,6 +15,7 @@ interface RailNode {
   y: number;
   connections: RailConnection[];
   type: string;
+  linkedNodes?: RailNode[]; // NOVO: Guarda os vizinhos reais encontrados até a distância 5
 }
 
 interface Train {
@@ -74,23 +75,12 @@ export class TrainManager {
     const trainAssets: Record<string, string> = {
       'locomotive': '/models/infra/train/train-locomotive-c.glb',
       'passenger': '/models/infra/train/train-locomotive-passenger-a.glb',
-
     };
 
     const modelUrl = trainAssets[modelType] || trainAssets['locomotive'];
     
     console.log(`🚂 Carregando modelo ${modelType} de: ${modelUrl}`);
 
-   /* // Primeiro tenta usar o AssetManager (se o asset já estiver carregado)
-    const assetName = modelUrl.replace('/models/infra/train/', '').replace('.glb', '');
-    const existingAsset = this.assetManager.getAsset(assetName);
-    
-    if (existingAsset && existingAsset.resource) {
-      console.log(`🚂 Usando asset já carregado: ${assetName}`);
-      this.instantiateTrainModel(entity, existingAsset);
-      return;
-    }
-*/
     // Se não estiver no AssetManager, carrega manualmente
     console.log(`🚂 Asset não encontrado, carregando manualmente: ${modelUrl}`);
     this.loadTrainModelManually(entity, modelUrl);
@@ -146,14 +136,10 @@ export class TrainManager {
    * Cria trem fallback (cubo colorido) se modelo 3D falhar
    */
   private createFallbackTrain(entity: pc.Entity, modelType: string): void {
-    // Material colorido baseado no tipo de modelo
     const material = new pc.StandardMaterial();
     const colors: Record<string, pc.Color> = {
       'locomotive': new pc.Color(0.5, 0.25, 0),  // Marrom
-     // 'cargo': new pc.Color(0.5, 0.5, 0.5),      // Cinza
       'passenger': new pc.Color(0, 0, 1),        // Azul
-     // 'freight': new pc.Color(1, 0, 0),          // Vermelho
-     // 'steam': new pc.Color(0.8, 0.8, 0.8)       // Prata
     };
     
     material.diffuse = colors[modelType] || colors['locomotive'];
@@ -166,26 +152,29 @@ export class TrainManager {
   /**
    * Atualiza o grafo de trilhos com base nas peças de trilho existentes
    */
+  /**
+   * Atualiza o grafo de trilhos (À PROVA DE BALAS CONTRA DECIMAIS)
+   */
   updateRailGraph(buildings: Building[]): void {
     this.railGraph.clear();
     
-    // Filtra apenas peças de trilho
     const rails = buildings.filter(b => this.railTypes.includes(b.type));
     
-    if (rails.length === 0) {
-      return;
-    }
+    if (rails.length === 0) return;
     
-    // Cria nós para cada peça de trilho
     rails.forEach(rail => {
       const node = this.createRailNode(rail);
       if (node) {
-        const key = `${rail.x},${rail.y}`;
+        node.linkedNodes = [];
+        // FORÇANDO ARREDONDAMENTO NA CHAVE DO MAPA!
+        const safeX = Math.round(rail.x);
+        const safeY = Math.round(rail.y);
+        const key = `${safeX},${safeY}`;
+        
         this.railGraph.set(key, node);
       }
     });
 
-    // Conecta nós adjacentes
     this.connectAdjacentRails();
   }
 
@@ -223,38 +212,56 @@ export class TrainManager {
    * Rotaciona uma conexão baseado no ângulo
    */
   private rotateConnection(conn: RailConnection, rotation: number): RailConnection {
-    const rot = rotation % 360;
+    // Arredonda para ignorar floats (ex: 89.999 vira 90) e corrige ângulos negativos (ex: -90 vira 270)
+    let rot = Math.round(rotation) % 360;
+    if (rot < 0) rot += 360; 
+
     switch (rot) {
       case 0: return conn;
       case 90: return { x: -conn.y, y: conn.x };
       case 180: return { x: -conn.x, y: -conn.y };
       case 270: return { x: conn.y, y: -conn.x };
-      default: return conn;
+      default: return conn; // Se por acaso der um ângulo bizarro, mantém a base
     }
   }
 
   /**
-   * Conecta nós adjacentes que se encaixam
+   * Conecta nós adjacentes (com radar de distância até 5)
+   */
+  /**
+   * Conecta nós adjacentes (Radar com precisão matemática e Debug)
+   */
+  /**
+   * Conecta nós por PROXIMIDADE (Raio de 5 blocos, ignora rotação)
    */
   private connectAdjacentRails(): void {
-    this.railGraph.forEach((node, key) => {
-      node.connections.forEach(conn => {
-        const targetX = node.x + conn.x;
-        const targetY = node.y + conn.y;
-        const targetKey = `${targetX},${targetY}`;
-        
-        const targetNode = this.railGraph.get(targetKey);
-        if (targetNode) {
-          // Verifica se a conexão é válida (双向)
-          const reverseConn = { x: -conn.x, y: -conn.y };
-          const hasReverse = targetNode.connections.some(c => c.x === reverseConn.x && c.y === reverseConn.y);
-          
-          if (hasReverse) {
-            // Conexão válida, o trem pode passar
-          }
+    const MAX_DISTANCE = 5;
+    let totalConnections = 0;
+
+    // Pega todos os trilhos do mapa
+    const allNodes = Array.from(this.railGraph.values());
+
+    allNodes.forEach(node => {
+      if (!node.linkedNodes) node.linkedNodes = [];
+
+      allNodes.forEach(targetNode => {
+        // Ignora a si mesmo
+        if (node.x === targetNode.x && node.y === targetNode.y) return;
+
+        // Calcula a distância real entre os dois trilhos (Teorema de Pitágoras)
+        const dx = targetNode.x - node.x;
+        const dy = targetNode.y - node.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Se estiver dentro do alcance de 5 blocos, cria a conexão!
+        if (distance <= MAX_DISTANCE) {
+          node.linkedNodes!.push(targetNode);
+          totalConnections++;
         }
       });
     });
+
+    console.log(`🚂 MAPA MAGNÉTICO PRONTO! Conexões por proximidade: ${totalConnections}`);
   }
 
   /**
@@ -341,23 +348,36 @@ export class TrainManager {
   /**
    * Gera um caminho aleatório a partir de um nó
    */
+  /**
+   * Gera um caminho inteligente, priorizando trilhos novos
+   */
+  /**
+   * Gera o caminho indo sempre para o trilho vizinho MAIS PRÓXIMO
+   */
   private generateRandomPath(startNode: RailNode, length: number): RailNode[] {
     const path: RailNode[] = [startNode];
     let currentNode = startNode;
     
     for (let i = 0; i < length; i++) {
-      const nextNode = this.getRandomConnectedNode(currentNode);
-      if (nextNode) {
-        // Verifica se o próximo nó já está no caminho (evita loops)
-        const alreadyInPath = path.some(node => node.x === nextNode.x && node.y === nextNode.y);
-        
-        if (alreadyInPath) {
-          continue;
-        }
-        
+      const linked = currentNode.linkedNodes || [];
+      
+      // Filtra os trilhos por onde o trem AINDA NÃO passou
+      const validNodes = linked.filter(n => !path.some(p => p.x === n.x && p.y === n.y));
+      
+      if (validNodes.length > 0) {
+        // Ordena a lista de vizinhos do mais PERTO para o mais LONGE
+        validNodes.sort((a, b) => {
+          const distA = Math.sqrt(Math.pow(a.x - currentNode.x, 2) + Math.pow(a.y - currentNode.y, 2));
+          const distB = Math.sqrt(Math.pow(b.x - currentNode.x, 2) + Math.pow(b.y - currentNode.y, 2));
+          return distA - distB;
+        });
+
+        // Pega o primeiro da lista (o mais próximo!)
+        const nextNode = validNodes[0];
         path.push(nextNode);
         currentNode = nextNode;
       } else {
+        // Beco sem saída
         break;
       }
     }
@@ -366,24 +386,16 @@ export class TrainManager {
   }
 
   /**
-   * Obtém um nó conectado aleatoriamente
+   * Obtém um nó conectado aleatoriamente (usando a nova lista linkada)
    */
   private getRandomConnectedNode(node: RailNode): RailNode | null {
-    const candidates: RailNode[] = [];
+    // Se não tiver nenhum trilho linkado pelo nosso radar, retorna nulo
+    if (!node.linkedNodes || node.linkedNodes.length === 0) {
+      return null;
+    }
     
-    node.connections.forEach(conn => {
-      const targetX = node.x + conn.x;
-      const targetY = node.y + conn.y;
-      const targetKey = `${targetX},${targetY}`;
-      
-      const targetNode = this.railGraph.get(targetKey);
-      if (targetNode) {
-        candidates.push(targetNode);
-      }
-    });
-
-    if (candidates.length === 0) return null;
-    return candidates[Math.floor(Math.random() * candidates.length)];
+    // Sorteia um dos trilhos que estão até a distância 5
+    return node.linkedNodes[Math.floor(Math.random() * node.linkedNodes.length)];
   }
 
   /**
@@ -446,7 +458,7 @@ export class TrainManager {
       const direction = nextPos.sub(targetPos).normalize();
       const angle = Math.atan2(direction.x, direction.z);
       // Corrige a orientação (os trens estavam andando de ré)
-      train.entity.setEulerAngles(0, (-angle * (180 / Math.PI)) + 180, 0);
+      train.entity.setEulerAngles(0, -angle * (180 / Math.PI), 0);
     }
     
     // Vai para o próximo nó

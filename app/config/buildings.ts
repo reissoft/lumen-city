@@ -2189,6 +2189,19 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "icon": "__ICON_TreeDeciduous__",
     "scale": 2,
     "iconImage": "/models/suburban/tree-small_icon.png"
+  },
+  "rail_trilho": {
+    "name": "Trilho",
+    "description": "Trilho de trem",
+    "category": "infrastructure",
+    "cost": 1,
+    "url": "/models/infra/train/railroad-straight.glb",
+    "icon": "__ICON_TreeDeciduous__",
+    "scale": 1,
+    "stats": {
+      "entertainment": 10
+    },
+    "iconImage": "/models/infra/train/railroad-straight_icon.png"
   }
 }
 

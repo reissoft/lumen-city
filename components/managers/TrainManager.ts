@@ -267,23 +267,38 @@ export class TrainManager {
   /**
    * Spawna trens aleatoriamente nos trilhos
    */
+  /**
+   * Spawna trens aleatoriamente nos trilhos (AGORA NAS PONTAS DA LINHA!)
+   */
   spawnTrains(): void {
-    if (this.trains.length >= 1) {
-      return; 
-    }
+    if (this.trains.length >= 1) return; 
+
     const now = Date.now();
     if (now - this.lastSpawnTime < this.TRAIN_SPAWN_INTERVAL) return;
     
     this.lastSpawnTime = now;
     
-    // Encontra um nó de trilho aleatório
     const railNodes = Array.from(this.railGraph.values());
     
-    if (railNodes.length === 0) {
-      return;
+    // 1. Filtra trilhos isolados (que têm 0 vizinhos) para o trem não nascer preso
+    const connectedNodes = railNodes.filter(node => node.linkedNodes && node.linkedNodes.length > 0);
+    
+    if (connectedNodes.length === 0) return; // Não tem trilhos conectados no mapa
+    
+    // 2. A SUA LÓGICA: Acha as pontas (trilhos com exatamente 1 vizinho)
+    const tipNodes = connectedNodes.filter(node => node.linkedNodes!.length === 1);
+    
+    let startNode: RailNode;
+    
+    if (tipNodes.length > 0) {
+      // 3A. Se achou pontas, sorteia uma delas para o trem nascer
+      startNode = tipNodes[Math.floor(Math.random() * tipNodes.length)];
+      console.log(`🚂 Trem nascendo na PONTA da linha em (${startNode.x}, ${startNode.y})`);
+    } else {
+      // 3B. Se não tem pontas (é uma pista circular), nasce em qualquer lugar válido
+      startNode = connectedNodes[Math.floor(Math.random() * connectedNodes.length)];
+      console.log(`🚂 Pista circular detectada. Trem nascendo em (${startNode.x}, ${startNode.y})`);
     }
-
-    const startNode = railNodes[Math.floor(Math.random() * railNodes.length)];
     
     const train = this.getAvailableTrain();
     

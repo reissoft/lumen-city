@@ -111,4 +111,9 @@ export class GhostManager {
   getEntity(): pc.Entity {
     return this.ghostEntity;
   }
+
+  setRotation(angle: number): void {
+    // Rotaciona o fantasma no eixo Y
+    this.ghostEntity.setEulerAngles(0, angle, 0);
+  }
 }

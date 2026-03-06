@@ -70,4 +70,5 @@ export interface CitySceneProps {
   onAssetsLoaded?: () => void;
   activeBuild: string | null;
   selectedBuildingId: number | null;
+  buildRotation?: number;
 }

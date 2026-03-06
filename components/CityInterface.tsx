@@ -38,10 +38,15 @@ export default function CityInterface({ student, buildings: initialBuildings, re
   const [isLoading, setIsLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isBottomBarVisible, setIsBottomBarVisible] = useState(true);
+  const [buildRotation, setBuildRotation] = useState(0);
 
   const handleAssetsLoaded = useCallback(() => {
      setTimeout(() => setIsLoading(false), 300);
   }, []);
+
+useEffect(() => {
+    setBuildRotation(0);
+  }, [activeBuild]);
 
   useEffect(() => {
     if (initialBuildings && initialBuildings.length > 0) {
@@ -81,10 +86,10 @@ export default function CityInterface({ student, buildings: initialBuildings, re
     if (activeBuild) {
       if (clickedBuilding) { alert("Local ocupado!"); return; }
       setIsBuilding(true);
-      const newBuilding = { id: Date.now(), type: activeBuild, x, y, rotation: 0 };
+      const newBuilding = { id: Date.now(), type: activeBuild, x, y, rotation: buildRotation };
       setLocalBuildings([...localBuildings, newBuilding]);
       setIsBuilding(false);
-      await buyBuilding(activeBuild, x, y);
+      await buyBuilding(activeBuild, x, y,buildRotation);
       return;
     }
     if (clickedBuilding) {
@@ -146,6 +151,7 @@ export default function CityInterface({ student, buildings: initialBuildings, re
                 selectedBuildingId={selectedBuildingId}
                 onCancelBuild={() => setActiveBuild(null)}
                 onAssetsLoaded={handleAssetsLoaded}
+                buildRotation={buildRotation}
             />
 
             <div 
@@ -243,11 +249,23 @@ export default function CityInterface({ student, buildings: initialBuildings, re
                     <MousePointer2 className="w-4 h-4" />
                     Construindo: {BUILDING_CONFIG[activeBuild as keyof typeof BUILDING_CONFIG]?.name}
                 </Badge>
-                <div className="text-center mt-2">
-                    <Button variant="secondary" size="sm" className="shadow-lg opacity-90 hover:opacity-100" onClick={() => setActiveBuild(null)}>
-                        <X className="w-4 h-4 mr-1" /> Cancelar
-                    </Button>
-                </div>
+                {/* 👇 Botões Grandes e Espaçados (Perfeitos para Touch) */}
+                    <div className="flex justify-center gap-4 mt-1">
+                        <Button 
+                            variant="secondary" 
+                            className="h-12 px-6 rounded-full bg-blue-600 hover:bg-blue-500 text-white shadow-xl border-2 border-white transition-transform active:scale-95 text-base font-bold" 
+                            onClick={() => setBuildRotation(prev => (prev + 90) % 360)}
+                        >
+                            <RotateCw className="w-5 h-5 mr-2" /> Girar
+                        </Button>
+                        <Button 
+                            variant="secondary" 
+                            className="h-12 px-6 rounded-full bg-red-600 hover:bg-red-500 text-white shadow-xl border-2 border-white transition-transform active:scale-95 text-base font-bold border-0" 
+                            onClick={() => setActiveBuild(null)}
+                        >
+                            <X className="w-5 h-5 mr-2" /> Cancelar
+                        </Button>
+                    </div>
                 </div>
             )}
 

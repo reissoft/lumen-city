@@ -33,7 +33,8 @@ const CityScene = memo(function CityScene({
   activeBuild, 
   selectedBuildingId, 
   onCancelBuild,
-  onAssetsLoaded 
+  onAssetsLoaded,
+  buildRotation = 0
 }: CitySceneProps) {
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -264,6 +265,14 @@ const CityScene = memo(function CityScene({
       </div>
     )
   }
+
+
+  useEffect(() => {
+    const ghostManager = ghostManagerRef.current;
+    if (ghostManager) {
+      ghostManager.setRotation(buildRotation);
+    }
+  }, [buildRotation]);
 
   return (
     <canvas 

@@ -400,7 +400,7 @@ export async function createStudent(formData: FormData) {
 
 const BUILDINGS = BUILDING_CONFIG;
 
-export async function buyBuilding(type: string, x: number, y: number) {
+export async function buyBuilding(type: string, x: number, y: number, rotation: number = 0) {
   const studentUsername = await getCurrentUser();
 
   try {
@@ -429,7 +429,7 @@ export async function buyBuilding(type: string, x: number, y: number) {
     const buildingInfo = BUILDINGS[type as keyof typeof BUILDINGS];
 
     // VERIFICA SE TEM OURO SUFICIENTE
-   /* if (studentResources.gold < buildingInfo.cost) {
+    /* if (studentResources.gold < buildingInfo.cost) {
       console.error("Ação 'buyBuilding': Ouro insuficiente.");
       return; // Retorna para não continuar a execução
     }*/
@@ -442,7 +442,8 @@ export async function buyBuilding(type: string, x: number, y: number) {
       return;
     }
 
-    const newBuilding = { id: Date.now(), type, x, y, rotation: 0 };
+    // 👇 AQUI ESTÁ A MUDANÇA: Passando a rotação escolhida para o novo prédio
+    const newBuilding = { id: Date.now(), type, x, y, rotation }; 
     
     // SOLUÇÃO DE IMUTABILIDADE: Cria um novo objeto cityData
     const newCityData = {
@@ -463,7 +464,7 @@ export async function buyBuilding(type: string, x: number, y: number) {
       },
     });
 
-    console.log("Debug: Construção salva no banco de dados!");
+    console.log(`Debug: Construção salva no banco de dados! Rotação: ${rotation}`);
     revalidatePath('/student/city');
 
   } catch (error) {

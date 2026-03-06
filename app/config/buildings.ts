@@ -2167,7 +2167,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "cost": 10,
     "url": "/models/suburban/planter.glb",
     "icon": "__ICON_Home__",
-    "scale": 2,
+    "scale": 1.5,
     "iconImage": "/models/suburban/planter_icon.png"
   },
   "tree_large": {
@@ -2197,7 +2197,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "cost": 1,
     "url": "/models/infra/train/railroad-straight.glb",
     "icon": "__ICON_TreeDeciduous__",
-    "scale": 1,
+    "scale": 0.5,
     "stats": {
       "entertainment": 10
     },

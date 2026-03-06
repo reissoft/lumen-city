@@ -68,7 +68,7 @@ export class TrainManager {
       for (let j = 0; j < this.TRAIN_LENGTH; j++) {
         const entity = new pc.Entity(`Train-${i}-Car-${j}`);
         this.loadTrainModel(entity, types[j]);
-        entity.setLocalScale(0.8, 0.8, 0.8);
+        entity.setLocalScale(0.7, 0.7, 0.7);
         entity.enabled = false;
         this.app.root.addChild(entity);
         trainEntities.push(entity);

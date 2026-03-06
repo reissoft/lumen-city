@@ -266,8 +266,10 @@ export class TrainManager {
           const nextPos = new pc.Vec3(nextWorldX, 0.6, nextWorldZ);
           
           const direction = nextPos.sub(targetPos).normalize();
-          const angle = Math.atan2(direction.x, direction.z);
-          entity.setEulerAngles(0, -angle * (180 / Math.PI), 0);
+          //const angle = Math.atan2(direction.x, direction.z);
+          const angle = Math.atan2(direction.x, direction.z) * (180 / Math.PI);
+          //entity.setEulerAngles(0, -angle * (180 / Math.PI), 0);
+          entity.setEulerAngles(0, angle, 0);
         }
       } else {
         entity.enabled = false; 

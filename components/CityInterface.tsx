@@ -97,7 +97,7 @@ useEffect(() => {
     } else {
       if(!inEditMode) setSelectedBuildingId(null);
     }
-  }, [activeBuild, localBuildings, canEdit]);
+  }, [activeBuild, localBuildings, canEdit, buildRotation]);
 
   const handleRotate = async () => {
     if (!selectedBuildingId) return;

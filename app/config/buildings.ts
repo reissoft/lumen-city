@@ -12,7 +12,7 @@ export interface BuildingDef {
   iconImage: string
   stats?: BuildingStats,
   yOffset?: number; 
-  "haveLight"?: boolean; // Indica se o prédio tem luzes (para ligar/desligar à noite)
+  haveLight?: boolean; // Indica se o prédio tem luzes (para ligar/desligar à noite)
 }
 
 export interface BuildingStats {
@@ -46,8 +46,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 1
     },
     "iconImage": "/models/building-b_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_c": {
     "name": "Casa",
@@ -62,8 +61,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 1
     },
     "iconImage": "/models/building-c_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_d": {
     "name": "Casa",
@@ -78,8 +76,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 1
     },
     "iconImage": "/models/building-d_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_e": {
     "name": "Casa",
@@ -94,8 +91,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 1
     },
     "iconImage": "/models/building-e_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_f": {
     "name": "Casa",
@@ -110,8 +106,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 1
     },
     "iconImage": "/models/building-f_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_g": {
     "name": "Casa",
@@ -126,8 +121,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 1
     },
     "iconImage": "/models/building-g_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_h": {
     "name": "Casa",
@@ -142,8 +136,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 1
     },
     "iconImage": "/models/building-h_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_i": {
     "name": "Casa",
@@ -158,8 +151,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 2
     },
     "iconImage": "/models/building-i_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_k": {
     "name": "Casa",
@@ -174,8 +166,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 2
     },
     "iconImage": "/models/building-k_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_l": {
     "name": "Casa",
@@ -190,8 +181,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 3
     },
     "iconImage": "/models/building-l_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_m": {
     "name": "Casa",
@@ -206,8 +196,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 3
     },
     "iconImage": "/models/building-m_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_n": {
     "name": "Hospital",
@@ -223,8 +212,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "security": 2
     },
     "iconImage": "/models/building-n_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_skyscraper_a": {
     "name": "Edifício",
@@ -239,8 +227,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 5
     },
     "iconImage": "/models/building-skyscraper-a_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_skyscraper_b": {
     "name": "Edifício",
@@ -255,8 +242,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 7
     },
     "iconImage": "/models/building-skyscraper-b_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_skyscraper_c": {
     "name": "Edifício",
@@ -271,8 +257,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 6
     },
     "iconImage": "/models/building-skyscraper-c_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_skyscraper_d": {
     "name": "Edifício",
@@ -287,8 +272,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 8
     },
     "iconImage": "/models/building-skyscraper-d_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_skyscraper_e": {
     "name": "Edifício",
@@ -303,8 +287,216 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 5
     },
     "iconImage": "/models/building-skyscraper-e_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
+  },
+  "detail_awning_wide": {
+    "name": "Detail Awning Wide",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/detail-awning-wide.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/detail-awning-wide_icon.png",
+    haveLight: true,
+  },
+  "detail_awning": {
+    "name": "Detail Awning",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/detail-awning.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/detail-awning_icon.png",
+    haveLight: true,
+  },
+  "detail_overhang_wide": {
+    "name": "Detail Overhang Wide",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/detail-overhang-wide.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/detail-overhang-wide_icon.png",
+    haveLight: true,
+  },
+  "detail_overhang": {
+    "name": "Detail Overhang",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/detail-overhang.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/detail-overhang_icon.png",
+    haveLight: true,
+  },
+  "detail_parasol_a": {
+    "name": "Detail Parasol A",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/detail-parasol-a.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/detail-parasol-a_icon.png",
+    haveLight: true,
+  },
+  "low_detail_building_a": {
+    "name": "Low Detail Building A",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/low-detail-building-a.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/low-detail-building-a_icon.png",
+    haveLight: true,
+  },
+  "low_detail_building_b": {
+    "name": "Low Detail Building B",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/low-detail-building-b.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/low-detail-building-b_icon.png",
+    haveLight: true,
+  },
+  "low_detail_building_c": {
+    "name": "Low Detail Building C",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/low-detail-building-c.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/low-detail-building-c_icon.png",
+    haveLight: true,
+  },
+  "low_detail_building_e": {
+    "name": "Low Detail Building E",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/low-detail-building-e.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/low-detail-building-e_icon.png",
+    haveLight: true,
+  },
+  "low_detail_building_f": {
+    "name": "Low Detail Building F",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/low-detail-building-f.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/low-detail-building-f_icon.png",
+    haveLight: true,
+  },
+  "low_detail_building_g": {
+    "name": "Low Detail Building G",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/low-detail-building-g.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/low-detail-building-g_icon.png",
+    haveLight: true,
+  },
+  "low_detail_building_h": {
+    "name": "Low Detail Building H",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/low-detail-building-h.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/low-detail-building-h_icon.png",
+    haveLight: true,
+  },
+  "low_detail_building_i": {
+    "name": "Low Detail Building I",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/low-detail-building-i.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/low-detail-building-i_icon.png",
+    haveLight: true,
+  },
+  "low_detail_building_j": {
+    "name": "Low Detail Building J",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/low-detail-building-j.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/low-detail-building-j_icon.png",
+    haveLight: true,
+  },
+  "low_detail_building_k": {
+    "name": "Low Detail Building K",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/low-detail-building-k.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/low-detail-building-k_icon.png",
+    haveLight: true,
+  },
+  "low_detail_building_l": {
+    "name": "Low Detail Building L",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/low-detail-building-l.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/low-detail-building-l_icon.png",
+    haveLight: true,
+  },
+  "low_detail_building_m": {
+    "name": "Low Detail Building M",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/low-detail-building-m.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/low-detail-building-m_icon.png",
+    haveLight: true,
+  },
+  "low_detail_building_n": {
+    "name": "Low Detail Building N",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/low-detail-building-n.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/low-detail-building-n_icon.png",
+    haveLight: true,
+  },
+  "low_detail_building_wide_b": {
+    "name": "Low Detail Building Wide B",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/low-detail-building-wide-b.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/low-detail-building-wide-b_icon.png",
+    haveLight: true,
   },
   "building_a": {
     "name": "Indústria",
@@ -319,8 +511,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 3
     },
     "iconImage": "/models/buildings/building-a_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_b_1": {
     "name": "Indústria",
@@ -335,8 +526,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 3
     },
     "iconImage": "/models/buildings/building-b_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_c_1": {
     "name": "Fábrica",
@@ -351,8 +541,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 5
     },
     "iconImage": "/models/buildings/building-c_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_d_1": {
     "name": "Indústria",
@@ -367,8 +556,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 4
     },
     "iconImage": "/models/buildings/building-d_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_e_1": {
     "name": "Fábrica",
@@ -382,9 +570,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "jobs": 6,
       "pollution": 3
     },
-    "haveLight": true,
-    "iconImage": "/models/buildings/building-e_icon.png",
-    "yOffset": 0,
+    haveLight: true,
+    "iconImage": "/models/buildings/building-e_icon.png"
   },
   "building_f_1": {
     "name": "Fábrica",
@@ -399,8 +586,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 3
     },
     "iconImage": "/models/buildings/building-f_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_g_1": {
     "name": "Indústria",
@@ -415,8 +601,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 4
     },
     "iconImage": "/models/buildings/building-g_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_h_1": {
     "name": "Casa",
@@ -431,8 +616,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 1
     },
     "iconImage": "/models/buildings/building-h_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_i_1": {
     "name": "Casa",
@@ -447,8 +631,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 1
     },
     "iconImage": "/models/buildings/building-i_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_j": {
     "name": "Armazém",
@@ -463,8 +646,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 1
     },
     "iconImage": "/models/buildings/building-j_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_k_1": {
     "name": "Armazém",
@@ -479,8 +661,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 1
     },
     "iconImage": "/models/buildings/building-k_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_l_1": {
     "name": "Fábrica",
@@ -495,8 +676,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 3
     },
     "iconImage": "/models/buildings/building-l_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_m_1": {
     "name": "Fábrica",
@@ -511,8 +691,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 4
     },
     "iconImage": "/models/buildings/building-m_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_n_1": {
     "name": "Fábrica",
@@ -527,8 +706,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 3
     },
     "iconImage": "/models/buildings/building-n_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_o": {
     "name": "Indústria",
@@ -543,8 +721,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 2
     },
     "iconImage": "/models/buildings/building-o_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_p": {
     "name": "Casa",
@@ -559,8 +736,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 1
     },
     "iconImage": "/models/buildings/building-p_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_q": {
     "name": "Polícia",
@@ -576,8 +752,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "security": 3
     },
     "iconImage": "/models/buildings/building-q_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_r": {
     "name": "Polícia",
@@ -593,8 +768,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "security": 2
     },
     "iconImage": "/models/buildings/building-r_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_s": {
     "name": "Armazém",
@@ -609,8 +783,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 2
     },
     "iconImage": "/models/buildings/building-s_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "building_t": {
     "name": "Casa",
@@ -625,33 +798,573 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 1
     },
     "iconImage": "/models/buildings/building-t_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
-  "road_side": {
-    "name": "Road Side",
+  "chimney_basic": {
+    "name": "Chimney Basic",
     "description": "Descrição Placeholder.",
-    "category": "infrastructure",
-    "cost": 1,
-    "url": "/models/infra/road-side.glb",
-    "icon": "__ICON_Route__",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/buildings/chimney-basic.glb",
+    "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/infra/road-side_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/buildings/chimney-basic_icon.png",
+    haveLight: true,
   },
-  "rail_trilho": {
-    "name": "Trilho",
-    "description": "Trilho de trem",
-    "category": "infrastructure",
-    "cost": 1,
-    "url": "/models/infra/train/railroad-straight.glb",
-    "icon": "__ICON_TreeDeciduous__",
-    "scale": 0.5,
-    "stats": {
-      "entertainment": 1
-    },
-    "iconImage": "/models/infra/train/railroad-straight_icon.png",
-    "yOffset": 0,
+  "chimney_large": {
+    "name": "Chimney Large",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/buildings/chimney-large.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/buildings/chimney-large_icon.png",
+    haveLight: true,
+  },
+  "chimney_medium": {
+    "name": "Chimney Medium",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/buildings/chimney-medium.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/buildings/chimney-medium_icon.png",
+    haveLight: true,
+  },
+  "chimney_small": {
+    "name": "Chimney Small",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/buildings/chimney-small.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/buildings/chimney-small_icon.png",
+    haveLight: true,
+  },
+  "detail_tank": {
+    "name": "Detail Tank",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/buildings/detail-tank.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/buildings/detail-tank_icon.png",
+    haveLight: true,
+  },
+  "ambulance": {
+    "name": "Ambulance",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/ambulance.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/ambulance_icon.png"
+  },
+  "box": {
+    "name": "Box",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/box.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/box_icon.png"
+  },
+  "cone_flat": {
+    "name": "Cone Flat",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/cone-flat.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/cone-flat_icon.png"
+  },
+  "cone": {
+    "name": "Cone",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/cone.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/cone_icon.png"
+  },
+  "debris_bolt": {
+    "name": "Debris Bolt",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/debris-bolt.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/debris-bolt_icon.png"
+  },
+  "debris_drivetrain": {
+    "name": "Debris Drivetrain",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/debris-drivetrain.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/debris-drivetrain_icon.png"
+  },
+  "debris_spoiler_a": {
+    "name": "Debris Spoiler A",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/debris-spoiler-a.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/debris-spoiler-a_icon.png"
+  },
+  "delivery_flat": {
+    "name": "Delivery Flat",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/delivery-flat.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/delivery-flat_icon.png",
+    haveLight: true,
+  },
+  "delivery": {
+    "name": "Delivery",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/delivery.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/delivery_icon.png",
+    haveLight: true,
+  },
+  "firetruck": {
+    "name": "Firetruck",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/firetruck.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/firetruck_icon.png",
+    haveLight: true,
+  },
+  "garbage_truck": {
+    "name": "Garbage Truck",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/garbage-truck.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/garbage-truck_icon.png",
+    haveLight: true,
+  },
+  "hatchback_sports": {
+    "name": "Hatchback Sports",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/hatchback-sports.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/hatchback-sports_icon.png",
+    haveLight: true,
+  },
+  "kart_oobi": {
+    "name": "Kart Oobi",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/kart-oobi.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/kart-oobi_icon.png",
+    haveLight: true,
+  },
+  "kart_oodi": {
+    "name": "Kart Oodi",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/kart-oodi.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/kart-oodi_icon.png",
+    haveLight: true,
+  },
+  "kart_ooli": {
+    "name": "Kart Ooli",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/kart-ooli.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/kart-ooli_icon.png",
+    haveLight: true,
+  },
+  "kart_oopi": {
+    "name": "Kart Oopi",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/kart-oopi.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/kart-oopi_icon.png",
+    haveLight: true,
+  },
+  "kart_oozi": {
+    "name": "Kart Oozi",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/kart-oozi.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/kart-oozi_icon.png",
+    haveLight: true,
+  },
+  "police": {
+    "name": "Police",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/police.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/police_icon.png",
+    haveLight: true,
+  },
+  "race_future": {
+    "name": "Race Future",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/race-future.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/race-future_icon.png",
+    haveLight: true,
+  },
+  "race": {
+    "name": "Race",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/race.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/race_icon.png",
+    haveLight: true,
+  },
+  "sedan_sports": {
+    "name": "Sedan Sports",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/sedan-sports.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/sedan-sports_icon.png",
+    haveLight: true,
+  },
+  "sedan": {
+    "name": "Sedan",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/sedan.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/sedan_icon.png",
+    haveLight: true,
+  },
+  "suv_luxury": {
+    "name": "Suv Luxury",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/suv-luxury.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/suv-luxury_icon.png",
+    haveLight: true,
+  },
+  "suv": {
+    "name": "Suv",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/suv.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/suv_icon.png",
+    haveLight: true,
+  },
+  "taxi": {
+    "name": "Taxi",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/taxi.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/taxi_icon.png",
+    haveLight: true,
+  },
+  "tractor_police": {
+    "name": "Tractor Police",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/tractor-police.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/tractor-police_icon.png",
+    haveLight: true,
+  },
+  "tractor_shovel": {
+    "name": "Tractor Shovel",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/tractor-shovel.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/tractor-shovel_icon.png"
+  },
+  "tractor": {
+    "name": "Tractor",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/tractor.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/tractor_icon.png"
+  },
+  "truck_flat": {
+    "name": "Truck Flat",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/truck-flat.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/truck-flat_icon.png"
+  },
+  "truck": {
+    "name": "Truck",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/truck.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/truck_icon.png",
+    haveLight: true,
+  },
+  "van": {
+    "name": "Van",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/cars/van.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/cars/van_icon.png",
+    haveLight: true,
+  },
+  "character_a": {
+    "name": "Character A",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/chars/character-a.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/chars/character-a_icon.png"
+  },
+  "character_b": {
+    "name": "Character B",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/chars/character-b.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/chars/character-b_icon.png"
+  },
+  "character_c": {
+    "name": "Character C",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/chars/character-c.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/chars/character-c_icon.png"
+  },
+  "character_d": {
+    "name": "Character D",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/chars/character-d.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/chars/character-d_icon.png"
+  },
+  "character_e": {
+    "name": "Character E",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/chars/character-e.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/chars/character-e_icon.png"
+  },
+  "character_f": {
+    "name": "Character F",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/chars/character-f.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/chars/character-f_icon.png"
+  },
+  "character_g": {
+    "name": "Character G",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/chars/character-g.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/chars/character-g_icon.png"
+  },
+  "character_h": {
+    "name": "Character H",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/chars/character-h.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/chars/character-h_icon.png"
+  },
+  "character_i": {
+    "name": "Character I",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/chars/character-i.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/chars/character-i_icon.png"
+  },
+  "character_j": {
+    "name": "Character J",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/chars/character-j.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/chars/character-j_icon.png"
+  },
+  "character_k": {
+    "name": "Character K",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/chars/character-k.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/chars/character-k_icon.png"
+  },
+  "character_l": {
+    "name": "Character L",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/chars/character-l.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/chars/character-l_icon.png"
+  },
+  "character_m": {
+    "name": "Character M",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/chars/character-m.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/chars/character-m_icon.png"
+  },
+  "character_n": {
+    "name": "Character N",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/chars/character-n.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/chars/character-n_icon.png"
+  },
+  "character_o": {
+    "name": "Character O",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/chars/character-o.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/chars/character-o_icon.png"
+  },
+  "character_p": {
+    "name": "Character P",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/chars/character-p.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/chars/character-p_icon.png"
+  },
+  "character_q": {
+    "name": "Character Q",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/chars/character-q.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/chars/character-q_icon.png"
+  },
+  "character_r": {
+    "name": "Character R",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/chars/character-r.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/chars/character-r_icon.png"
   },
   "construction_barrier": {
     "name": "Construction Barrier",
@@ -661,8 +1374,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/construction-barrier.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/infra/construction-barrier_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/construction-barrier_icon.png"
   },
   "construction_cone": {
     "name": "Construction Cone",
@@ -672,8 +1384,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/construction-cone.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/construction-cone_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/construction-cone_icon.png"
   },
   "construction_light": {
     "name": "Construction Light",
@@ -684,8 +1395,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "icon": "__ICON_Route__",
     "scale": 2,
     "iconImage": "/models/infra/construction-light_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "light_curved_cross": {
     "name": "Light Curved Cross",
@@ -696,8 +1406,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "icon": "__ICON_Route__",
     "scale": 2,
     "iconImage": "/models/infra/light-curved-cross_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "light_curved_double": {
     "name": "Light Curved Double",
@@ -708,8 +1417,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "icon": "__ICON_Route__",
     "scale": 2,
     "iconImage": "/models/infra/light-curved-double_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "light_curved": {
     "name": "Light Curved",
@@ -720,8 +1428,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "icon": "__ICON_Route__",
     "scale": 2,
     "iconImage": "/models/infra/light-curved_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "light_square_cross": {
     "name": "Light Square Cross",
@@ -732,8 +1439,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "icon": "__ICON_Route__",
     "scale": 2,
     "iconImage": "/models/infra/light-square-cross_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "light_square_double": {
     "name": "Light Square Double",
@@ -744,8 +1450,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "icon": "__ICON_Route__",
     "scale": 2,
     "iconImage": "/models/infra/light-square-double_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
   },
   "light_square": {
     "name": "Light Square",
@@ -756,8 +1461,37 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "icon": "__ICON_Route__",
     "scale": 2,
     "iconImage": "/models/infra/light-square_icon.png",
-    "haveLight": true,
-    "yOffset": 0,
+    haveLight: true,
+  },
+  "road_bend_sidewalk": {
+    "name": "Road Bend Sidewalk",
+    "description": "Descrição Placeholder.",
+    "category": "infrastructure",
+    "cost": 1,
+    "url": "/models/infra/road-bend-sidewalk.glb",
+    "icon": "__ICON_Route__",
+    "scale": 2,
+    "iconImage": "/models/infra/road-bend-sidewalk_icon.png"
+  },
+  "road_bend_square": {
+    "name": "Road Bend Square",
+    "description": "Descrição Placeholder.",
+    "category": "infrastructure",
+    "cost": 1,
+    "url": "/models/infra/road-bend-square.glb",
+    "icon": "__ICON_Route__",
+    "scale": 2,
+    "iconImage": "/models/infra/road-bend-square_icon.png"
+  },
+  "road_bend": {
+    "name": "Road Bend",
+    "description": "Descrição Placeholder.",
+    "category": "infrastructure",
+    "cost": 1,
+    "url": "/models/infra/road-bend.glb",
+    "icon": "__ICON_Route__",
+    "scale": 2,
+    "iconImage": "/models/infra/road-bend_icon.png"
   },
   "road_bridge": {
     "name": "Road Bridge",
@@ -767,8 +1501,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-bridge.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-bridge_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-bridge_icon.png"
   },
   "road_crossing": {
     "name": "Road Crossing",
@@ -778,8 +1511,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-crossing.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-crossing_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-crossing_icon.png"
   },
   "road_crossroad_line": {
     "name": "Road Crossroad Line",
@@ -789,8 +1521,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-crossroad-line.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-crossroad-line_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-crossroad-line_icon.png"
   },
   "road_crossroad_path": {
     "name": "Road Crossroad Path",
@@ -800,8 +1531,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-crossroad-path.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-crossroad-path_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-crossroad-path_icon.png"
   },
   "road_crossroad": {
     "name": "Road Crossroad",
@@ -811,8 +1541,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-crossroad.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-crossroad_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-crossroad_icon.png"
   },
   "road_curve_intersection": {
     "name": "Road Curve Intersection",
@@ -822,8 +1551,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-curve-intersection.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-curve-intersection_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-curve-intersection_icon.png"
   },
   "road_curve_pavement": {
     "name": "Road Curve Pavement",
@@ -833,8 +1561,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-curve-pavement.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-curve-pavement_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-curve-pavement_icon.png"
   },
   "road_curve": {
     "name": "Road Curve",
@@ -844,8 +1571,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-curve.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-curve_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-curve_icon.png"
   },
   "road_driveway_double": {
     "name": "Road Driveway Double",
@@ -855,8 +1581,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-driveway-double.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-driveway-double_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-driveway-double_icon.png"
   },
   "road_driveway_single": {
     "name": "Road Driveway Single",
@@ -866,8 +1591,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-driveway-single.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-driveway-single_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-driveway-single_icon.png"
   },
   "road_end_round": {
     "name": "Road End Round",
@@ -877,8 +1601,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-end-round.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-end-round_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-end-round_icon.png"
   },
   "road_end": {
     "name": "Road End",
@@ -888,8 +1611,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-end.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-end_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-end_icon.png"
   },
   "road_intersection_line": {
     "name": "Road Intersection Line",
@@ -899,8 +1621,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-intersection-line.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-intersection-line_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-intersection-line_icon.png"
   },
   "road_intersection_path": {
     "name": "Road Intersection Path",
@@ -910,8 +1631,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-intersection-path.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-intersection-path_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-intersection-path_icon.png"
   },
   "road_intersection": {
     "name": "Road Intersection",
@@ -921,8 +1641,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-intersection.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-intersection_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-intersection_icon.png"
   },
   "road_roundabout": {
     "name": "Road Roundabout",
@@ -932,8 +1651,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-roundabout.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-roundabout_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-roundabout_icon.png"
   },
   "road_side_entry": {
     "name": "Road Side Entry",
@@ -943,8 +1661,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-side-entry.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-side-entry_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-side-entry_icon.png"
   },
   "road_side_exit": {
     "name": "Road Side Exit",
@@ -954,8 +1671,17 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-side-exit.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-side-exit_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-side-exit_icon.png"
+  },
+  "road_side": {
+    "name": "Road Side",
+    "description": "Descrição Placeholder.",
+    "category": "infrastructure",
+    "cost": 1,
+    "url": "/models/infra/road-side.glb",
+    "icon": "__ICON_Route__",
+    "scale": 2,
+    "iconImage": "/models/infra/road-side_icon.png"
   },
   "road_slant_curve": {
     "name": "Road Slant Curve",
@@ -965,8 +1691,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-slant-curve.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-slant-curve_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-slant-curve_icon.png"
   },
   "road_slant_flat_curve": {
     "name": "Road Slant Flat Curve",
@@ -976,8 +1701,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-slant-flat-curve.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-slant-flat-curve_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-slant-flat-curve_icon.png"
   },
   "road_slant_flat_high": {
     "name": "Road Slant Flat High",
@@ -987,8 +1711,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-slant-flat-high.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-slant-flat-high_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-slant-flat-high_icon.png"
   },
   "road_slant_flat": {
     "name": "Road Slant Flat",
@@ -998,8 +1721,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-slant-flat.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-slant-flat_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-slant-flat_icon.png"
   },
   "road_slant_high": {
     "name": "Road Slant High",
@@ -1009,8 +1731,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-slant-high.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-slant-high_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-slant-high_icon.png"
   },
   "road_slant": {
     "name": "Road Slant",
@@ -1020,8 +1741,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-slant.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-slant_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-slant_icon.png"
   },
   "road_split": {
     "name": "Road Split",
@@ -1031,8 +1751,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-split.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-split_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-split_icon.png"
   },
   "road_square": {
     "name": "Road Square",
@@ -1042,8 +1761,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-square.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-square_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-square_icon.png"
   },
   "road_straight_half": {
     "name": "Road Straight Half",
@@ -1053,8 +1771,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-straight-half.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-straight-half_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-straight-half_icon.png"
   },
   "road_straight": {
     "name": "Road Straight",
@@ -1064,8 +1781,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/road-straight.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/road-straight_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/road-straight_icon.png"
   },
   "sign_highway_detailed": {
     "name": "Sign Highway Detailed",
@@ -1075,8 +1791,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/sign-highway-detailed.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/sign-highway-detailed_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/sign-highway-detailed_icon.png"
   },
   "sign_highway_wide": {
     "name": "Sign Highway Wide",
@@ -1086,8 +1801,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/sign-highway-wide.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/sign-highway-wide_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/sign-highway-wide_icon.png"
   },
   "sign_highway": {
     "name": "Sign Highway",
@@ -1097,8 +1811,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/sign-highway.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/sign-highway_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/infra/sign-highway_icon.png"
   },
   "missao": {
     "name": "Missao",
@@ -1113,7 +1826,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "entertainment": 3
     },
     "iconImage": "/models/specials/missao_icon.png",
-    yOffset: 0.5,
+    yOffset: 0.5
   },
   "building_type_a": {
     "name": "Casa",
@@ -1127,8 +1840,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 5,
       "pollution": 1
     },
-    "iconImage": "/models/suburban/building-type-a_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/suburban/building-type-a_icon.png"
   },
   "building_type_b": {
     "name": "Casa",
@@ -1142,8 +1854,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 5,
       "pollution": 1
     },
-    "iconImage": "/models/suburban/building-type-b_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/suburban/building-type-b_icon.png"
   },
   "building_type_c": {
     "name": "Casa",
@@ -1157,8 +1868,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 6,
       "pollution": 1
     },
-    "iconImage": "/models/suburban/building-type-c_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/suburban/building-type-c_icon.png"
   },
   "building_type_d": {
     "name": "Casa",
@@ -1172,8 +1882,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 6,
       "pollution": 1
     },
-    "iconImage": "/models/suburban/building-type-d_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/suburban/building-type-d_icon.png"
   },
   "building_type_e": {
     "name": "Casa",
@@ -1187,8 +1896,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 6,
       "pollution": 1
     },
-    "iconImage": "/models/suburban/building-type-e_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/suburban/building-type-e_icon.png"
   },
   "building_type_f": {
     "name": "Casa",
@@ -1202,8 +1910,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 8,
       "pollution": 2
     },
-    "iconImage": "/models/suburban/building-type-f_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/suburban/building-type-f_icon.png"
   },
   "building_type_g": {
     "name": "Casa",
@@ -1217,8 +1924,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 2,
       "pollution": 1
     },
-    "iconImage": "/models/suburban/building-type-g_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/suburban/building-type-g_icon.png"
   },
   "building_type_h": {
     "name": "Casa",
@@ -1232,8 +1938,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 3,
       "pollution": 1
     },
-    "iconImage": "/models/suburban/building-type-h_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/suburban/building-type-h_icon.png"
   },
   "building_type_i": {
     "name": "Casa",
@@ -1247,8 +1952,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 3,
       "pollution": 1
     },
-    "iconImage": "/models/suburban/building-type-i_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/suburban/building-type-i_icon.png"
   },
   "building_type_j": {
     "name": "Casa",
@@ -1262,8 +1966,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 4,
       "pollution": 1
     },
-    "iconImage": "/models/suburban/building-type-j_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/suburban/building-type-j_icon.png"
   },
   "building_type_k": {
     "name": "Casa",
@@ -1277,8 +1980,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 4,
       "pollution": 1
     },
-    "iconImage": "/models/suburban/building-type-k_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/suburban/building-type-k_icon.png"
   },
   "building_type_l": {
     "name": "Casa",
@@ -1292,8 +1994,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 4,
       "pollution": 1
     },
-    "iconImage": "/models/suburban/building-type-l_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/suburban/building-type-l_icon.png"
   },
   "building_type_m": {
     "name": "Casa",
@@ -1307,8 +2008,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 5,
       "pollution": 1
     },
-    "iconImage": "/models/suburban/building-type-m_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/suburban/building-type-m_icon.png"
   },
   "building_type_n": {
     "name": "Casa",
@@ -1322,8 +2022,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 6,
       "pollution": 1
     },
-    "iconImage": "/models/suburban/building-type-n_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/suburban/building-type-n_icon.png"
   },
   "building_type_o": {
     "name": "Casa",
@@ -1337,8 +2036,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 6,
       "pollution": 1
     },
-    "iconImage": "/models/suburban/building-type-o_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/suburban/building-type-o_icon.png"
   },
   "building_type_p": {
     "name": "Casa",
@@ -1352,8 +2050,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 6,
       "pollution": 1
     },
-    "iconImage": "/models/suburban/building-type-p_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/suburban/building-type-p_icon.png"
   },
   "building_type_q": {
     "name": "Casa",
@@ -1367,8 +2064,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 7,
       "pollution": 1
     },
-    "iconImage": "/models/suburban/building-type-q_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/suburban/building-type-q_icon.png"
   },
   "building_type_r": {
     "name": "Casa",
@@ -1382,8 +2078,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 6,
       "pollution": 1
     },
-    "iconImage": "/models/suburban/building-type-r_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/suburban/building-type-r_icon.png"
   },
   "building_type_s": {
     "name": "Casa",
@@ -1397,8 +2092,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 6,
       "pollution": 1
     },
-    "iconImage": "/models/suburban/building-type-s_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/suburban/building-type-s_icon.png"
   },
   "building_type_t": {
     "name": "Casa",
@@ -1412,8 +2106,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 8,
       "pollution": 1
     },
-    "iconImage": "/models/suburban/building-type-t_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/suburban/building-type-t_icon.png"
   },
   "building_type_u": {
     "name": "Building Type U",
@@ -1427,20 +2120,147 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 6,
       "pollution": 1
     },
-    "iconImage": "/models/suburban/building-type-u_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/suburban/building-type-u_icon.png"
   },
-  
+  "driveway_long": {
+    "name": "Driveway Long",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/suburban/driveway-long.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/suburban/driveway-long_icon.png"
+  },
+  "driveway_short": {
+    "name": "Driveway Short",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/suburban/driveway-short.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/suburban/driveway-short_icon.png"
+  },
+  "fence_1x2": {
+    "name": "Fence 1X2",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/suburban/fence-1x2.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/suburban/fence-1x2_icon.png"
+  },
+  "fence_1x3": {
+    "name": "Fence 1X3",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/suburban/fence-1x3.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/suburban/fence-1x3_icon.png"
+  },
+  "fence_1x4": {
+    "name": "Fence 1X4",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/suburban/fence-1x4.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/suburban/fence-1x4_icon.png"
+  },
+  "fence_2x2": {
+    "name": "Fence 2X2",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/suburban/fence-2x2.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/suburban/fence-2x2_icon.png"
+  },
+  "fence_2x3": {
+    "name": "Fence 2X3",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/suburban/fence-2x3.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/suburban/fence-2x3_icon.png"
+  },
+  "fence_3x2": {
+    "name": "Fence 3X2",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/suburban/fence-3x2.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/suburban/fence-3x2_icon.png"
+  },
+  "fence_3x3": {
+    "name": "Fence 3X3",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/suburban/fence-3x3.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/suburban/fence-3x3_icon.png"
+  },
+  "fence_low": {
+    "name": "Fence Low",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/suburban/fence-low.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/suburban/fence-low_icon.png"
+  },
+  "fence": {
+    "name": "Fence",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/suburban/fence.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/suburban/fence_icon.png"
+  },
+  "path_long": {
+    "name": "Path Long",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/suburban/path-long.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/suburban/path-long_icon.png"
+  },
+  "path_short": {
+    "name": "Path Short",
+    "description": "Descrição Placeholder.",
+    "category": "construction",
+    "cost": 10,
+    "url": "/models/suburban/path-short.glb",
+    "icon": "__ICON_Home__",
+    "scale": 2,
+    "iconImage": "/models/suburban/path-short_icon.png"
+  },
   "planter": {
     "name": "Planter",
     "description": "Descrição Placeholder.",
-    "category": "nature",
+    "category": "construction",
     "cost": 10,
     "url": "/models/suburban/planter.glb",
     "icon": "__ICON_Home__",
     "scale": 1.5,
-    "iconImage": "/models/suburban/planter_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/suburban/planter_icon.png"
   },
   "tree_large": {
     "name": "Tree Large",
@@ -1450,8 +2270,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/suburban/tree-large.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/suburban/tree-large_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/suburban/tree-large_icon.png"
   },
   "tree_small": {
     "name": "Tree Small",
@@ -1461,8 +2280,20 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/suburban/tree-small.glb",
     "icon": "__ICON_TreeDeciduous__",
     "scale": 2,
-    "iconImage": "/models/suburban/tree-small_icon.png",
-    "yOffset": 0,
+    "iconImage": "/models/suburban/tree-small_icon.png"
+  },
+  "rail_trilho": {
+    "name": "Trilho",
+    "description": "Trilho de trem",
+    "category": "infrastructure",
+    "cost": 1,
+    "url": "/models/infra/train/railroad-straight.glb",
+    "icon": "__ICON_TreeDeciduous__",
+    "scale": 0.5,
+    "stats": {
+      "entertainment": 1
+    },
+    "iconImage": "/models/infra/train/railroad-straight_icon.png"
   },
   "airport": {
     "name": "Aeroporto",
@@ -1477,7 +2308,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     },
     "iconImage": "/models/specials/airport_tower_icon.png",
     "yOffset": 1.5,
-    "haveLight": true,
+    haveLight: true,
   }
 }
 

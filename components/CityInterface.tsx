@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from 'react'
 import CityScene from "./CityScene"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { X, MousePointer2, Hammer, Leaf, Route, Star, RotateCw, Trash2, Loader2, Smartphone, Maximize, Minimize, ChevronDown, ChevronUp } from "lucide-react"
+import { X, MousePointer2, Hammer, Leaf, Route, Star, RotateCw, Trash2, Loader2, Smartphone, Maximize, Minimize, ChevronDown, ChevronUp, Sun, Moon } from "lucide-react"
 import { Users, Briefcase, Smile, ShieldAlert } from 'lucide-react';
 import { buyBuilding, demolishBuildingAction, rotateBuildingAction } from "@/app/actions"
 import { BUILDING_CONFIG, CATEGORIES, BuildingCategory } from '@/app/config/buildings'
@@ -38,6 +38,9 @@ export default function CityInterface({ student, buildings: initialBuildings, re
   const [isBottomBarVisible, setIsBottomBarVisible] = useState(true);
   const [buildRotation, setBuildRotation] = useState(0);
 
+  // NOVO: Estado para controlar o relógio do jogo (Começa às 08:00)
+  const [gameTime, setGameTime] = useState(8);
+
   const setPointerOverUI = (isOver: boolean) => {
     if (typeof window !== 'undefined') {
       window.isPointerOverUI = isOver;
@@ -48,9 +51,31 @@ export default function CityInterface({ student, buildings: initialBuildings, re
      setTimeout(() => setIsLoading(false), 300);
   }, []);
 
+  // NOVO: Efeito que faz o relógio rodar na mesma velocidade do DayNightManager (120s = 24h)
+  useEffect(() => {
+    const CYCLE_DURATION = 120; // Segundos que duram um dia
+    const hoursPerSecond = 24 / CYCLE_DURATION;
+
+    const interval = setInterval(() => {
+      setGameTime(prev => {
+        let nextTime = prev + hoursPerSecond;
+        if (nextTime >= 24) nextTime -= 24;
+        return nextTime;
+      });
+    }, 1000); // Atualiza o relógio a cada 1 segundo real
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Converte o número (ex: 8.5) para formato de hora (ex: 08:30)
+  const formatTime = (time: number) => {
+    const hours = Math.floor(time);
+    const minutes = Math.floor((time - hours) * 60);
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  };
+
   useEffect(() => {
     setBuildRotation(0);
-    // Garantia dupla: se o modo de construção for cancelado, destrava o mouse da tela
     if (!activeBuild) {
         setPointerOverUI(false);
     }
@@ -124,7 +149,7 @@ export default function CityInterface({ student, buildings: initialBuildings, re
           await demolishBuildingAction(selectedBuildingId);
           setLocalBuildings(prev => prev.filter(b => b.id !== selectedBuildingId));
           setSelectedBuildingId(null);
-          setPointerOverUI(false); // Destrava a interface ao fechar o menu!
+          setPointerOverUI(false); 
       }
   }
 
@@ -136,6 +161,9 @@ export default function CityInterface({ student, buildings: initialBuildings, re
   )
 
   const stats = useCityStats(localBuildings);
+
+  // Descobre se é de dia ou de noite para trocar o ícone (Dia é entre 6h e 18h)
+  const isDaytime = gameTime >= 6 && gameTime < 18;
 
   return (
     <div className="w-full h-screen relative overflow-hidden bg-black select-none">
@@ -189,6 +217,19 @@ export default function CityInterface({ student, buildings: initialBuildings, re
             >
                 <div className="flex justify-between items-start">
                     <div className="bg-slate-900/90 backdrop-blur p-2 md:p-4 rounded-xl border border-slate-700 flex gap-3 md:gap-6 text-white shadow-xl">
+                        
+                        {/* 👇 NOVO: Bloco do Relógio */}
+                        <div className="flex flex-col items-center border-r border-slate-700 pr-3 md:pr-6">
+                            <div className="flex items-center gap-1 md:gap-2 text-slate-400 text-[10px] md:text-xs uppercase font-bold">
+                                {isDaytime ? <Sun size={12} className="text-yellow-400" /> : <Moon size={12} className="text-blue-300" />} 
+                                Hora
+                            </div>
+                            <span className={cn("text-base md:text-xl font-bold font-mono", isDaytime ? "text-white" : "text-blue-200")}>
+                                {formatTime(gameTime)}
+                            </span>
+                        </div>
+                        {/* 👆 FIM do Bloco do Relógio */}
+
                         <div className="flex flex-col items-center">
                             <div className="flex items-center gap-1 md:gap-2 text-slate-400 text-[10px] md:text-xs uppercase font-bold"><Users size={12} /> População</div>
                             <span className="text-base md:text-xl font-bold">{stats.population}</span>
@@ -242,7 +283,7 @@ export default function CityInterface({ student, buildings: initialBuildings, re
                         <Button 
                             onClick={() => {
                                 setSelectedBuildingId(null);
-                                setPointerOverUI(false); // Destrava a interface ao fechar o menu!
+                                setPointerOverUI(false); 
                             }} 
                             className="h-12 w-12 rounded-full bg-slate-700 hover:bg-slate-600 shadow-xl border-2 border-white transition-transform hover:scale-110"
                         >
@@ -275,7 +316,7 @@ export default function CityInterface({ student, buildings: initialBuildings, re
                             className="h-12 px-6 rounded-full bg-red-600 hover:bg-red-500 text-white shadow-xl border-2 border-white transition-transform active:scale-95 text-base font-bold border-0" 
                             onClick={() => {
                                 setActiveBuild(null);
-                                setPointerOverUI(false); // Destrava a interface ao fechar o menu!
+                                setPointerOverUI(false); 
                             }}
                         >
                             <X className="w-5 h-5 mr-2" /> Cancelar
@@ -293,7 +334,7 @@ export default function CityInterface({ student, buildings: initialBuildings, re
                 <Button
                   onClick={() => {
                       setIsBottomBarVisible(!isBottomBarVisible);
-                      if (isBottomBarVisible) setPointerOverUI(false); // Destrava quando fecha a barra de baixo
+                      if (isBottomBarVisible) setPointerOverUI(false); 
                   }}
                   variant="secondary"
                   size="icon"

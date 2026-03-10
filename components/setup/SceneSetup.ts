@@ -127,6 +127,7 @@ export class SceneSetup {
    * Carrega o skybox
    */
   private async setupSkybox(): Promise<void> {
+    return;
     const textureUrls = [
       '/textures/skybox/posx.jpg',
       '/textures/skybox/negx.jpg',

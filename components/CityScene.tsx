@@ -12,6 +12,7 @@ import { TrafficManager } from './managers/TrafficManager'
 import { TrainManager } from './managers/TrainManager'
 import { AirplaneManager } from './managers/AirplaneManager'
 import { CloudManager } from './managers/CloudManager'
+import { DayNightManager } from './managers/DayNightManager'
 import { SceneSetup } from './setup/SceneSetup'
 import { DEVICETYPE_WEBGL1 } from 'playcanvas'
 
@@ -36,8 +37,9 @@ const CityScene = memo(function CityScene({
   selectedBuildingId, 
   onCancelBuild,
   onAssetsLoaded,
-  buildRotation = 0
-}: CitySceneProps) {
+  buildRotation = 0,
+  onTimeUpdate
+}: CitySceneProps & { buildRotation?: number, onTimeUpdate?: (time: number) => void }) {
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const appRef = useRef<pc.Application | null>(null)
@@ -52,6 +54,7 @@ const CityScene = memo(function CityScene({
   const trainManagerRef = useRef<TrainManager | null>(null)
   const airplaneManagerRef = useRef<AirplaneManager | null>(null)
   const cloudManagerRef = useRef<CloudManager | null>(null)
+  const dayNightManagerRef = useRef<DayNightManager | null>(null)
   
   // Controle de assets
   const [assetsReady, setAssetsReady] = useState(false)
@@ -113,11 +116,9 @@ const CityScene = memo(function CityScene({
     const cameraManager = new CameraManager(app, cursorEntity, {
       onSelectTile: (x, y) => {
         console.log('🎯 onSelectTile chamado dentro do CameraManager:', { x, y })
-        // Callback inicial (será atualizado pelo effect abaixo)
       },
       onCancelBuild: () => {
         console.log('🚫 onCancelBuild chamado dentro do CameraManager')
-        // Callback inicial (será atualizado pelo effect abaixo)
       },
       getActiveBuild: () => activeBuild
     })
@@ -134,24 +135,25 @@ const CityScene = memo(function CityScene({
     )
     ghostManagerRef.current = ghostManager
 
-    // Inicializa TrafficManager
     const trafficManager = new TrafficManager(app, assetManager)
     trafficManagerRef.current = trafficManager
 
-    // Inicializa TrainManager
     const trainManager = new TrainManager(app, assetManager)
     trainManagerRef.current = trainManager
 
     const airplaneManager = new AirplaneManager(app, assetManager)
     airplaneManagerRef.current = airplaneManager
 
-    // Inicializa CloudManager <--- ADICIONE ESTE BLOCO
     const cloudManager = new CloudManager(app)
     cloudManagerRef.current = cloudManager
 
     // Configuração da cena
     const sceneSetup = new SceneSetup(app)
     sceneSetup.setupScene()
+
+    const dayNightManager = new DayNightManager(app);
+    dayNightManager.setCamera(cameraManager.getCamera());
+    dayNightManagerRef.current = dayNightManager;
 
     // Carrega assets
     assetManager.loadBuildingAssets()
@@ -164,6 +166,7 @@ const CityScene = memo(function CityScene({
       trainManager.update(dt)
       airplaneManager.update(dt)
       cloudManager.update(dt)
+      dayNightManager.update(dt)
     })
 
     // Resize handler
@@ -182,24 +185,20 @@ const CityScene = memo(function CityScene({
     return () => {
       window.removeEventListener('resize', resize)
       const trafficManager = trafficManagerRef.current
-      if (trafficManager) {
-        trafficManager.destroy()
-      }
+      if (trafficManager) trafficManager.destroy()
+      
       const trainManager = trainManagerRef.current
-      if (trainManager) {
-        trainManager.destroy()
-      }
+      if (trainManager) trainManager.destroy()
 
       const airplaneManager = airplaneManagerRef.current
-      if (airplaneManager) {
-        airplaneManager.destroy()
-      }
+      if (airplaneManager) airplaneManager.destroy()
 
       const cloudManager = cloudManagerRef.current
-      if (cloudManager) {
-        cloudManager.destroy()
-      }
-      
+      if (cloudManager) cloudManager.destroy()
+
+      const dayNightManager = dayNightManagerRef.current
+      if (dayNightManager) dayNightManagerRef.current = null
+
       app.destroy()
       appRef.current = null
     }
@@ -208,28 +207,19 @@ const CityScene = memo(function CityScene({
   // --- EFEITO 2: ATUALIZA CALLBACKS (Sempre que props mudam) ---
   useEffect(() => {
     const cameraManager = cameraManagerRef.current
-    if (!cameraManager) return
-
-    console.log('🔄 Atualizando callbacks do CameraManager:', {
-      hasOnSelectTile: !!onSelectTile,
-      hasOnCancelBuild: !!onCancelBuild,
-      activeBuild
-    })
-
-    // Atualiza diretamente as propriedades públicas
-    cameraManager.onSelectTile = (x, y) => {
-      console.log('📞 onSelectTile recebido - chamando callback do React:', { x, y })
-      onSelectTile?.(x, y)
+    if (cameraManager) {
+      cameraManager.onSelectTile = (x, y) => onSelectTile?.(x, y)
+      cameraManager.onCancelBuild = () => onCancelBuild?.()
+      cameraManager.getActiveBuild = () => activeBuild
     }
 
-    cameraManager.onCancelBuild = () => {
-      console.log('📞 onCancelBuild recebido - chamando callback do React')
-      onCancelBuild?.()
+    // 👇 AQUI ESTAVA FALTANDO A LIGAÇÃO DO RELÓGIO
+    const dayNightManager = dayNightManagerRef.current
+    if (dayNightManager) {
+      dayNightManager.onTimeUpdate = onTimeUpdate
     }
 
-    cameraManager.getActiveBuild = () => activeBuild
-
-  }, [onSelectTile, onCancelBuild, activeBuild])
+  }, [onSelectTile, onCancelBuild, activeBuild, onTimeUpdate]) // A dependência do onTimeUpdate também foi adicionada aqui
 
   // --- EFEITO 3: SINCRONIZAÇÃO DA CENA ---
   useEffect(() => {
@@ -243,31 +233,25 @@ const CityScene = memo(function CityScene({
 
     console.log("🔄 Sincronizando Cena...")
 
-    // 1. Atualiza Ghost
     ghostManager.updateGhost(activeBuild)
     
-    // 2. Atualiza cor do Ghost
     const updateGhostColor = () => {
       ghostManager.updateGhostColor(buildings, activeBuild)
     }
     app.on('update', updateGhostColor)
 
-    // 3. Sincroniza prédios
     buildingManager.syncBuildings(buildings)
 
-    // 4. Atualiza grafo de tráfego
     const trafficManager = trafficManagerRef.current
     if (trafficManager) {
       trafficManager.updateRoadGraph(buildings)
     }
 
-    // 5. Atualiza grafo de trilhos
     const trainManager = trainManagerRef.current
     if (trainManager) {
       trainManager.updateRailGraph(buildings)
     }
 
-    // 6. Atualiza Aeroportos <--- ADICIONE ESTE BLOCO
     const airplaneManager = airplaneManagerRef.current
     if (airplaneManager) {
       airplaneManager.updateAirports(buildings)
@@ -278,7 +262,14 @@ const CityScene = memo(function CityScene({
     }
   }, [buildings, activeBuild, assetsReady])
 
-  // Renderiza fallback se WebGL não for suportado
+  // --- EFEITO 4: Rotação do Fantasma ---
+  useEffect(() => {
+    const ghostManager = ghostManagerRef.current;
+    if (ghostManager) {
+      ghostManager.setRotation(buildRotation);
+    }
+  }, [buildRotation]);
+
   if (!webglSupported) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-gray-900 text-white">
@@ -295,14 +286,6 @@ const CityScene = memo(function CityScene({
       </div>
     )
   }
-
-
-  useEffect(() => {
-    const ghostManager = ghostManagerRef.current;
-    if (ghostManager) {
-      ghostManager.setRotation(buildRotation);
-    }
-  }, [buildRotation]);
 
   return (
     <canvas 

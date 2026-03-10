@@ -111,7 +111,7 @@ export class BuildingManager {
 
     const worldX = building.x * 2 - OFFSET;
     const worldZ = building.y * 2 - OFFSET;
-    buildingEntity.setPosition(worldX, 0, worldZ);
+    buildingEntity.setPosition(worldX, config.yOffset || 0, worldZ);
 
     this.app.root.addChild(buildingEntity);
 

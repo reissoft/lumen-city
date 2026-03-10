@@ -10,7 +10,8 @@ export interface BuildingDef {
   icon: any
   scale: number
   iconImage: string
-  stats?: BuildingStats;
+  stats?: BuildingStats,
+  yOffset?: number; // Deslocamento vertical para ajustar o posicionamento do modelo
 }
 
 export interface BuildingStats {
@@ -1729,12 +1730,13 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "cost": 1000,
     "url": "/models/specials/missao.glb",
     "icon": "__ICON_Home__",
-    "scale": 2,
+    "scale": 3,
     "stats": {
       "pollution": 1,
       "entertainment": 3
     },
-    "iconImage": "/models/specials/missao_icon.png"
+    "iconImage": "/models/specials/missao_icon.png",
+    yOffset: 0.5
   },
   "building_type_a": {
     "name": "Casa",
@@ -2214,7 +2216,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "stats": {
       "entertainment": 10
     },
-    "iconImage": "/models/specials/airport_tower_icon.png"
+    "iconImage": "/models/specials/airport_tower_icon.png",
+    "yOffset": 1.5
   }
 }
 

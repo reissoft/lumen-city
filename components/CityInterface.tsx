@@ -26,8 +26,6 @@ interface BuildingData {
   rotation?: number
 }
 
-let inEditMode = false;
-
 export default function CityInterface({ student, buildings: initialBuildings, readOnly = false }: { student: any, buildings: any[], readOnly?: boolean }) {
   const canEdit = !readOnly;
   const [localBuildings, setLocalBuildings] = useState<BuildingData[]>(initialBuildings || []);
@@ -40,12 +38,22 @@ export default function CityInterface({ student, buildings: initialBuildings, re
   const [isBottomBarVisible, setIsBottomBarVisible] = useState(true);
   const [buildRotation, setBuildRotation] = useState(0);
 
+  const setPointerOverUI = (isOver: boolean) => {
+    if (typeof window !== 'undefined') {
+      window.isPointerOverUI = isOver;
+    }
+  };
+
   const handleAssetsLoaded = useCallback(() => {
      setTimeout(() => setIsLoading(false), 300);
   }, []);
 
-useEffect(() => {
+  useEffect(() => {
     setBuildRotation(0);
+    // Garantia dupla: se o modo de construção for cancelado, destrava o mouse da tela
+    if (!activeBuild) {
+        setPointerOverUI(false);
+    }
   }, [activeBuild]);
 
   useEffect(() => {
@@ -75,7 +83,6 @@ useEffect(() => {
   const handleTileClick = useCallback(async (x: number, y: number) => {
     const clickedBuilding = localBuildings.find(b => b.x === x && b.y === y);
     if (!canEdit) {
-      // in readonly mode just allow selecting to see info
       if (clickedBuilding) {
         setSelectedBuildingId(clickedBuilding.id);
       } else {
@@ -83,19 +90,21 @@ useEffect(() => {
       }
       return;
     }
+    
     if (activeBuild) {
       if (clickedBuilding) { alert("Local ocupado!"); return; }
       setIsBuilding(true);
       const newBuilding = { id: Date.now(), type: activeBuild, x, y, rotation: buildRotation };
       setLocalBuildings([...localBuildings, newBuilding]);
       setIsBuilding(false);
-      await buyBuilding(activeBuild, x, y,buildRotation);
+      await buyBuilding(activeBuild, x, y, buildRotation);
       return;
     }
+    
     if (clickedBuilding) {
       setSelectedBuildingId(clickedBuilding.id);
     } else {
-      if(!inEditMode) setSelectedBuildingId(null);
+      setSelectedBuildingId(null);
     }
   }, [activeBuild, localBuildings, canEdit, buildRotation]);
 
@@ -115,6 +124,7 @@ useEffect(() => {
           await demolishBuildingAction(selectedBuildingId);
           setLocalBuildings(prev => prev.filter(b => b.id !== selectedBuildingId));
           setSelectedBuildingId(null);
+          setPointerOverUI(false); // Destrava a interface ao fechar o menu!
       }
   }
 
@@ -126,12 +136,6 @@ useEffect(() => {
   )
 
   const stats = useCityStats(localBuildings);
-  
-  const setPointerOverUI = (isOver: boolean) => {
-    if (typeof window !== 'undefined') {
-      window.isPointerOverUI = isOver;
-    }
-  };
 
   return (
     <div className="w-full h-screen relative overflow-hidden bg-black select-none">
@@ -149,7 +153,10 @@ useEffect(() => {
                 onSelectTile={handleTileClick} 
                 activeBuild={activeBuild} 
                 selectedBuildingId={selectedBuildingId}
-                onCancelBuild={() => setActiveBuild(null)}
+                onCancelBuild={() => {
+                    setActiveBuild(null);
+                    setPointerOverUI(false);
+                }}
                 onAssetsLoaded={handleAssetsLoaded}
                 buildRotation={buildRotation}
             />
@@ -170,7 +177,6 @@ useEffect(() => {
                 </div>
             </div>
             
-            {/* display a small notice if viewing someone else's city */}
         {readOnly && (
             <div className="absolute top-0 left-0 w-full bg-red-500/20 text-white text-center py-1 z-40 font-semibold">
                 Cidade de {student.name} (visualização – somente leitura)
@@ -222,7 +228,6 @@ useEffect(() => {
             </div>
 
             {selectedBuildingId && selectedConfig && !activeBuild && canEdit && (
-                inEditMode = true,
                 <div 
                     onPointerEnter={() => setPointerOverUI(true)}
                     onPointerLeave={() => setPointerOverUI(false)}
@@ -234,7 +239,15 @@ useEffect(() => {
                     <div className="flex gap-2">
                         <Button onClick={handleRotate} className="h-12 w-12 rounded-full bg-blue-600 hover:bg-blue-500 shadow-xl border-2 border-white transition-transform hover:scale-110"><RotateCw className="w-6 h-6 text-white" /></Button>
                         <Button onClick={handleDelete} className="h-12 w-12 rounded-full bg-red-600 hover:bg-red-500 shadow-xl border-2 border-white transition-transform hover:scale-110"><Trash2 className="w-5 h-5 text-white" /></Button>
-                        <Button onClick={() => {setSelectedBuildingId(null);inEditMode = false;}} className="h-12 w-12 rounded-full bg-slate-700 hover:bg-slate-600 shadow-xl border-2 border-white transition-transform hover:scale-110"><X className="w-6 h-6 text-white" /></Button>
+                        <Button 
+                            onClick={() => {
+                                setSelectedBuildingId(null);
+                                setPointerOverUI(false); // Destrava a interface ao fechar o menu!
+                            }} 
+                            className="h-12 w-12 rounded-full bg-slate-700 hover:bg-slate-600 shadow-xl border-2 border-white transition-transform hover:scale-110"
+                        >
+                            <X className="w-6 h-6 text-white" />
+                        </Button>
                     </div>
                 </div>
             )}
@@ -249,7 +262,6 @@ useEffect(() => {
                     <MousePointer2 className="w-4 h-4" />
                     Construindo: {BUILDING_CONFIG[activeBuild as keyof typeof BUILDING_CONFIG]?.name}
                 </Badge>
-                {/* 👇 Botões Grandes e Espaçados (Perfeitos para Touch) */}
                     <div className="flex justify-center gap-4 mt-1">
                         <Button 
                             variant="secondary" 
@@ -261,7 +273,10 @@ useEffect(() => {
                         <Button 
                             variant="secondary" 
                             className="h-12 px-6 rounded-full bg-red-600 hover:bg-red-500 text-white shadow-xl border-2 border-white transition-transform active:scale-95 text-base font-bold border-0" 
-                            onClick={() => setActiveBuild(null)}
+                            onClick={() => {
+                                setActiveBuild(null);
+                                setPointerOverUI(false); // Destrava a interface ao fechar o menu!
+                            }}
                         >
                             <X className="w-5 h-5 mr-2" /> Cancelar
                         </Button>
@@ -276,7 +291,10 @@ useEffect(() => {
                 onPointerLeave={() => setPointerOverUI(false)}
               >
                 <Button
-                  onClick={() => setIsBottomBarVisible(!isBottomBarVisible)}
+                  onClick={() => {
+                      setIsBottomBarVisible(!isBottomBarVisible);
+                      if (isBottomBarVisible) setPointerOverUI(false); // Destrava quando fecha a barra de baixo
+                  }}
                   variant="secondary"
                   size="icon"
                   className="bg-slate-900/80 hover:bg-slate-800 text-white backdrop-blur rounded-full w-10 h-10 md:w-12 md:h-12 shadow-lg border border-slate-700"

@@ -11,7 +11,8 @@ export interface BuildingDef {
   scale: number
   iconImage: string
   stats?: BuildingStats,
-  yOffset?: number; // Deslocamento vertical para ajustar o posicionamento do modelo
+  yOffset?: number; 
+  haveLight?: boolean; // Indica se o prédio tem luzes (para ligar/desligar à noite)
 }
 
 export interface BuildingStats {
@@ -44,7 +45,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 4,
       "pollution": 1
     },
-    "iconImage": "/models/building-b_icon.png"
+    "iconImage": "/models/building-b_icon.png",
+    haveLight: true,
   },
   "building_c": {
     "name": "Casa",
@@ -58,7 +60,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 4,
       "pollution": 1
     },
-    "iconImage": "/models/building-c_icon.png"
+    "iconImage": "/models/building-c_icon.png",
+    haveLight: true,
   },
   "building_d": {
     "name": "Casa",
@@ -72,7 +75,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 4,
       "pollution": 1
     },
-    "iconImage": "/models/building-d_icon.png"
+    "iconImage": "/models/building-d_icon.png",
+    haveLight: true,
   },
   "building_e": {
     "name": "Casa",
@@ -86,7 +90,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 5,
       "pollution": 1
     },
-    "iconImage": "/models/building-e_icon.png"
+    "iconImage": "/models/building-e_icon.png",
+    haveLight: true,
   },
   "building_f": {
     "name": "Casa",
@@ -100,7 +105,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 6,
       "pollution": 1
     },
-    "iconImage": "/models/building-f_icon.png"
+    "iconImage": "/models/building-f_icon.png",
+    haveLight: true,
   },
   "building_g": {
     "name": "Casa",
@@ -114,7 +120,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 6,
       "pollution": 1
     },
-    "iconImage": "/models/building-g_icon.png"
+    "iconImage": "/models/building-g_icon.png",
+    haveLight: true,
   },
   "building_h": {
     "name": "Casa",
@@ -128,7 +135,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 6,
       "pollution": 1
     },
-    "iconImage": "/models/building-h_icon.png"
+    "iconImage": "/models/building-h_icon.png",
+    haveLight: true,
   },
   "building_i": {
     "name": "Casa",
@@ -142,7 +150,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 9,
       "pollution": 2
     },
-    "iconImage": "/models/building-i_icon.png"
+    "iconImage": "/models/building-i_icon.png",
+    haveLight: true,
   },
   "building_k": {
     "name": "Casa",
@@ -156,7 +165,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 10,
       "pollution": 2
     },
-    "iconImage": "/models/building-k_icon.png"
+    "iconImage": "/models/building-k_icon.png",
+    haveLight: true,
   },
   "building_l": {
     "name": "Casa",
@@ -170,7 +180,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 12,
       "pollution": 3
     },
-    "iconImage": "/models/building-l_icon.png"
+    "iconImage": "/models/building-l_icon.png",
+    haveLight: true,
   },
   "building_m": {
     "name": "Casa",
@@ -184,7 +195,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 12,
       "pollution": 3
     },
-    "iconImage": "/models/building-m_icon.png"
+    "iconImage": "/models/building-m_icon.png",
+    haveLight: true,
   },
   "building_n": {
     "name": "Hospital",
@@ -199,7 +211,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 4,
       "security": 2
     },
-    "iconImage": "/models/building-n_icon.png"
+    "iconImage": "/models/building-n_icon.png",
+    haveLight: true,
   },
   "building_skyscraper_a": {
     "name": "Edifício",
@@ -213,7 +226,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "jobs": 10,
       "pollution": 5
     },
-    "iconImage": "/models/building-skyscraper-a_icon.png"
+    "iconImage": "/models/building-skyscraper-a_icon.png",
+    haveLight: true,
   },
   "building_skyscraper_b": {
     "name": "Edifício",
@@ -227,7 +241,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "jobs": 14,
       "pollution": 7
     },
-    "iconImage": "/models/building-skyscraper-b_icon.png"
+    "iconImage": "/models/building-skyscraper-b_icon.png",
+    haveLight: true,
   },
   "building_skyscraper_c": {
     "name": "Edifício",
@@ -241,7 +256,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "jobs": 12,
       "pollution": 6
     },
-    "iconImage": "/models/building-skyscraper-c_icon.png"
+    "iconImage": "/models/building-skyscraper-c_icon.png",
+    haveLight: true,
   },
   "building_skyscraper_d": {
     "name": "Edifício",
@@ -255,7 +271,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "jobs": 16,
       "pollution": 8
     },
-    "iconImage": "/models/building-skyscraper-d_icon.png"
+    "iconImage": "/models/building-skyscraper-d_icon.png",
+    haveLight: true,
   },
   "building_skyscraper_e": {
     "name": "Edifício",
@@ -269,7 +286,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "jobs": 10,
       "pollution": 5
     },
-    "iconImage": "/models/building-skyscraper-e_icon.png"
+    "iconImage": "/models/building-skyscraper-e_icon.png",
+    haveLight: true,
   },
   "detail_awning_wide": {
     "name": "Detail Awning Wide",
@@ -279,7 +297,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/detail-awning-wide.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/detail-awning-wide_icon.png"
+    "iconImage": "/models/detail-awning-wide_icon.png",
+    haveLight: true,
   },
   "detail_awning": {
     "name": "Detail Awning",
@@ -289,7 +308,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/detail-awning.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/detail-awning_icon.png"
+    "iconImage": "/models/detail-awning_icon.png",
+    haveLight: true,
   },
   "detail_overhang_wide": {
     "name": "Detail Overhang Wide",
@@ -299,7 +319,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/detail-overhang-wide.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/detail-overhang-wide_icon.png"
+    "iconImage": "/models/detail-overhang-wide_icon.png",
+    haveLight: true,
   },
   "detail_overhang": {
     "name": "Detail Overhang",
@@ -309,7 +330,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/detail-overhang.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/detail-overhang_icon.png"
+    "iconImage": "/models/detail-overhang_icon.png",
+    haveLight: true,
   },
   "detail_parasol_a": {
     "name": "Detail Parasol A",
@@ -319,7 +341,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/detail-parasol-a.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/detail-parasol-a_icon.png"
+    "iconImage": "/models/detail-parasol-a_icon.png",
+    haveLight: true,
   },
   "low_detail_building_a": {
     "name": "Low Detail Building A",
@@ -329,7 +352,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/low-detail-building-a.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/low-detail-building-a_icon.png"
+    "iconImage": "/models/low-detail-building-a_icon.png",
+    haveLight: true,
   },
   "low_detail_building_b": {
     "name": "Low Detail Building B",
@@ -339,7 +363,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/low-detail-building-b.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/low-detail-building-b_icon.png"
+    "iconImage": "/models/low-detail-building-b_icon.png",
+    haveLight: true,
   },
   "low_detail_building_c": {
     "name": "Low Detail Building C",
@@ -349,7 +374,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/low-detail-building-c.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/low-detail-building-c_icon.png"
+    "iconImage": "/models/low-detail-building-c_icon.png",
+    haveLight: true,
   },
   "low_detail_building_e": {
     "name": "Low Detail Building E",
@@ -359,7 +385,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/low-detail-building-e.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/low-detail-building-e_icon.png"
+    "iconImage": "/models/low-detail-building-e_icon.png",
+    haveLight: true,
   },
   "low_detail_building_f": {
     "name": "Low Detail Building F",
@@ -369,7 +396,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/low-detail-building-f.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/low-detail-building-f_icon.png"
+    "iconImage": "/models/low-detail-building-f_icon.png",
+    haveLight: true,
   },
   "low_detail_building_g": {
     "name": "Low Detail Building G",
@@ -379,7 +407,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/low-detail-building-g.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/low-detail-building-g_icon.png"
+    "iconImage": "/models/low-detail-building-g_icon.png",
+    haveLight: true,
   },
   "low_detail_building_h": {
     "name": "Low Detail Building H",
@@ -389,7 +418,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/low-detail-building-h.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/low-detail-building-h_icon.png"
+    "iconImage": "/models/low-detail-building-h_icon.png",
+    haveLight: true,
   },
   "low_detail_building_i": {
     "name": "Low Detail Building I",
@@ -399,7 +429,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/low-detail-building-i.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/low-detail-building-i_icon.png"
+    "iconImage": "/models/low-detail-building-i_icon.png",
+    haveLight: true,
   },
   "low_detail_building_j": {
     "name": "Low Detail Building J",
@@ -409,7 +440,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/low-detail-building-j.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/low-detail-building-j_icon.png"
+    "iconImage": "/models/low-detail-building-j_icon.png",
+    haveLight: true,
   },
   "low_detail_building_k": {
     "name": "Low Detail Building K",
@@ -419,7 +451,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/low-detail-building-k.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/low-detail-building-k_icon.png"
+    "iconImage": "/models/low-detail-building-k_icon.png",
+    haveLight: true,
   },
   "low_detail_building_l": {
     "name": "Low Detail Building L",
@@ -429,7 +462,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/low-detail-building-l.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/low-detail-building-l_icon.png"
+    "iconImage": "/models/low-detail-building-l_icon.png",
+    haveLight: true,
   },
   "low_detail_building_m": {
     "name": "Low Detail Building M",
@@ -439,7 +473,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/low-detail-building-m.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/low-detail-building-m_icon.png"
+    "iconImage": "/models/low-detail-building-m_icon.png",
+    haveLight: true,
   },
   "low_detail_building_n": {
     "name": "Low Detail Building N",
@@ -449,7 +484,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/low-detail-building-n.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/low-detail-building-n_icon.png"
+    "iconImage": "/models/low-detail-building-n_icon.png",
+    haveLight: true,
   },
   "low_detail_building_wide_b": {
     "name": "Low Detail Building Wide B",
@@ -459,7 +495,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/low-detail-building-wide-b.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/low-detail-building-wide-b_icon.png"
+    "iconImage": "/models/low-detail-building-wide-b_icon.png",
+    haveLight: true,
   },
   "building_a": {
     "name": "Indústria",
@@ -473,7 +510,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "jobs": 6,
       "pollution": 3
     },
-    "iconImage": "/models/buildings/building-a_icon.png"
+    "iconImage": "/models/buildings/building-a_icon.png",
+    haveLight: true,
   },
   "building_b_1": {
     "name": "Indústria",
@@ -487,7 +525,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "jobs": 6,
       "pollution": 3
     },
-    "iconImage": "/models/buildings/building-b_icon.png"
+    "iconImage": "/models/buildings/building-b_icon.png",
+    haveLight: true,
   },
   "building_c_1": {
     "name": "Fábrica",
@@ -501,7 +540,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "jobs": 10,
       "pollution": 5
     },
-    "iconImage": "/models/buildings/building-c_icon.png"
+    "iconImage": "/models/buildings/building-c_icon.png",
+    haveLight: true,
   },
   "building_d_1": {
     "name": "Indústria",
@@ -515,7 +555,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "jobs": 8,
       "pollution": 4
     },
-    "iconImage": "/models/buildings/building-d_icon.png"
+    "iconImage": "/models/buildings/building-d_icon.png",
+    haveLight: true,
   },
   "building_e_1": {
     "name": "Fábrica",
@@ -529,6 +570,7 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "jobs": 6,
       "pollution": 3
     },
+    haveLight: true,
     "iconImage": "/models/buildings/building-e_icon.png"
   },
   "building_f_1": {
@@ -543,7 +585,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "jobs": 6,
       "pollution": 3
     },
-    "iconImage": "/models/buildings/building-f_icon.png"
+    "iconImage": "/models/buildings/building-f_icon.png",
+    haveLight: true,
   },
   "building_g_1": {
     "name": "Indústria",
@@ -557,7 +600,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "jobs": 8,
       "pollution": 4
     },
-    "iconImage": "/models/buildings/building-g_icon.png"
+    "iconImage": "/models/buildings/building-g_icon.png",
+    haveLight: true,
   },
   "building_h_1": {
     "name": "Casa",
@@ -571,7 +615,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 2,
       "pollution": 1
     },
-    "iconImage": "/models/buildings/building-h_icon.png"
+    "iconImage": "/models/buildings/building-h_icon.png",
+    haveLight: true,
   },
   "building_i_1": {
     "name": "Casa",
@@ -585,7 +630,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 2,
       "pollution": 1
     },
-    "iconImage": "/models/buildings/building-i_icon.png"
+    "iconImage": "/models/buildings/building-i_icon.png",
+    haveLight: true,
   },
   "building_j": {
     "name": "Armazém",
@@ -599,7 +645,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "jobs": 2,
       "pollution": 1
     },
-    "iconImage": "/models/buildings/building-j_icon.png"
+    "iconImage": "/models/buildings/building-j_icon.png",
+    haveLight: true,
   },
   "building_k_1": {
     "name": "Armazém",
@@ -613,7 +660,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "jobs": 2,
       "pollution": 1
     },
-    "iconImage": "/models/buildings/building-k_icon.png"
+    "iconImage": "/models/buildings/building-k_icon.png",
+    haveLight: true,
   },
   "building_l_1": {
     "name": "Fábrica",
@@ -627,7 +675,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "jobs": 6,
       "pollution": 3
     },
-    "iconImage": "/models/buildings/building-l_icon.png"
+    "iconImage": "/models/buildings/building-l_icon.png",
+    haveLight: true,
   },
   "building_m_1": {
     "name": "Fábrica",
@@ -641,7 +690,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "jobs": 8,
       "pollution": 4
     },
-    "iconImage": "/models/buildings/building-m_icon.png"
+    "iconImage": "/models/buildings/building-m_icon.png",
+    haveLight: true,
   },
   "building_n_1": {
     "name": "Fábrica",
@@ -655,7 +705,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "jobs": 6,
       "pollution": 3
     },
-    "iconImage": "/models/buildings/building-n_icon.png"
+    "iconImage": "/models/buildings/building-n_icon.png",
+    haveLight: true,
   },
   "building_o": {
     "name": "Indústria",
@@ -669,7 +720,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "jobs": 4,
       "pollution": 2
     },
-    "iconImage": "/models/buildings/building-o_icon.png"
+    "iconImage": "/models/buildings/building-o_icon.png",
+    haveLight: true,
   },
   "building_p": {
     "name": "Casa",
@@ -683,7 +735,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 2,
       "pollution": 1
     },
-    "iconImage": "/models/buildings/building-p_icon.png"
+    "iconImage": "/models/buildings/building-p_icon.png",
+    haveLight: true,
   },
   "building_q": {
     "name": "Polícia",
@@ -698,7 +751,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 3,
       "security": 3
     },
-    "iconImage": "/models/buildings/building-q_icon.png"
+    "iconImage": "/models/buildings/building-q_icon.png",
+    haveLight: true,
   },
   "building_r": {
     "name": "Polícia",
@@ -713,7 +767,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "pollution": 2,
       "security": 2
     },
-    "iconImage": "/models/buildings/building-r_icon.png"
+    "iconImage": "/models/buildings/building-r_icon.png",
+    haveLight: true,
   },
   "building_s": {
     "name": "Armazém",
@@ -727,7 +782,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "jobs": 4,
       "pollution": 2
     },
-    "iconImage": "/models/buildings/building-s_icon.png"
+    "iconImage": "/models/buildings/building-s_icon.png",
+    haveLight: true,
   },
   "building_t": {
     "name": "Casa",
@@ -741,7 +797,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "population": 6,
       "pollution": 1
     },
-    "iconImage": "/models/buildings/building-t_icon.png"
+    "iconImage": "/models/buildings/building-t_icon.png",
+    haveLight: true,
   },
   "chimney_basic": {
     "name": "Chimney Basic",
@@ -751,7 +808,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/buildings/chimney-basic.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/buildings/chimney-basic_icon.png"
+    "iconImage": "/models/buildings/chimney-basic_icon.png",
+    haveLight: true,
   },
   "chimney_large": {
     "name": "Chimney Large",
@@ -761,7 +819,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/buildings/chimney-large.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/buildings/chimney-large_icon.png"
+    "iconImage": "/models/buildings/chimney-large_icon.png",
+    haveLight: true,
   },
   "chimney_medium": {
     "name": "Chimney Medium",
@@ -771,7 +830,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/buildings/chimney-medium.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/buildings/chimney-medium_icon.png"
+    "iconImage": "/models/buildings/chimney-medium_icon.png",
+    haveLight: true,
   },
   "chimney_small": {
     "name": "Chimney Small",
@@ -781,7 +841,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/buildings/chimney-small.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/buildings/chimney-small_icon.png"
+    "iconImage": "/models/buildings/chimney-small_icon.png",
+    haveLight: true,
   },
   "detail_tank": {
     "name": "Detail Tank",
@@ -791,7 +852,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/buildings/detail-tank.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/buildings/detail-tank_icon.png"
+    "iconImage": "/models/buildings/detail-tank_icon.png",
+    haveLight: true,
   },
   "ambulance": {
     "name": "Ambulance",
@@ -871,7 +933,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/cars/delivery-flat.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/cars/delivery-flat_icon.png"
+    "iconImage": "/models/cars/delivery-flat_icon.png",
+    haveLight: true,
   },
   "delivery": {
     "name": "Delivery",
@@ -881,7 +944,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/cars/delivery.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/cars/delivery_icon.png"
+    "iconImage": "/models/cars/delivery_icon.png",
+    haveLight: true,
   },
   "firetruck": {
     "name": "Firetruck",
@@ -891,7 +955,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/cars/firetruck.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/cars/firetruck_icon.png"
+    "iconImage": "/models/cars/firetruck_icon.png",
+    haveLight: true,
   },
   "garbage_truck": {
     "name": "Garbage Truck",
@@ -901,7 +966,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/cars/garbage-truck.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/cars/garbage-truck_icon.png"
+    "iconImage": "/models/cars/garbage-truck_icon.png",
+    haveLight: true,
   },
   "hatchback_sports": {
     "name": "Hatchback Sports",
@@ -911,7 +977,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/cars/hatchback-sports.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/cars/hatchback-sports_icon.png"
+    "iconImage": "/models/cars/hatchback-sports_icon.png",
+    haveLight: true,
   },
   "kart_oobi": {
     "name": "Kart Oobi",
@@ -921,7 +988,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/cars/kart-oobi.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/cars/kart-oobi_icon.png"
+    "iconImage": "/models/cars/kart-oobi_icon.png",
+    haveLight: true,
   },
   "kart_oodi": {
     "name": "Kart Oodi",
@@ -931,7 +999,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/cars/kart-oodi.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/cars/kart-oodi_icon.png"
+    "iconImage": "/models/cars/kart-oodi_icon.png",
+    haveLight: true,
   },
   "kart_ooli": {
     "name": "Kart Ooli",
@@ -941,7 +1010,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/cars/kart-ooli.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/cars/kart-ooli_icon.png"
+    "iconImage": "/models/cars/kart-ooli_icon.png",
+    haveLight: true,
   },
   "kart_oopi": {
     "name": "Kart Oopi",
@@ -951,7 +1021,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/cars/kart-oopi.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/cars/kart-oopi_icon.png"
+    "iconImage": "/models/cars/kart-oopi_icon.png",
+    haveLight: true,
   },
   "kart_oozi": {
     "name": "Kart Oozi",
@@ -961,7 +1032,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/cars/kart-oozi.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/cars/kart-oozi_icon.png"
+    "iconImage": "/models/cars/kart-oozi_icon.png",
+    haveLight: true,
   },
   "police": {
     "name": "Police",
@@ -971,7 +1043,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/cars/police.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/cars/police_icon.png"
+    "iconImage": "/models/cars/police_icon.png",
+    haveLight: true,
   },
   "race_future": {
     "name": "Race Future",
@@ -981,7 +1054,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/cars/race-future.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/cars/race-future_icon.png"
+    "iconImage": "/models/cars/race-future_icon.png",
+    haveLight: true,
   },
   "race": {
     "name": "Race",
@@ -991,7 +1065,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/cars/race.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/cars/race_icon.png"
+    "iconImage": "/models/cars/race_icon.png",
+    haveLight: true,
   },
   "sedan_sports": {
     "name": "Sedan Sports",
@@ -1001,7 +1076,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/cars/sedan-sports.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/cars/sedan-sports_icon.png"
+    "iconImage": "/models/cars/sedan-sports_icon.png",
+    haveLight: true,
   },
   "sedan": {
     "name": "Sedan",
@@ -1011,7 +1087,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/cars/sedan.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/cars/sedan_icon.png"
+    "iconImage": "/models/cars/sedan_icon.png",
+    haveLight: true,
   },
   "suv_luxury": {
     "name": "Suv Luxury",
@@ -1021,7 +1098,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/cars/suv-luxury.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/cars/suv-luxury_icon.png"
+    "iconImage": "/models/cars/suv-luxury_icon.png",
+    haveLight: true,
   },
   "suv": {
     "name": "Suv",
@@ -1031,7 +1109,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/cars/suv.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/cars/suv_icon.png"
+    "iconImage": "/models/cars/suv_icon.png",
+    haveLight: true,
   },
   "taxi": {
     "name": "Taxi",
@@ -1041,7 +1120,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/cars/taxi.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/cars/taxi_icon.png"
+    "iconImage": "/models/cars/taxi_icon.png",
+    haveLight: true,
   },
   "tractor_police": {
     "name": "Tractor Police",
@@ -1051,7 +1131,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/cars/tractor-police.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/cars/tractor-police_icon.png"
+    "iconImage": "/models/cars/tractor-police_icon.png",
+    haveLight: true,
   },
   "tractor_shovel": {
     "name": "Tractor Shovel",
@@ -1091,7 +1172,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/cars/truck.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/cars/truck_icon.png"
+    "iconImage": "/models/cars/truck_icon.png",
+    haveLight: true,
   },
   "van": {
     "name": "Van",
@@ -1101,7 +1183,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/cars/van.glb",
     "icon": "__ICON_Home__",
     "scale": 2,
-    "iconImage": "/models/cars/van_icon.png"
+    "iconImage": "/models/cars/van_icon.png",
+    haveLight: true,
   },
   "character_a": {
     "name": "Character A",
@@ -1311,7 +1394,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/construction-light.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/construction-light_icon.png"
+    "iconImage": "/models/infra/construction-light_icon.png",
+    haveLight: true,
   },
   "light_curved_cross": {
     "name": "Light Curved Cross",
@@ -1321,7 +1405,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/light-curved-cross.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/light-curved-cross_icon.png"
+    "iconImage": "/models/infra/light-curved-cross_icon.png",
+    haveLight: true,
   },
   "light_curved_double": {
     "name": "Light Curved Double",
@@ -1331,7 +1416,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/light-curved-double.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/light-curved-double_icon.png"
+    "iconImage": "/models/infra/light-curved-double_icon.png",
+    haveLight: true,
   },
   "light_curved": {
     "name": "Light Curved",
@@ -1341,7 +1427,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/light-curved.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/light-curved_icon.png"
+    "iconImage": "/models/infra/light-curved_icon.png",
+    haveLight: true,
   },
   "light_square_cross": {
     "name": "Light Square Cross",
@@ -1351,7 +1438,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/light-square-cross.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/light-square-cross_icon.png"
+    "iconImage": "/models/infra/light-square-cross_icon.png",
+    haveLight: true,
   },
   "light_square_double": {
     "name": "Light Square Double",
@@ -1361,7 +1449,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/light-square-double.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/light-square-double_icon.png"
+    "iconImage": "/models/infra/light-square-double_icon.png",
+    haveLight: true,
   },
   "light_square": {
     "name": "Light Square",
@@ -1371,7 +1460,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "url": "/models/infra/light-square.glb",
     "icon": "__ICON_Route__",
     "scale": 2,
-    "iconImage": "/models/infra/light-square_icon.png"
+    "iconImage": "/models/infra/light-square_icon.png",
+    haveLight: true,
   },
   "road_bend_sidewalk": {
     "name": "Road Bend Sidewalk",
@@ -2217,7 +2307,8 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
       "entertainment": 10
     },
     "iconImage": "/models/specials/airport_tower_icon.png",
-    "yOffset": 1.5
+    "yOffset": 1.5,
+    haveLight: true,
   }
 }
 

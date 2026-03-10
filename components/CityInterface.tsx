@@ -51,21 +51,7 @@ export default function CityInterface({ student, buildings: initialBuildings, re
      setTimeout(() => setIsLoading(false), 300);
   }, []);
 
-  // NOVO: Efeito que faz o relógio rodar na mesma velocidade do DayNightManager (120s = 24h)
-  useEffect(() => {
-    const CYCLE_DURATION = 120; // Segundos que duram um dia
-    const hoursPerSecond = 24 / CYCLE_DURATION;
 
-    const interval = setInterval(() => {
-      setGameTime(prev => {
-        let nextTime = prev + hoursPerSecond;
-        if (nextTime >= 24) nextTime -= 24;
-        return nextTime;
-      });
-    }, 1000); // Atualiza o relógio a cada 1 segundo real
-
-    return () => clearInterval(interval);
-  }, []);
 
   // Converte o número (ex: 8.5) para formato de hora (ex: 08:30)
   const formatTime = (time: number) => {
@@ -187,6 +173,7 @@ export default function CityInterface({ student, buildings: initialBuildings, re
                 }}
                 onAssetsLoaded={handleAssetsLoaded}
                 buildRotation={buildRotation}
+                onTimeUpdate={setGameTime}
             />
 
             <div 

@@ -113,6 +113,28 @@ export class BuildingManager {
     const worldZ = building.y * 2 - OFFSET;
     buildingEntity.setPosition(worldX, config.yOffset || 0, worldZ);
 
+    if(config.haveLight) {
+    // 👇 INÍCIO DO NOVO BLOCO: LUZES DA CIDADE 👇
+    const nightLight = new pc.Entity('NightLight');
+    nightLight.addComponent('light', {
+        type: 'point',
+        color: new pc.Color(1.0, 0.85, 0.5), // Cor de poste de rua (Amarelo quente)
+        intensity: 0,                        // Começa apagada (pois pode ser dia)
+        range: 15,                            // Ilumina só o quarteirão do prédio
+        falloffMode: pc.LIGHTFALLOFF_LINEAR, // A luz some suavemente nas bordas
+        castShadows: false                   // IMPORTANTE: Sem sombras para não travar o celular!
+    });
+    
+    // Coloca a luz a 1 metro de altura (para iluminar o chão em volta do prédio)
+    nightLight.setLocalPosition(0, 1, 0); 
+    
+    // Adicionamos uma "etiqueta" para acharmos todas as luzes facilmente depois
+    nightLight.tags.add('city-light'); 
+    
+    buildingEntity.addChild(nightLight);
+    // 👆 FIM DO NOVO BLOCO 👆
+  }
+
     this.app.root.addChild(buildingEntity);
 
     // Animação de entrada

@@ -22,6 +22,9 @@ export class DayNightManager {
   public onTimeUpdate?: (time: number) => void;
   private lastEmittedTime = -1;
 
+  // NOVO: Chave usada para salvar no cache do navegador
+  private readonly STORAGE_KEY = 'lumen_city_time';
+
   // Ângulos contínuos (90 até -270) garantem que o sol faça um círculo perfeito de 360º
   private keyframes: TimeKeyframe[] = [
     { time: 0,  sky: new pc.Color(0.05, 0.05, 0.15), ambient: new pc.Color(0.3, 0.3, 0.4), sun: new pc.Color(0.1, 0.1, 0.2), intensity: 0.5, pitch: 90 }, 
@@ -36,7 +39,34 @@ export class DayNightManager {
 
   constructor(app: pc.Application) {
     this.app = app;
+    this.loadTimeFromCache(); // NOVO: Tenta carregar o tempo salvo ao iniciar
   }
+
+  // 👇 INÍCIO DO BLOCO DE CACHE 👇
+  private loadTimeFromCache(): void {
+    try {
+      const savedTime = localStorage.getItem(this.STORAGE_KEY);
+      if (savedTime !== null) {
+        const parsedTime = parseFloat(savedTime);
+        // Garante que o valor salvo é um número válido e está entre 0 e 24
+        if (!isNaN(parsedTime) && parsedTime >= 0 && parsedTime <= 24) {
+          this.timeOfDay = parsedTime;
+          console.log(`⏰ Relógio carregado do cache: ${this.timeOfDay.toFixed(2)}h`);
+        }
+      }
+    } catch (e) {
+      console.warn("Não foi possível acessar o localStorage para carregar a hora.");
+    }
+  }
+
+  private saveTimeToCache(): void {
+    try {
+      localStorage.setItem(this.STORAGE_KEY, this.timeOfDay.toString());
+    } catch (e) {
+      // Ignora silenciosamente (ex: modo anônimo ou limite de quota)
+    }
+  }
+  // 👆 FIM DO BLOCO DE CACHE 👆
 
   public setCamera(camera: pc.Entity): void {
     this.cameraEntity = camera;
@@ -65,11 +95,12 @@ export class DayNightManager {
 
     this.updateLighting();
 
-    // Avisa a interface a cada "1 minuto" de jogo para sincronizar os relógios
+    // Avisa a interface a cada "1 minuto" de jogo para sincronizar os relógios e SALVAR o cache
     const roundedTime = Math.floor(this.timeOfDay * 60); 
     if (roundedTime !== this.lastEmittedTime) {
         this.lastEmittedTime = roundedTime;
         if (this.onTimeUpdate) this.onTimeUpdate(this.timeOfDay);
+        this.saveTimeToCache(); // NOVO: Salva o progresso a cada minuto do jogo
     }
   }
 
@@ -107,11 +138,11 @@ export class DayNightManager {
     // --- CONTROLE DAS LUZES DA CIDADE ---
     let cityLightForce = 0;
     if (this.timeOfDay >= 18.5 || this.timeOfDay <= 5.5) {
-      cityLightForce = 5.0; // MUITO MAIS FORTE
+      cityLightForce = 1.5; // MUITO MAIS FORTE
     } else if (this.timeOfDay > 18.0 && this.timeOfDay < 18.5) {
-      cityLightForce = (this.timeOfDay - 18.0) * 10; 
+      cityLightForce = (this.timeOfDay - 18.0) * 2; 
     } else if (this.timeOfDay > 5.5 && this.timeOfDay < 6.0) {
-      cityLightForce = (6.0 - this.timeOfDay) * 10;
+      cityLightForce = (6.0 - this.timeOfDay) * 2;
     }
 
     const cityLights = this.app.root.findByTag('city-light') as pc.Entity[];

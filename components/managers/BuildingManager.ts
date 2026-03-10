@@ -126,7 +126,7 @@ export class BuildingManager {
         type: 'point',
         color: new pc.Color(1.0, 0.85, 0.5), // Cor de poste de rua (Amarelo quente)
         intensity: 0,                        // Começa apagada (pois pode ser dia)
-        range: 15,                            // Ilumina só o quarteirão do prédio
+        range: 4,                            // Ilumina só o quarteirão do prédio
         falloffMode: pc.LIGHTFALLOFF_LINEAR, // A luz some suavemente nas bordas
         castShadows: false                   // IMPORTANTE: Sem sombras para não travar o celular!
     });

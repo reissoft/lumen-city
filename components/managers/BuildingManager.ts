@@ -70,7 +70,13 @@ export class BuildingManager {
     const asset = this.assetManager.getAsset(building.type);
     const config = BUILDING_CONFIG[building.type as BuildingType];
     const scale = config?.scale || 1;
-    
+    if (!config) {
+        console.warn(`Prédio antigo ou desconhecido ignorado: ${building.type}`);
+        // Retorna uma entidade vazia para não quebrar o jogo
+        const emptyEntity = new pc.Entity();
+        this.app.root.addChild(emptyEntity);
+        return emptyEntity;
+    }
     let buildingEntity: pc.Entity | null = null;
 
     // 1. TENTATIVA: Criar a partir do Asset GLB

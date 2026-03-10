@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from 'react'
 import CityScene from "./CityScene"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { X, MousePointer2, Hammer, Leaf, Route, Star, RotateCw, Trash2, Loader2, Smartphone, Maximize, Minimize, ChevronDown, ChevronUp, Sun, Moon } from "lucide-react"
+import { X, MousePointer2, Hammer, Leaf, Route, Star, RotateCw, Trash2, Loader2, Smartphone, Maximize, Minimize, ChevronDown, ChevronUp, Sun, Moon,Play, Pause } from "lucide-react"
 import { Users, Briefcase, Smile, ShieldAlert } from 'lucide-react';
 import { buyBuilding, demolishBuildingAction, rotateBuildingAction } from "@/app/actions"
 import { BUILDING_CONFIG, CATEGORIES, BuildingCategory } from '@/app/config/buildings'
@@ -39,7 +39,8 @@ export default function CityInterface({ student, buildings: initialBuildings, re
   const [buildRotation, setBuildRotation] = useState(0);
 
   // NOVO: Estado para controlar o relógio do jogo (Começa às 08:00)
-  const [gameTime, setGameTime] = useState(8);
+    const [gameTime, setGameTime] = useState(8);
+  const [isTimePaused, setIsTimePaused] = useState(false); // <--- ADICIONE AQUI
 
   const setPointerOverUI = (isOver: boolean) => {
     if (typeof window !== 'undefined') {
@@ -174,6 +175,7 @@ export default function CityInterface({ student, buildings: initialBuildings, re
                 onAssetsLoaded={handleAssetsLoaded}
                 buildRotation={buildRotation}
                 onTimeUpdate={setGameTime}
+                isTimePaused={isTimePaused}
             />
 
             <div 
@@ -205,15 +207,28 @@ export default function CityInterface({ student, buildings: initialBuildings, re
                 <div className="flex justify-between items-start">
                     <div className="bg-slate-900/90 backdrop-blur p-2 md:p-4 rounded-xl border border-slate-700 flex gap-3 md:gap-6 text-white shadow-xl">
                         
-                        {/* 👇 NOVO: Bloco do Relógio */}
-                        <div className="flex flex-col items-center border-r border-slate-700 pr-3 md:pr-6">
-                            <div className="flex items-center gap-1 md:gap-2 text-slate-400 text-[10px] md:text-xs uppercase font-bold">
-                                {isDaytime ? <Sun size={12} className="text-yellow-400" /> : <Moon size={12} className="text-blue-300" />} 
-                                Hora
+                        {/* 👇 NOVO: Bloco do Relógio com Botão Pause */}
+                        <div className="flex items-center border-r border-slate-700 pr-3 md:pr-6 gap-2 md:gap-4">
+                            <div className="flex flex-col items-center">
+                                <div className="flex items-center gap-1 md:gap-2 text-slate-400 text-[10px] md:text-xs uppercase font-bold">
+                                    {isDaytime ? <Sun size={12} className="text-yellow-400" /> : <Moon size={12} className="text-blue-300" />} 
+                                    Hora
+                                </div>
+                                <span className={cn("text-base md:text-xl font-bold font-mono", isDaytime ? "text-white" : "text-blue-200")}>
+                                    {formatTime(gameTime)}
+                                </span>
                             </div>
-                            <span className={cn("text-base md:text-xl font-bold font-mono", isDaytime ? "text-white" : "text-blue-200")}>
-                                {formatTime(gameTime)}
-                            </span>
+                            
+                            {/* Botão de Pause/Play */}
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="w-8 h-8 md:w-10 md:h-10 rounded-full hover:bg-slate-800 text-slate-300 hover:text-white"
+                                onClick={() => setIsTimePaused(!isTimePaused)}
+                                title={isTimePaused ? "Retomar Tempo" : "Pausar Tempo"}
+                            >
+                                {isTimePaused ? <Play size={16} className="text-green-400" /> : <Pause size={16} className="text-yellow-400" />}
+                            </Button>
                         </div>
                         {/* 👆 FIM do Bloco do Relógio */}
 

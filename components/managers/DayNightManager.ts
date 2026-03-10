@@ -16,7 +16,8 @@ export class DayNightManager {
   private sunLight: pc.Entity | null = null;
 
   public timeOfDay: number = 8; 
-  private readonly CYCLE_DURATION = 60; // 120s = 24h. Agora vai funcionar!
+  private readonly CYCLE_DURATION = 520; 
+  public isPaused: boolean = false;
 
   public onTimeUpdate?: (time: number) => void;
   private lastEmittedTime = -1;
@@ -56,9 +57,11 @@ export class DayNightManager {
   update(dt: number): void {
     this.findSunLight();
 
-    const hoursPerSecond = 24 / this.CYCLE_DURATION;
-    this.timeOfDay += hoursPerSecond * dt;
-    if (this.timeOfDay >= 24) this.timeOfDay -= 24;
+    if (!this.isPaused) {
+      const hoursPerSecond = 24 / this.CYCLE_DURATION;
+      this.timeOfDay += hoursPerSecond * dt;
+      if (this.timeOfDay >= 24) this.timeOfDay -= 24;
+    }
 
     this.updateLighting();
 

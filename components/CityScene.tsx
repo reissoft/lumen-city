@@ -38,8 +38,9 @@ const CityScene = memo(function CityScene({
   onCancelBuild,
   onAssetsLoaded,
   buildRotation = 0,
-  onTimeUpdate
-}: CitySceneProps & { buildRotation?: number, onTimeUpdate?: (time: number) => void }) {
+  onTimeUpdate,
+  isTimePaused
+}: CitySceneProps & { buildRotation?: number, onTimeUpdate?: (time: number) => void,isTimePaused?: boolean }) {
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const appRef = useRef<pc.Application | null>(null)
@@ -217,6 +218,7 @@ const CityScene = memo(function CityScene({
     const dayNightManager = dayNightManagerRef.current
     if (dayNightManager) {
       dayNightManager.onTimeUpdate = onTimeUpdate
+      dayNightManager.isPaused = !!isTimePaused
     }
 
   }, [onSelectTile, onCancelBuild, activeBuild, onTimeUpdate]) // A dependência do onTimeUpdate também foi adicionada aqui

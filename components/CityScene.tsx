@@ -11,6 +11,7 @@ import { GhostManager } from './managers/GhostManager'
 import { TrafficManager } from './managers/TrafficManager'
 import { TrainManager } from './managers/TrainManager'
 import { AirplaneManager } from './managers/AirplaneManager'
+import { CloudManager } from './managers/CloudManager'
 import { SceneSetup } from './setup/SceneSetup'
 import { DEVICETYPE_WEBGL1 } from 'playcanvas'
 
@@ -50,6 +51,7 @@ const CityScene = memo(function CityScene({
   const trafficManagerRef = useRef<TrafficManager | null>(null)
   const trainManagerRef = useRef<TrainManager | null>(null)
   const airplaneManagerRef = useRef<AirplaneManager | null>(null)
+  const cloudManagerRef = useRef<CloudManager | null>(null)
   
   // Controle de assets
   const [assetsReady, setAssetsReady] = useState(false)
@@ -143,6 +145,10 @@ const CityScene = memo(function CityScene({
     const airplaneManager = new AirplaneManager(app, assetManager)
     airplaneManagerRef.current = airplaneManager
 
+    // Inicializa CloudManager <--- ADICIONE ESTE BLOCO
+    const cloudManager = new CloudManager(app)
+    cloudManagerRef.current = cloudManager
+
     // Configuração da cena
     const sceneSetup = new SceneSetup(app)
     sceneSetup.setupScene()
@@ -157,6 +163,7 @@ const CityScene = memo(function CityScene({
       trafficManager.update(dt)
       trainManager.update(dt)
       airplaneManager.update(dt)
+      cloudManager.update(dt)
     })
 
     // Resize handler
@@ -187,6 +194,12 @@ const CityScene = memo(function CityScene({
       if (airplaneManager) {
         airplaneManager.destroy()
       }
+
+      const cloudManager = cloudManagerRef.current
+      if (cloudManager) {
+        cloudManager.destroy()
+      }
+      
       app.destroy()
       appRef.current = null
     }

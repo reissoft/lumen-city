@@ -10,6 +10,7 @@ import { BuildingManager } from './managers/BuildingManager'
 import { GhostManager } from './managers/GhostManager'
 import { TrafficManager } from './managers/TrafficManager'
 import { TrainManager } from './managers/TrainManager'
+import { AirplaneManager } from './managers/AirplaneManager'
 import { SceneSetup } from './setup/SceneSetup'
 import { DEVICETYPE_WEBGL1 } from 'playcanvas'
 
@@ -48,6 +49,7 @@ const CityScene = memo(function CityScene({
   const ghostManagerRef = useRef<GhostManager | null>(null)
   const trafficManagerRef = useRef<TrafficManager | null>(null)
   const trainManagerRef = useRef<TrainManager | null>(null)
+  const airplaneManagerRef = useRef<AirplaneManager | null>(null)
   
   // Controle de assets
   const [assetsReady, setAssetsReady] = useState(false)
@@ -138,6 +140,9 @@ const CityScene = memo(function CityScene({
     const trainManager = new TrainManager(app, assetManager)
     trainManagerRef.current = trainManager
 
+    const airplaneManager = new AirplaneManager(app, assetManager)
+    airplaneManagerRef.current = airplaneManager
+
     // Configuração da cena
     const sceneSetup = new SceneSetup(app)
     sceneSetup.setupScene()
@@ -151,6 +156,7 @@ const CityScene = memo(function CityScene({
       materialManager.updateGhostPulse()
       trafficManager.update(dt)
       trainManager.update(dt)
+      airplaneManager.update(dt)
     })
 
     // Resize handler
@@ -175,6 +181,11 @@ const CityScene = memo(function CityScene({
       const trainManager = trainManagerRef.current
       if (trainManager) {
         trainManager.destroy()
+      }
+
+      const airplaneManager = airplaneManagerRef.current
+      if (airplaneManager) {
+        airplaneManager.destroy()
       }
       app.destroy()
       appRef.current = null
@@ -241,6 +252,12 @@ const CityScene = memo(function CityScene({
     const trainManager = trainManagerRef.current
     if (trainManager) {
       trainManager.updateRailGraph(buildings)
+    }
+
+    // 6. Atualiza Aeroportos <--- ADICIONE ESTE BLOCO
+    const airplaneManager = airplaneManagerRef.current
+    if (airplaneManager) {
+      airplaneManager.updateAirports(buildings)
     }
 
     return () => { 

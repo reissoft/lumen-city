@@ -2199,9 +2199,22 @@ export const BUILDING_CONFIG: Record<string, BuildingDef> = {
     "icon": "__ICON_TreeDeciduous__",
     "scale": 0.5,
     "stats": {
-      "entertainment": 10
+      "entertainment": 1
     },
     "iconImage": "/models/infra/train/railroad-straight_icon.png"
+  },
+  "airport": {
+    "name": "Aeroporto",
+    "description": "Aeroporto",
+    "category": "special",
+    "cost": 100,
+    "url": "/models/specials/airport_tower.glb",
+    "icon": "__ICON_Home__",
+    "scale": 4,
+    "stats": {
+      "entertainment": 10
+    },
+    "iconImage": "/models/specials/airport_tower_icon.png"
   }
 }
 

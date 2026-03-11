@@ -15,17 +15,13 @@ export class DayNightManager {
   private cameraEntity: pc.Entity | null = null;
   private sunLight: pc.Entity | null = null;
 
-  public timeOfDay: number = 8; 
-  private readonly CYCLE_DURATION = 520; 
+  public timeOfDay: number = 12; // Inicia ao meio-dia por padrão
   public isPaused: boolean = false;
 
   public onTimeUpdate?: (time: number) => void;
   private lastEmittedTime = -1;
 
-  // NOVO: Chave usada para salvar no cache do navegador
-  private readonly STORAGE_KEY = 'lumen_city_time';
-
-  // Ângulos contínuos (90 até -270) garantem que o sol faça um círculo perfeito de 360º
+  // Keyframes mantidos: Cores vibrantes de dia e noites claras e azuladas
   private keyframes: TimeKeyframe[] = [
     { time: 0,  sky: new pc.Color(0.05, 0.05, 0.15), ambient: new pc.Color(0.3, 0.3, 0.4), sun: new pc.Color(0.1, 0.1, 0.2), intensity: 0.5, pitch: 90 }, 
     { time: 6,  sky: new pc.Color(0.80, 0.40, 0.20), ambient: new pc.Color(0.5, 0.4, 0.4), sun: new pc.Color(1.0, 0.6, 0.2), intensity: 0.8, pitch: 0 },  
@@ -39,34 +35,8 @@ export class DayNightManager {
 
   constructor(app: pc.Application) {
     this.app = app;
-    this.loadTimeFromCache(); // NOVO: Tenta carregar o tempo salvo ao iniciar
+    // Removemos as funções de cache, pois agora usamos a hora real do sistema!
   }
-
-  // 👇 INÍCIO DO BLOCO DE CACHE 👇
-  private loadTimeFromCache(): void {
-    try {
-      const savedTime = localStorage.getItem(this.STORAGE_KEY);
-      if (savedTime !== null) {
-        const parsedTime = parseFloat(savedTime);
-        // Garante que o valor salvo é um número válido e está entre 0 e 24
-        if (!isNaN(parsedTime) && parsedTime >= 0 && parsedTime <= 24) {
-          this.timeOfDay = parsedTime;
-          console.log(`⏰ Relógio carregado do cache: ${this.timeOfDay.toFixed(2)}h`);
-        }
-      }
-    } catch (e) {
-      console.warn("Não foi possível acessar o localStorage para carregar a hora.");
-    }
-  }
-
-  private saveTimeToCache(): void {
-    try {
-      localStorage.setItem(this.STORAGE_KEY, this.timeOfDay.toString());
-    } catch (e) {
-      // Ignora silenciosamente (ex: modo anônimo ou limite de quota)
-    }
-  }
-  // 👆 FIM DO BLOCO DE CACHE 👆
 
   public setCamera(camera: pc.Entity): void {
     this.cameraEntity = camera;
@@ -87,20 +57,24 @@ export class DayNightManager {
   update(dt: number): void {
     this.findSunLight();
 
-    if (!this.isPaused) {
-      const hoursPerSecond = 24 / this.CYCLE_DURATION;
-      this.timeOfDay += hoursPerSecond * dt;
-      if (this.timeOfDay >= 24) this.timeOfDay -= 24;
+    // 👇 NOVA LÓGICA DE TEMPO 👇
+    if (this.isPaused) {
+      // Se pausado, crava o relógio sempre no meio-dia
+      this.timeOfDay = 12;
+    } else {
+      // Se rodando, pega a hora exata do computador do usuário
+      const now = new Date();
+      // Converte a hora real para um número decimal (Ex: 14h30 vira 14.5)
+      this.timeOfDay = now.getHours() + (now.getMinutes() / 60) + (now.getSeconds() / 3600);
     }
 
     this.updateLighting();
 
-    // Avisa a interface a cada "1 minuto" de jogo para sincronizar os relógios e SALVAR o cache
+    // Avisa a interface apenas quando o minuto "visível" mudar (para não flodar o React de atualizações)
     const roundedTime = Math.floor(this.timeOfDay * 60); 
     if (roundedTime !== this.lastEmittedTime) {
         this.lastEmittedTime = roundedTime;
         if (this.onTimeUpdate) this.onTimeUpdate(this.timeOfDay);
-        this.saveTimeToCache(); // NOVO: Salva o progresso a cada minuto do jogo
     }
   }
 
@@ -138,7 +112,7 @@ export class DayNightManager {
     // --- CONTROLE DAS LUZES DA CIDADE ---
     let cityLightForce = 0;
     if (this.timeOfDay >= 18.5 || this.timeOfDay <= 5.5) {
-      cityLightForce = 1.5; // MUITO MAIS FORTE
+      cityLightForce = 1.5; 
     } else if (this.timeOfDay > 18.0 && this.timeOfDay < 18.5) {
       cityLightForce = (this.timeOfDay - 18.0) * 2; 
     } else if (this.timeOfDay > 5.5 && this.timeOfDay < 6.0) {

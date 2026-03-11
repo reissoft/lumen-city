@@ -562,3 +562,21 @@ export async function demolishBuildingAction(buildingId: number) {
     console.error("Erro ao demolir no banco:", error);
   }
 }
+
+export async function getServerDayConfig() {
+  // 1. Aqui você buscaria do banco de dados a data em que o aluno criou a cidade.
+  // Por enquanto, vamos simular uma data de início fixa (ex: 1 de Março de 2024)
+  const cityStartDate = new Date('2026-03-01T00:00:00Z').getTime();
+  
+  // 2. Pegamos a hora real e inviolável do servidor
+  const currentServerTime = Date.now();
+  
+  // 3. Definimos que 1 dia no jogo equivale a 24 horas reais (em milissegundos)
+  const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+  return {
+    cityStartDate,
+    currentServerTime,
+    MS_PER_DAY
+  };
+}

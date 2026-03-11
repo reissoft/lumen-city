@@ -4,9 +4,9 @@ import { useState, useCallback, useEffect } from 'react'
 import CityScene from "./CityScene"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { X, MousePointer2, Hammer, Leaf, Route, Star, RotateCw, Trash2, Loader2, Smartphone, Maximize, Minimize, ChevronDown, ChevronUp, Sun, Moon,Play, Pause } from "lucide-react"
+import { X, MousePointer2, Hammer, Leaf, Route, Star, RotateCw, Trash2, Loader2, Smartphone, Maximize, Minimize, ChevronDown, ChevronUp, Sun, Moon,Play, Pause,Calendar } from "lucide-react"
 import { Users, Briefcase, Smile, ShieldAlert } from 'lucide-react';
-import { buyBuilding, demolishBuildingAction, rotateBuildingAction } from "@/app/actions"
+import { buyBuilding, demolishBuildingAction, rotateBuildingAction,getServerDayConfig } from "@/app/actions"
 import { BUILDING_CONFIG, CATEGORIES, BuildingCategory } from '@/app/config/buildings'
 import { cn } from '@/lib/utils'
 import { useCityStats } from '@/app/hooks/useCityStats';
@@ -40,7 +40,32 @@ export default function CityInterface({ student, buildings: initialBuildings, re
 
   // NOVO: Estado para controlar o relógio do jogo (Começa às 08:00)
     const [gameTime, setGameTime] = useState(8);
-  const [isTimePaused, setIsTimePaused] = useState(false); // <--- ADICIONE AQUI
+
+    const [gameDay, setGameDay] = useState<number>(1);
+
+  // NOVO: Busca o Dia real do servidor assim que a interface carrega
+  useEffect(() => {
+    async function fetchGameDay() {
+      try {
+        const config = await getServerDayConfig();
+        
+        // Quanto tempo passou desde que a cidade foi criada?
+        const timeElapsed = config.currentServerTime - config.cityStartDate;
+        
+        // Calcula os dias (arredondando para baixo) e soma 1 (para começar no Dia 1)
+        const daysPassed = Math.floor(timeElapsed / config.MS_PER_DAY);
+        
+        // Garante que o dia nunca será menor que 1
+        setGameDay(Math.max(1, daysPassed + 1));
+      } catch (error) {
+        console.error("Falha ao sincronizar o dia com o servidor:", error);
+      }
+    }
+    
+    fetchGameDay();
+  }, []);
+
+  const [isTimePaused, setIsTimePaused] = useState(false); 
 
   const setPointerOverUI = (isOver: boolean) => {
     if (typeof window !== 'undefined') {
@@ -206,7 +231,14 @@ export default function CityInterface({ student, buildings: initialBuildings, re
             >
                 <div className="flex justify-between items-start">
                     <div className="bg-slate-900/90 backdrop-blur p-2 md:p-4 rounded-xl border border-slate-700 flex gap-3 md:gap-6 text-white shadow-xl">
-                        
+                        <div className="flex flex-col items-center border-r border-slate-700 pr-3 md:pr-6">
+                            <div className="flex items-center gap-1 md:gap-2 text-slate-400 text-[10px] md:text-xs uppercase font-bold">
+                                <Calendar size={12} className="text-emerald-400" /> Dia
+                            </div>
+                            <span className="text-base md:text-xl font-bold font-mono text-emerald-100">
+                                {gameDay}
+                            </span>
+                        </div>
                         {/* 👇 NOVO: Bloco do Relógio com Botão Pause */}
                         <div className="flex items-center border-r border-slate-700 pr-3 md:pr-6 gap-2 md:gap-4">
                             <div className="flex flex-col items-center">

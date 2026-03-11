@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import CityScene from "./CityScene"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { X, MousePointer2, Hammer, Leaf, Route, Star, RotateCw, Trash2, Loader2, Smartphone, Maximize, Minimize, ChevronDown, ChevronUp, Sun, Moon,Play, Pause,Calendar } from "lucide-react"
+import { X, MousePointer2, Hammer, Leaf, Route, Star, RotateCw, Trash2, Loader2, Smartphone, Maximize, Minimize, ChevronDown, ChevronUp, Sun, Moon,Play, Pause,Calendar,Bell } from "lucide-react"
 import { Users, Briefcase, Smile, ShieldAlert } from 'lucide-react';
 import { buyBuilding, demolishBuildingAction, rotateBuildingAction,getServerDayConfig } from "@/app/actions"
 import { BUILDING_CONFIG, CATEGORIES, BuildingCategory } from '@/app/config/buildings'
+import { toast } from "sonner";
 import { cn } from '@/lib/utils'
 import { useCityStats } from '@/app/hooks/useCityStats';
 
@@ -172,7 +173,139 @@ export default function CityInterface({ student, buildings: initialBuildings, re
     ([_, config]) => config.category === activeCategory
   )
 
-  const stats = useCityStats(localBuildings);
+  const stats = useCityStats(localBuildings,gameDay);
+
+  // 1. Controle para o mascote não ser "chato" e repetir a mensagem sem parar
+  const warningsGiven = useRef({
+    population: false,
+    security: false,
+    unemployment: false,
+  });
+
+  // 2. A função que chama o Sonner com a fotinha
+  const showVirtualFriendMessage = (title: string, message: string) => {
+    toast(title, {
+      description: message,
+      duration: 6000, // Fica 6 segundos na tela para dar tempo de ler
+      icon: (
+        <img 
+          // Troque esse link depois pela foto real do mascote do seu projeto!
+          src="https://api.dicebear.com/7.x/bottts/svg?seed=Conselheiro&backgroundColor=6366f1" 
+          alt="Amigo Virtual" 
+          className="w-10 h-10 rounded-full border-2 border-indigo-500 bg-slate-800 shadow-md shrink-0" 
+        />
+      ),
+    });
+  };
+  // Calcula quantos alertas estão ativos neste exato momento
+  const activeWarningsCount = [
+    stats.population < stats.expectedPopulation,
+    stats.securityLevel < 50,
+    stats.unemployed > stats.population * 0.3 && stats.population > 0
+  ].filter(Boolean).length;
+
+  // Função disparada ao clicar no Sino
+  // 1. Controle para saber se o jogador acabou de abrir as notificações manuais
+  const isAdvisorOpen = useRef(false);
+
+  // 2. A função do botão do Sino com efeito Liga/Desliga
+  const handleShowAdvisor = () => {
+    // Se já estiver aberto, o clique serve para FECHAR tudo!
+    if (isAdvisorOpen.current) {
+      toast.dismiss('adv-pop');
+      toast.dismiss('adv-sec');
+      toast.dismiss('adv-emp');
+      toast.dismiss('adv-ok');
+      isAdvisorOpen.current = false;
+      return;
+    }
+
+    // Se estava fechado, vamos abrir
+    isAdvisorOpen.current = true;
+    let hasWarning = false;
+
+    // Disparador interno inteligente (com IDs fixos para não duplicar nunca)
+    const notify = (id: string, title: string, message: string) => {
+      toast(title, {
+        id: id, // <--- O SEGREDO DO SONNER: IDs iguais não se multiplicam!
+        description: message,
+        duration: 6000,
+        // Se a mensagem sumir sozinha ou o usuário fechar arrastando, resetamos o botão
+        onAutoClose: () => { isAdvisorOpen.current = false; },
+        onDismiss: () => { isAdvisorOpen.current = false; },
+        icon: (
+          <img 
+            src="https://api.dicebear.com/7.x/bottts/svg?seed=Conselheiro&backgroundColor=6366f1" 
+            alt="Amigo Virtual" 
+            className="w-10 h-10 rounded-full border-2 border-indigo-500 bg-slate-800 shadow-md shrink-0" 
+          />
+        ),
+      });
+    };
+
+    // Dispara os alertas se houver problemas
+    if (stats.population < stats.expectedPopulation) {
+      notify('adv-pop', "Precisamos crescer!", `Sua cidade está com pouca população para a meta do Dia ${gameDay}. Construa mais casas!`);
+      hasWarning = true;
+    }
+    if (stats.securityLevel < 50) {
+      notify('adv-sec', "Atenção, Prefeito!", "A população está se sentindo insegura. A criminalidade está subindo! Construa delegacias.");
+      hasWarning = true;
+    }
+    if (stats.unemployed > stats.population * 0.3 && stats.population > 0) {
+      notify('adv-emp', "Falta de Empregos!", "Muitos cidadãos estão sem trabalho. Construa áreas comerciais ou industriais!");
+      hasWarning = true;
+    }
+
+    // Se estiver tudo perfeito
+    if (!hasWarning) {
+      notify('adv-ok', "Tudo em ordem!", "Sua cidade está prosperando de forma incrível! Continue o bom trabalho, Prefeito.");
+    }
+  };
+
+  useEffect(() => {
+    if (readOnly) return; // Visitantes não recebem bronca do prefeito haha
+
+    // --- AVISO: POPULAÇÃO BAIXA ---
+    if (stats.population < stats.expectedPopulation) {
+      if (!warningsGiven.current.population) {
+        showVirtualFriendMessage(
+          "Precisamos crescer!", 
+          `Sua cidade está com pouca população para a meta do Dia ${gameDay}. Construa mais casas!`
+        );
+        warningsGiven.current.population = true;
+      }
+    } else {
+      warningsGiven.current.population = false; 
+    }
+
+    // --- AVISO: INSEGURANÇA ---
+    if (stats.securityLevel < 50) {
+      if (!warningsGiven.current.security) {
+        showVirtualFriendMessage(
+          "Atenção, Prefeito!", 
+          "A população está se sentindo insegura. A criminalidade está subindo! Construa delegacias."
+        );
+        warningsGiven.current.security = true;
+      }
+    } else if (stats.securityLevel > 80) {
+      warningsGiven.current.security = false;
+    }
+
+    // --- AVISO: DESEMPREGO ---
+    if (stats.unemployed > stats.population * 0.3 && stats.population > 0) { 
+      if (!warningsGiven.current.unemployment) {
+        showVirtualFriendMessage(
+          "Falta de Empregos!", 
+          "Muitos cidadãos estão sem trabalho. Construa áreas comerciais ou industriais!"
+        );
+        warningsGiven.current.unemployment = true;
+      }
+    } else if (stats.unemployed === 0) {
+      warningsGiven.current.unemployment = false;
+    }
+
+  }, [stats.population, stats.expectedPopulation, stats.securityLevel, stats.unemployed, gameDay, readOnly]);
 
   // Descobre se é de dia ou de noite para trocar o ícone (Dia é entre 6h e 18h)
   const isDaytime = gameTime >= 6 && gameTime < 18;
@@ -265,8 +398,12 @@ export default function CityInterface({ student, buildings: initialBuildings, re
                         {/* 👆 FIM do Bloco do Relógio */}
 
                         <div className="flex flex-col items-center">
-                            <div className="flex items-center gap-1 md:gap-2 text-slate-400 text-[10px] md:text-xs uppercase font-bold"><Users size={12} /> População</div>
-                            <span className="text-base md:text-xl font-bold">{stats.population}</span>
+                            <div className="flex items-center gap-1 md:gap-2 text-slate-400 text-[10px] md:text-xs uppercase font-bold" title="População Atual / Meta do Mês">
+                                <Users size={12} /> População
+                            </div>
+                            <span className="text-base md:text-xl font-bold">
+                                {stats.population} <span className="text-slate-500 text-sm md:text-lg font-normal">/ {stats.expectedPopulation}</span>
+                            </span>
                         </div>
                         <div className="flex flex-col items-center">
                             <div className="flex items-center gap-1 md:gap-2 text-slate-400 text-[10px] md:text-xs uppercase font-bold"><Smile size={12} /> Felicidade</div>
@@ -282,23 +419,50 @@ export default function CityInterface({ student, buildings: initialBuildings, re
                         </div>
                     </div>
 
-                    <Button 
-                        onClick={toggleFullscreen}
-                        variant="ghost"
-                        size="icon"
-                        className="bg-slate-900/80 hover:bg-slate-800 text-white backdrop-blur rounded-full w-10 h-10 md:w-12 md:h-12 absolute top-2 right-2 md:top-6 md:right-16"
-                    >
-                        {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
-                    </Button>
-                    <Button 
-                        onClick={() => window.history.back()}
-                        variant="ghost"
-                        size="icon"
-                        className="bg-slate-900/80 hover:bg-slate-800 text-white backdrop-blur rounded-full w-10 h-10 md:w-12 md:h-12 absolute top-2 right-14 md:top-6 md:right-2"
-                        title="Sair da cidade"
-                    >
-                        <X size={20} />
-                    </Button>
+                    {/* Grupo de botões da direita */}
+                    <div className="flex gap-2 absolute top-2 right-2 md:top-6 md:right-6">
+                        
+                        {/* 👇 NOVO: Botão do Conselheiro / Notificações 👇 */}
+                        <div className="relative">
+                            <Button 
+                                onClick={handleShowAdvisor}
+                                variant="ghost"
+                                size="icon"
+                                className="bg-slate-900/80 hover:bg-slate-800 text-white backdrop-blur rounded-full w-10 h-10 md:w-12 md:h-12 shadow-xl border border-slate-700 transition-transform active:scale-95"
+                                title="Falar com o Conselheiro"
+                            >
+                                <Bell size={20} />
+                                {/* Bolinha vermelha piscando se houver problemas */}
+                                {activeWarningsCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 flex h-4 w-4 md:h-5 md:w-5">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-4 w-4 md:h-5 md:w-5 bg-red-600 border-2 border-slate-900 text-[9px] md:text-[10px] font-bold items-center justify-center text-white">
+                                            {activeWarningsCount}
+                                        </span>
+                                    </span>
+                                )}
+                            </Button>
+                        </div>
+                        {/* 👆 FIM do Botão de Notificações 👆 */}
+
+                        <Button 
+                            onClick={toggleFullscreen}
+                            variant="ghost"
+                            size="icon"
+                            className="bg-slate-900/80 hover:bg-slate-800 text-white backdrop-blur rounded-full w-10 h-10 md:w-12 md:h-12 shadow-xl border border-slate-700"
+                        >
+                            {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+                        </Button>
+                        <Button 
+                            onClick={() => window.history.back()}
+                            variant="ghost"
+                            size="icon"
+                            className="bg-slate-900/80 hover:bg-red-600 text-white backdrop-blur rounded-full w-10 h-10 md:w-12 md:h-12 shadow-xl border border-slate-700"
+                            title="Sair da cidade"
+                        >
+                            <X size={20} />
+                        </Button>
+                    </div>
                 </div>
             </div>
 

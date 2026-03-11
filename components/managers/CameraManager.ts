@@ -248,7 +248,7 @@ export class CameraManager {
         const snapZ = Math.round(this.hitPosition.z / 2) * 2;
         if (snapX >= -OFFSET && snapX <= OFFSET && snapZ >= -OFFSET && snapZ <= OFFSET) {
           this.cursor.enabled = true;
-          this.cursor.setPosition(snapX, 1, snapZ);
+          this.cursor.setPosition(snapX, 0.0, snapZ);
         } else {
           this.cursor.enabled = false;
         }

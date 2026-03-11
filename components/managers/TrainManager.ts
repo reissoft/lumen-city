@@ -255,7 +255,7 @@ export class TrainManager {
         const targetNode = train.currentPath[nodeIndex];
         const worldX = targetNode.x * 2 - OFFSET;
         const worldZ = targetNode.y * 2 - OFFSET;
-        const targetPos = new pc.Vec3(worldX, 0.6, worldZ);
+        const targetPos = new pc.Vec3(worldX, 0.2, worldZ);
         
         entity.setPosition(targetPos);
 
@@ -263,7 +263,7 @@ export class TrainManager {
           const nextNode = train.currentPath[nodeIndex + 1];
           const nextWorldX = nextNode.x * 2 - OFFSET;
           const nextWorldZ = nextNode.y * 2 - OFFSET;
-          const nextPos = new pc.Vec3(nextWorldX, 0.6, nextWorldZ);
+          const nextPos = new pc.Vec3(nextWorldX, 0.2, nextWorldZ);
           
           const direction = nextPos.sub(targetPos).normalize();
           //const angle = Math.atan2(direction.x, direction.z);

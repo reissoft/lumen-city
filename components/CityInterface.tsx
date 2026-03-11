@@ -66,6 +66,27 @@ export default function CityInterface({ student, buildings: initialBuildings, re
     fetchGameDay();
   }, []);
 
+  // Estados para guardar a aparência do Conselheiro
+  const [advisorName, setAdvisorName] = useState('Conselheiro');
+  const [advisorAvatar, setAdvisorAvatar] = useState('empty'); // O avatar padrão
+
+  // Busca qual amigo virtual o aluno escolheu no banco de dados
+  useEffect(() => {
+    async function loadAdvisor() {
+      try {
+        const response = await fetch('/api/virtual-friend');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.friendName) setAdvisorName(data.friendName);
+          if (data.selectedAvatar) setAdvisorAvatar(data.selectedAvatar);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar o amigo virtual para as notificações", error);
+      }
+    }
+    loadAdvisor();
+  }, []);
+
   const [isTimePaused, setIsTimePaused] = useState(false); 
 
   const setPointerOverUI = (isOver: boolean) => {
@@ -183,20 +204,7 @@ export default function CityInterface({ student, buildings: initialBuildings, re
   });
 
   // 2. A função que chama o Sonner com a fotinha
-  const showVirtualFriendMessage = (title: string, message: string) => {
-    toast(title, {
-      description: message,
-      duration: 6000, // Fica 6 segundos na tela para dar tempo de ler
-      icon: (
-        <img 
-          // Troque esse link depois pela foto real do mascote do seu projeto!
-          src="https://api.dicebear.com/7.x/bottts/svg?seed=Conselheiro&backgroundColor=6366f1" 
-          alt="Amigo Virtual" 
-          className="w-10 h-10 rounded-full border-2 border-indigo-500 bg-slate-800 shadow-md shrink-0" 
-        />
-      ),
-    });
-  };
+  
   // Calcula quantos alertas estão ativos neste exato momento
   const activeWarningsCount = [
     stats.population < stats.expectedPopulation,
@@ -234,12 +242,22 @@ export default function CityInterface({ student, buildings: initialBuildings, re
         onAutoClose: () => { isAdvisorOpen.current = false; },
         onDismiss: () => { isAdvisorOpen.current = false; },
         icon: (
+        // 👇 Tiramos o flex em volta e adicionamos -ml-2 e mr-3 aqui 👇
+        <div className="-ml-4 mr-3 w-10 h-10 rounded-full border-2 border-indigo-500 bg-slate-800 shadow-md shrink-0 flex items-center justify-center overflow-hidden">
           <img 
-            src="https://api.dicebear.com/7.x/bottts/svg?seed=Conselheiro&backgroundColor=6366f1" 
-            alt="Amigo Virtual" 
-            className="w-10 h-10 rounded-full border-2 border-indigo-500 bg-slate-800 shadow-md shrink-0" 
+            src={`/friends/${advisorAvatar}.png`} 
+            alt={advisorName} 
+            className="w-full h-full object-contain bg-white/10" 
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+              const parent = e.currentTarget.parentElement;
+              if (parent) {
+                parent.innerHTML = '<svg class="w-6 h-6 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 20 20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>';
+              }
+            }}
           />
-        ),
+        </div>
+      ),
       });
     };
 
@@ -263,49 +281,7 @@ export default function CityInterface({ student, buildings: initialBuildings, re
     }
   };
 
-  useEffect(() => {
-    if (readOnly) return; // Visitantes não recebem bronca do prefeito haha
-
-    // --- AVISO: POPULAÇÃO BAIXA ---
-    if (stats.population < stats.expectedPopulation) {
-      if (!warningsGiven.current.population) {
-        showVirtualFriendMessage(
-          "Precisamos crescer!", 
-          `Sua cidade está com pouca população para a meta do Dia ${gameDay}. Construa mais casas!`
-        );
-        warningsGiven.current.population = true;
-      }
-    } else {
-      warningsGiven.current.population = false; 
-    }
-
-    // --- AVISO: INSEGURANÇA ---
-    if (stats.securityLevel < 50) {
-      if (!warningsGiven.current.security) {
-        showVirtualFriendMessage(
-          "Atenção, Prefeito!", 
-          "A população está se sentindo insegura. A criminalidade está subindo! Construa delegacias."
-        );
-        warningsGiven.current.security = true;
-      }
-    } else if (stats.securityLevel > 80) {
-      warningsGiven.current.security = false;
-    }
-
-    // --- AVISO: DESEMPREGO ---
-    if (stats.unemployed > stats.population * 0.3 && stats.population > 0) { 
-      if (!warningsGiven.current.unemployment) {
-        showVirtualFriendMessage(
-          "Falta de Empregos!", 
-          "Muitos cidadãos estão sem trabalho. Construa áreas comerciais ou industriais!"
-        );
-        warningsGiven.current.unemployment = true;
-      }
-    } else if (stats.unemployed === 0) {
-      warningsGiven.current.unemployment = false;
-    }
-
-  }, [stats.population, stats.expectedPopulation, stats.securityLevel, stats.unemployed, gameDay, readOnly]);
+  
 
   // Descobre se é de dia ou de noite para trocar o ícone (Dia é entre 6h e 18h)
   const isDaytime = gameTime >= 6 && gameTime < 18;

@@ -147,6 +147,7 @@ model StudyCampaign {
   rewardCoins     Int        @default(500)
   active          Boolean    @default(true)
   createdAt       DateTime   @default(now())
+  dailyFrequency  Int @default(3)
 
   // Quem criou e para quem é
   teacherId       String

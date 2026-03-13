@@ -580,3 +580,35 @@ export async function getServerDayConfig() {
     MS_PER_DAY
   };
 }
+
+// app/actions.ts
+
+// ... suas outras importações e funções (buyBuilding, etc)
+
+export async function rewardCampaignCoins(amount: number) {
+  try {
+    const cookieStore = cookies();
+    const email = cookieStore.get("lumen_session")?.value;
+    
+    if (!email) return { success: false, message: "Sessão não encontrada." };
+
+    const student = await prisma.student.findUnique({ 
+        where: { email } 
+    });
+
+    if (!student) return { success: false, message: "Aluno não encontrado." };
+
+    // 👇 CORREÇÃO: Atualizamos o gold dentro de StudentResources
+    await prisma.studentResources.update({
+      where: { studentId: student.id }, // Busca os recursos atrelados a este aluno
+      data: { 
+        gold: { increment: amount } // Adiciona as moedas
+      }
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Erro ao recompensar aluno:", error);
+    return { success: false, message: "Erro interno ao salvar as moedas." };
+  }
+}

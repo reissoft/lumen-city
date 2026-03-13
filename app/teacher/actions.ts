@@ -67,3 +67,5 @@ export async function createStudent(formData: FormData) {
   revalidatePath('/teacher/students');
   redirect('/teacher/students');
 }
+
+

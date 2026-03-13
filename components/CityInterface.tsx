@@ -4,9 +4,9 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import CityScene from "./CityScene"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { X, MousePointer2, Hammer, Leaf, Route, Star, RotateCw, Trash2, Loader2, Smartphone, Maximize, Minimize, ChevronDown, ChevronUp, Sun, Moon,Play, Pause,Calendar,Bell,Sparkles } from "lucide-react"
+import { X, MousePointer2, Hammer, Leaf, Route, Star, RotateCw, Trash2, Loader2, Smartphone, Maximize, Minimize, ChevronDown, ChevronUp, Sun, Moon, Play, Pause, Calendar, Bell, Sparkles } from "lucide-react"
 import { Users, Briefcase, Smile, ShieldAlert } from 'lucide-react';
-import { buyBuilding, demolishBuildingAction, rotateBuildingAction,getServerDayConfig } from "@/app/actions"
+import { buyBuilding, demolishBuildingAction, rotateBuildingAction, getServerDayConfig, rewardCampaignCoins } from "@/app/actions"
 import { BUILDING_CONFIG, CATEGORIES, BuildingCategory } from '@/app/config/buildings'
 import { toast } from "sonner";
 import { cn } from '@/lib/utils'
@@ -40,91 +40,118 @@ export default function CityInterface({ student, buildings: initialBuildings, re
   const [isBottomBarVisible, setIsBottomBarVisible] = useState(true);
   const [buildRotation, setBuildRotation] = useState(0);
 
-  // NOVO: Estado para controlar o relógio do jogo (Começa às 08:00)
-    const [gameTime, setGameTime] = useState(8);
+  // Controle do relógio do jogo
+  const [gameTime, setGameTime] = useState(8);
+  const [gameDay, setGameDay] = useState<number>(1);
+  const [isTimePaused, setIsTimePaused] = useState(false); 
 
-    const [gameDay, setGameDay] = useState<number>(1);
-
-  // NOVO: Busca o Dia real do servidor assim que a interface carrega
+  // Busca o Dia real do servidor
   useEffect(() => {
     async function fetchGameDay() {
       try {
         const config = await getServerDayConfig();
-        
-        // Quanto tempo passou desde que a cidade foi criada?
         const timeElapsed = config.currentServerTime - config.cityStartDate;
-        
-        // Calcula os dias (arredondando para baixo) e soma 1 (para começar no Dia 1)
         const daysPassed = Math.floor(timeElapsed / config.MS_PER_DAY);
-        
-        // Garante que o dia nunca será menor que 1
         setGameDay(Math.max(1, daysPassed + 1));
       } catch (error) {
         console.error("Falha ao sincronizar o dia com o servidor:", error);
       }
     }
-    
     fetchGameDay();
   }, []);
 
-  // Estados para guardar a aparência do Conselheiro
+  // Aparência do Conselheiro
   const [advisorName, setAdvisorName] = useState('Conselheiro');
-  const [advisorAvatar, setAdvisorAvatar] = useState('empty'); // O avatar padrão
+  const [advisorAvatar, setAdvisorAvatar] = useState('empty'); 
 
-
-
- // --- ESTADOS DA CAMPANHA DE ESTUDO ---
-  const [activeQuest, setActiveQuest] = useState<{ question: string, studyMaterial: string, campaignId: string } | null>(null);
+  // --- ESTADOS DA CAMPANHA DE ESTUDO (LIGADOS AO BANCO) ---
+  const [activeQuest, setActiveQuest] = useState<{ question: string, studyMaterial: string, campaignId: string, rewardCoins: number } | null>(null);
   const [questAnswer, setQuestAnswer] = useState("");
   const [isSubmittingQuest, setIsSubmittingQuest] = useState(false);
   const [isGeneratingQuest, setIsGeneratingQuest] = useState(false);
+  const [questCooldown, setQuestCooldown] = useState(0);
+  
+  // Lista de campanhas ativas e um Dicionário para contar quantas vezes cada uma rodou hoje
+  const [activeCampaigns, setActiveCampaigns] = useState<any[]>([]);
+  const [campaignProgress, setCampaignProgress] = useState<Record<string, number>>({});
 
-
-  // --- CONTROLE DE FREQUÊNCIA DA CAMPANHA ---
-  const [questsCompletedToday, setQuestsCompletedToday] = useState(0);
-  const maxQuestsPerDay = 3; // No futuro, isso virá da configuração do professor no banco!
-const [isTimePaused, setIsTimePaused] = useState(false); 
-  // --- O RELÓGIO ALEATÓRIO DE QUESTS ---
   useEffect(() => {
-    // Regras de bloqueio: 
-    // Não dispara se o jogo estiver pausado, se já tiver uma quest aberta,
-    // se estiver gerando uma, ou se o aluno já bateu a meta do dia!
-    if (isTimePaused || activeQuest || isGeneratingQuest || questsCompletedToday >= maxQuestsPerDay) {
+    if (questCooldown > 0) {
+      const timer = setTimeout(() => setQuestCooldown(questCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [questCooldown]);
+
+  // Função que o botão vai chamar para travar o tempo e gerar a quest
+  const handleManualQuestClick = () => {
+      if (questCooldown > 0 || isGeneratingQuest) return;
+      setQuestCooldown(60); // Trava o botão por 60 segundos
+      triggerQuest();       // Chama a IA
+  };
+
+  // 1. Busca TODAS as Campanhas Ativas do Aluno
+  useEffect(() => {
+    if (!student || !student.classId) return;
+
+    async function fetchActiveCampaigns() {
+      try {
+        const res = await fetch(`/api/campaigns/active?classId=${student.classId}`);
+        const textResponse = await res.text(); 
+        if (!textResponse) return;
+        
+        const data = JSON.parse(textResponse);
+        if (data.success && data.campaigns && data.campaigns.length > 0) {
+          setActiveCampaigns(data.campaigns);
+          console.log(`📚 ${data.campaigns.length} Campanhas Encontradas para hoje!`);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar campanhas:", error);
+      }
+    }
+    fetchActiveCampaigns();
+  }, [student]);
+
+  // Filtra as campanhas que AINDA NÃO atingiram o limite diário
+  const availableCampaigns = activeCampaigns.filter(
+    campaign => (campaignProgress[campaign.id] || 0) < campaign.dailyFrequency
+  );
+
+  // 2. O Relógio Aleatório de Quests
+  useEffect(() => {
+    // Se não tem campanhas disponíveis ou se o jogo não permite, aborta
+    if (availableCampaigns.length === 0 || isTimePaused || activeQuest || isGeneratingQuest) {
       return;
     }
 
     const getRandomDelay = () => {
-      // ⚠️ MODO DE TESTE: Sorteia entre 15 e 30 segundos
-      const minSeconds = 15;
-      const maxSeconds = 30;
-      
-      // 🚀 MODO PRODUÇÃO (Descomente depois): Sorteia entre 5 e 10 minutos
-      // const minSeconds = 5 * 60;
-      // const maxSeconds = 10 * 60;
-
-      const randomSeconds = Math.floor(Math.random() * (maxSeconds - minSeconds + 1)) + minSeconds;
-      return randomSeconds * 1000; // O setTimeout usa milissegundos
+      const minSeconds = 5 * 60;  // 300 segundos
+      const maxSeconds = 20 * 60; // 1200 segundos
+      return (Math.floor(Math.random() * (maxSeconds - minSeconds + 1)) + minSeconds) * 1000; 
     };
 
     const delay = getRandomDelay();
-    console.log(`⌚ IA agendou a próxima Quest para daqui a ${delay / 1000} segundos!`);
+    console.log(`⌚ IA agendou a próxima Quest para daqui a ${delay / 1000} segundos! (${availableCampaigns.length} campanhas na fila)`);
 
     const timer = setTimeout(() => {
-      // O sino virtual toca e puxa a pergunta!
-      triggerTestQuest(); 
+      triggerQuest(); 
     }, delay);
 
-    // Limpa o timer se o aluno pausar o jogo ou se o componente recarregar
     return () => clearTimeout(timer);
-  }, [isTimePaused, activeQuest, isGeneratingQuest, questsCompletedToday]);
+  }, [isTimePaused, activeQuest, isGeneratingQuest, availableCampaigns.length]);
 
+  // 3. Sorteia uma campanha válida e chama a IA
+  const triggerQuest = async () => {
+    // Filtra de novo para garantir que pegamos o estado mais recente
+    const eligibleCampaigns = activeCampaigns.filter(
+        c => (campaignProgress[c.id] || 0) < c.dailyFrequency
+    );
 
-  // 1. Função para chamar a IA e GERAR a pergunta (Modo Teste)
-  const triggerTestQuest = async () => {
+    if (eligibleCampaigns.length === 0) return;
+
+    // O SORTEIO MÁGICO! Escolhe uma campanha aleatória da lista
+    const selectedCampaign = eligibleCampaigns[Math.floor(Math.random() * eligibleCampaigns.length)];
+
     setIsGeneratingQuest(true);
-    // No futuro, isso virá do banco de dados (da tabela StudyCampaign)
-    const mockMaterial = "O ciclo da água é o movimento contínuo da água na Terra. A evaporação ocorre quando o sol aquece a água dos rios e oceanos, transformando-a em vapor. Depois, ocorre a condensação nas nuvens e, por fim, a precipitação em forma de chuva.";
-    const mockCampaignId = "campanha_teste_123"; 
 
     try {
       const response = await fetch('/api/virtual-friend', {
@@ -132,18 +159,18 @@ const [isTimePaused, setIsTimePaused] = useState(false);
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'generate_quest',
-          studyMaterial: mockMaterial,
+          studyMaterial: selectedCampaign.studyMaterial,
           friendName: advisorName
         })
       });
       
       const data = await response.json();
       if (data.success && data.question) {
-        // Abre o Modal com a pergunta gerada pela IA!
         setActiveQuest({
           question: data.question,
-          studyMaterial: mockMaterial,
-          campaignId: mockCampaignId
+          studyMaterial: selectedCampaign.studyMaterial,
+          campaignId: selectedCampaign.id,
+          rewardCoins: selectedCampaign.rewardCoins 
         });
       }
     } catch (error) {
@@ -153,7 +180,7 @@ const [isTimePaused, setIsTimePaused] = useState(false);
     }
   };
 
-  // 2. Função para ENVIAR a resposta para a IA corrigir
+  // 4. Envia a resposta para correção
   const submitQuestAnswer = async () => {
     if (!activeQuest || !questAnswer.trim()) return;
     setIsSubmittingQuest(true);
@@ -175,14 +202,18 @@ const [isTimePaused, setIsTimePaused] = useState(false);
       const data = await response.json();
       
       if (data.isCorrect) {
-        // ACERTOU! Mostra o feedback, dá moedas/felicidade e fecha o modal
-        toast.success(data.feedback, { duration: 6000 });
-        setQuestsCompletedToday(prev => prev + 1);
-        // Aqui você pode adicionar lógica para dar +500 moedas ao jogador
+        await rewardCampaignCoins(activeQuest.rewardCoins);
+        toast.success(`Acertou! +${activeQuest.rewardCoins} Moedas! \n${data.feedback}`, { duration: 6000 });
+        
+        // Adiciona +1 apenas no contador DESTA campanha específica!
+        setCampaignProgress(prev => ({
+            ...prev,
+            [activeQuest.campaignId]: (prev[activeQuest.campaignId] || 0) + 1
+        }));
+        
         setActiveQuest(null);
         setQuestAnswer("");
       } else {
-        // ERROU! Mostra o feedback para ele tentar de novo
         toast.error(data.feedback, { duration: 6000 });
       }
     } catch (error) {
@@ -192,9 +223,7 @@ const [isTimePaused, setIsTimePaused] = useState(false);
     }
   };
 
-
-
-  // Busca qual amigo virtual o aluno escolheu no banco de dados
+  // Busca Amigo Virtual
   useEffect(() => {
     async function loadAdvisor() {
       try {
@@ -205,13 +234,11 @@ const [isTimePaused, setIsTimePaused] = useState(false);
           if (data.selectedAvatar) setAdvisorAvatar(data.selectedAvatar);
         }
       } catch (error) {
-        console.error("Erro ao carregar o amigo virtual para as notificações", error);
+        console.error("Erro ao carregar o amigo virtual", error);
       }
     }
     loadAdvisor();
   }, []);
-
-  
 
   const setPointerOverUI = (isOver: boolean) => {
     if (typeof window !== 'undefined') {
@@ -223,9 +250,6 @@ const [isTimePaused, setIsTimePaused] = useState(false);
      setTimeout(() => setIsLoading(false), 300);
   }, []);
 
-
-
-  // Converte o número (ex: 8.5) para formato de hora (ex: 08:30)
   const formatTime = (time: number) => {
     const hours = Math.floor(time);
     const minutes = Math.floor((time - hours) * 60);
@@ -248,7 +272,7 @@ const [isTimePaused, setIsTimePaused] = useState(false);
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen().catch(err => {
-            alert(`Erro ao tentar ativar a tela cheia: ${err.message} (${err.name})`);
+            alert(`Erro ao ativar tela cheia: ${err.message}`);
         });
     } else {
         document.exitFullscreen();
@@ -256,9 +280,7 @@ const [isTimePaused, setIsTimePaused] = useState(false);
   };
 
   useEffect(() => {
-    const onFullscreenChange = () => {
-        setIsFullscreen(!!document.fullscreenElement);
-    };
+    const onFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', onFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
   }, []);
@@ -266,11 +288,8 @@ const [isTimePaused, setIsTimePaused] = useState(false);
   const handleTileClick = useCallback(async (x: number, y: number) => {
     const clickedBuilding = localBuildings.find(b => b.x === x && b.y === y);
     if (!canEdit) {
-      if (clickedBuilding) {
-        setSelectedBuildingId(clickedBuilding.id);
-      } else {
-        setSelectedBuildingId(null);
-      }
+      if (clickedBuilding) setSelectedBuildingId(clickedBuilding.id);
+      else setSelectedBuildingId(null);
       return;
     }
     
@@ -284,11 +303,8 @@ const [isTimePaused, setIsTimePaused] = useState(false);
       return;
     }
     
-    if (clickedBuilding) {
-      setSelectedBuildingId(clickedBuilding.id);
-    } else {
-      setSelectedBuildingId(null);
-    }
+    if (clickedBuilding) setSelectedBuildingId(clickedBuilding.id);
+    else setSelectedBuildingId(null);
   }, [activeBuild, localBuildings, canEdit, buildRotation]);
 
   const handleRotate = async () => {
@@ -318,31 +334,17 @@ const [isTimePaused, setIsTimePaused] = useState(false);
     ([_, config]) => config.category === activeCategory
   )
 
-  const stats = useCityStats(localBuildings,gameDay);
+  const stats = useCityStats(localBuildings, gameDay);
 
-  // 1. Controle para o mascote não ser "chato" e repetir a mensagem sem parar
-  const warningsGiven = useRef({
-    population: false,
-    security: false,
-    unemployment: false,
-  });
-
-  // 2. A função que chama o Sonner com a fotinha
-  
-  // Calcula quantos alertas estão ativos neste exato momento
   const activeWarningsCount = [
     stats.population < stats.expectedPopulation,
     stats.securityLevel < 50,
     stats.unemployed > stats.population * 0.3 && stats.population > 0
   ].filter(Boolean).length;
 
-  // Função disparada ao clicar no Sino
-  // 1. Controle para saber se o jogador acabou de abrir as notificações manuais
   const isAdvisorOpen = useRef(false);
 
-  // 2. A função do botão do Sino com efeito Liga/Desliga
   const handleShowAdvisor = () => {
-    // Se já estiver aberto, o clique serve para FECHAR tudo!
     if (isAdvisorOpen.current) {
       toast.dismiss('adv-pop');
       toast.dismiss('adv-sec');
@@ -352,21 +354,17 @@ const [isTimePaused, setIsTimePaused] = useState(false);
       return;
     }
 
-    // Se estava fechado, vamos abrir
     isAdvisorOpen.current = true;
     let hasWarning = false;
 
-    // Disparador interno inteligente (com IDs fixos para não duplicar nunca)
     const notify = (id: string, title: string, message: string) => {
       toast(title, {
-        id: id, // <--- O SEGREDO DO SONNER: IDs iguais não se multiplicam!
+        id: id, 
         description: message,
         duration: 6000,
-        // Se a mensagem sumir sozinha ou o usuário fechar arrastando, resetamos o botão
         onAutoClose: () => { isAdvisorOpen.current = false; },
         onDismiss: () => { isAdvisorOpen.current = false; },
         icon: (
-        // 👇 Tiramos o flex em volta e adicionamos -ml-2 e mr-3 aqui 👇
         <div className="-ml-4 mr-3 w-10 h-10 rounded-full border-2 border-indigo-500 bg-slate-800 shadow-md shrink-0 flex items-center justify-center overflow-hidden">
           <img 
             src={`/friends/${advisorAvatar}.png`} 
@@ -385,7 +383,6 @@ const [isTimePaused, setIsTimePaused] = useState(false);
       });
     };
 
-    // Dispara os alertas se houver problemas
     if (stats.population < stats.expectedPopulation) {
       notify('adv-pop', "Precisamos crescer!", `Sua cidade está com pouca população para a meta do Dia ${gameDay}. Construa mais casas!`);
       hasWarning = true;
@@ -399,27 +396,22 @@ const [isTimePaused, setIsTimePaused] = useState(false);
       hasWarning = true;
     }
 
-    // Se estiver tudo perfeito
     if (!hasWarning) {
       notify('adv-ok', "Tudo em ordem!", "Sua cidade está prosperando de forma incrível! Continue o bom trabalho, Prefeito.");
     }
   };
 
-  
-
-  // Descobre se é de dia ou de noite para trocar o ícone (Dia é entre 6h e 18h)
   const isDaytime = gameTime >= 6 && gameTime < 18;
 
   return (
     <div className="w-full h-screen relative overflow-hidden bg-black select-none">
-        {/* --- SOBREPOSIÇÃO PARA MODO RETRATO EM MOBILE --- */}
+        
         <div className="fixed inset-0 z-[100] bg-slate-950 md:hidden portrait:flex hidden flex-col items-center justify-center text-white p-8 text-center">
             <Smartphone className="w-16 h-16 mb-4 animate-pulse text-indigo-400" />
             <h2 className="text-2xl font-bold mb-2">Gire seu Dispositivo</h2>
             <p className="text-slate-400">Para uma melhor experiência, por favor, use o modo paisagem.</p>
         </div>
 
-        {/* --- CONTEÚDO PRINCIPAL (OCULTO EM MODO RETRATO) --- */}
         <div className="w-full h-full portrait:hidden md:block">
             <CityScene 
                 buildings={localBuildings} 
@@ -472,7 +464,7 @@ const [isTimePaused, setIsTimePaused] = useState(false);
                                 {gameDay}
                             </span>
                         </div>
-                        {/* 👇 NOVO: Bloco do Relógio com Botão Pause */}
+                        
                         <div className="flex items-center border-r border-slate-700 pr-3 md:pr-6 gap-2 md:gap-4">
                             <div className="flex flex-col items-center">
                                 <div className="flex items-center gap-1 md:gap-2 text-slate-400 text-[10px] md:text-xs uppercase font-bold">
@@ -484,7 +476,6 @@ const [isTimePaused, setIsTimePaused] = useState(false);
                                 </span>
                             </div>
                             
-                            {/* Botão de Pause/Play */}
                             <Button 
                                 variant="ghost" 
                                 size="icon" 
@@ -495,8 +486,7 @@ const [isTimePaused, setIsTimePaused] = useState(false);
                                 {isTimePaused ? <Play size={16} className="text-green-400" /> : <Pause size={16} className="text-yellow-400" />}
                             </Button>
                         </div>
-                        {/* 👆 FIM do Bloco do Relógio */}
-
+                        
                         <div className="flex flex-col items-center">
                             <div className="flex items-center gap-1 md:gap-2 text-slate-400 text-[10px] md:text-xs uppercase font-bold" title="População Atual / Meta do Mês">
                                 <Users size={12} /> População
@@ -519,22 +509,45 @@ const [isTimePaused, setIsTimePaused] = useState(false);
                         </div>
                     </div>
 
-                    {/* Grupo de botões da direita */}
                     <div className="flex gap-2 absolute top-2 right-2 md:top-6 md:right-6">
-                        {/* 👇 BOTÃO DE TESTE DA QUEST 👇 */}
-                        <Button 
-                            onClick={triggerTestQuest}
-                            disabled={isGeneratingQuest}
-                            className="bg-purple-600 hover:bg-purple-700 text-white font-bold h-10 md:h-12 px-4 rounded-full shadow-xl border border-purple-500 transition-all"
-                        >
-                            {isGeneratingQuest ? (
-                                <><Loader2 className="animate-spin mr-2" size={16} /> Pensando...</>
-                            ) : (
-                                "Testar Quest!"
-                            )}
-                        </Button>
-                        {/* 👆 FIM DO BOTÃO DE TESTE 👆 */}
-                        {/* 👇 NOVO: Botão do Conselheiro / Notificações 👇 */}
+                        
+                        {/* 👇 BOTÃO DE QUEST COM ÍCONE E HINT 👇 */}
+                        {activeCampaigns.length > 0 && (
+                          <div className="relative group">
+                              <Button 
+                                  onClick={handleManualQuestClick}
+                                  disabled={isGeneratingQuest || questCooldown > 0}
+                                  variant="ghost"
+                                  size="icon"
+                                  title={
+                                      isGeneratingQuest ? "Preparando desafio..." : 
+                                      questCooldown > 0 ? `Novo desafio em ${questCooldown}s` : 
+                                      "Nova Missão: Ganhar Moedas!"
+                                  }
+                                  className={cn(
+                                      "bg-slate-900/80 backdrop-blur rounded-full w-10 h-10 md:w-12 md:h-12 shadow-xl border transition-all overflow-hidden",
+                                      questCooldown === 0 && !isGeneratingQuest 
+                                        ? "border-purple-500 text-purple-400 hover:bg-purple-600 hover:text-white animate-pulse" 
+                                        : "border-slate-700 text-slate-500"
+                                  )}
+                              >
+                                  {isGeneratingQuest ? (
+                                      <Loader2 className="animate-spin" size={20} />
+                                  ) : (
+                                      <Sparkles size={20} />
+                                  )}
+                                  
+                                  {/* Overlay escuro mostrando os segundos do cooldown */}
+                                  {questCooldown > 0 && !isGeneratingQuest && (
+                                      <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold bg-slate-900/90 rounded-full text-white">
+                                          {questCooldown}s
+                                      </span>
+                                  )}
+                              </Button>
+                          </div>
+                        )}
+                        {/* 👆 ==================================== 👆 */}  
+                        
                         <div className="relative">
                             <Button 
                                 onClick={handleShowAdvisor}
@@ -544,7 +557,6 @@ const [isTimePaused, setIsTimePaused] = useState(false);
                                 title="Falar com o Conselheiro"
                             >
                                 <Bell size={20} />
-                                {/* Bolinha vermelha piscando se houver problemas */}
                                 {activeWarningsCount > 0 && (
                                     <span className="absolute -top-1 -right-1 flex h-4 w-4 md:h-5 md:w-5">
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -555,8 +567,7 @@ const [isTimePaused, setIsTimePaused] = useState(false);
                                 )}
                             </Button>
                         </div>
-                        {/* 👆 FIM do Botão de Notificações 👆 */}
-
+                        
                         <Button 
                             onClick={toggleFullscreen}
                             variant="ghost"
@@ -709,8 +720,6 @@ const [isTimePaused, setIsTimePaused] = useState(false);
             )}
         </div>
 
-
-
             {/* --- MODAL DA QUEST DE ESTUDO --- */}
             {activeQuest && (
                 <div
@@ -719,7 +728,6 @@ const [isTimePaused, setIsTimePaused] = useState(false);
                 className="fixed inset-0 z-[10000] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300">
                     <div className="bg-slate-900 border border-indigo-500/50 rounded-2xl p-6 md:p-8 w-full max-w-lg shadow-2xl flex flex-col gap-6 transform transition-all">
                         
-                        {/* Cabeçalho: Avatar e Nome */}
                         <div className="flex items-center gap-4">
                             <div className="w-16 h-16 rounded-full border-2 border-indigo-500 bg-slate-800 shadow-md shrink-0 flex items-center justify-center overflow-hidden">
                                 <img 
@@ -737,14 +745,12 @@ const [isTimePaused, setIsTimePaused] = useState(false);
                             </div>
                         </div>
 
-                        {/* A Pergunta da IA */}
                         <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
                             <p className="text-slate-200 text-base md:text-lg leading-relaxed">
                                 "{activeQuest.question}"
                             </p>
                         </div>
 
-                        {/* Campo de Resposta */}
                         <div className="flex flex-col gap-3">
                             <Input 
                                 autoFocus
@@ -756,11 +762,10 @@ const [isTimePaused, setIsTimePaused] = useState(false);
                                 disabled={isSubmittingQuest}
                             />
                             <div className="flex justify-end gap-3 mt-2">
-                                {/* Botão Pular (Opcional, se quiser deixar ele desistir) */}
                                 <Button 
                                     variant="ghost" 
                                     className="text-slate-400 hover:text-white"
-                                    onClick={() => { setActiveQuest(null); setQuestAnswer("");setQuestsCompletedToday(prev => prev + 1); }}
+                                    onClick={() => { setActiveQuest(null); setQuestAnswer(""); }}
                                     disabled={isSubmittingQuest}
                                 >
                                     Pular por agora
@@ -779,7 +784,6 @@ const [isTimePaused, setIsTimePaused] = useState(false);
                     </div>
                 </div>
             )}
-            {/* --- FIM DO MODAL --- */}
 
     </div>
   )

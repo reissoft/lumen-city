@@ -41,6 +41,18 @@ async function getActivities(teacherId: string) {
   });
 }
 
+// 👇 NOVO: Função para buscar as turmas deste professor
+async function getTeacherClasses(teacherId: string) {
+  return await prisma.class.findMany({
+    where: { 
+      teachers: { 
+        some: { id: teacherId } 
+      } 
+    },
+    select: { id: true, name: true }
+  });
+}
+
 async function getTeacherStats(teacherId: string) {
   // 1. Encontrar todas as turmas do professor (usando a relação muitos-para-muitos)
   const teacherClasses = await prisma.class.findMany({
@@ -107,12 +119,26 @@ async function getTeacherStats(teacherId: string) {
   };
 }
 
+async function getCampaigns(teacherId: string) {
+  return await prisma.studyCampaign.findMany({
+    where: { teacherId: teacherId },
+    orderBy: { createdAt: 'desc' },
+    include: {
+      classes: { select: { name: true } } // Traz o nome da turma junto!
+    }
+  });
+}
+
 export default async function TeacherDashboard() {
   const teacher = await getTeacherData();
-  
-  const [activities, statsData] = await Promise.all([
+
+
+  // 👇 turmas junto com as atividades e os status
+  const [activities, statsData, classes, campaigns] = await Promise.all([
     getActivities(teacher.id),
     getTeacherStats(teacher.id),
+    getTeacherClasses(teacher.id),
+    getCampaigns(teacher.id) // <--- Busca as campanhas
   ]);
 
   const stats = [
@@ -127,6 +153,10 @@ export default async function TeacherDashboard() {
         teacherName={teacher.name || 'Professor(a)'} 
         activities={activities as any} 
         stats={stats}
+        // 👇 NOVO: Passando o ID e as turmas para o cliente
+        teacherId={teacher.id} 
+        classes={classes}
+        campaigns={campaigns}
       />
     </Suspense>
   );

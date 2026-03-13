@@ -4,13 +4,14 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import CityScene from "./CityScene"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { X, MousePointer2, Hammer, Leaf, Route, Star, RotateCw, Trash2, Loader2, Smartphone, Maximize, Minimize, ChevronDown, ChevronUp, Sun, Moon,Play, Pause,Calendar,Bell } from "lucide-react"
+import { X, MousePointer2, Hammer, Leaf, Route, Star, RotateCw, Trash2, Loader2, Smartphone, Maximize, Minimize, ChevronDown, ChevronUp, Sun, Moon,Play, Pause,Calendar,Bell,Sparkles } from "lucide-react"
 import { Users, Briefcase, Smile, ShieldAlert } from 'lucide-react';
 import { buyBuilding, demolishBuildingAction, rotateBuildingAction,getServerDayConfig } from "@/app/actions"
 import { BUILDING_CONFIG, CATEGORIES, BuildingCategory } from '@/app/config/buildings'
 import { toast } from "sonner";
 import { cn } from '@/lib/utils'
 import { useCityStats } from '@/app/hooks/useCityStats';
+import { Input } from './ui/input'
 
 const CATEGORY_ICONS: Record<BuildingCategory, any> = {
   construction: Hammer,
@@ -70,6 +71,129 @@ export default function CityInterface({ student, buildings: initialBuildings, re
   const [advisorName, setAdvisorName] = useState('Conselheiro');
   const [advisorAvatar, setAdvisorAvatar] = useState('empty'); // O avatar padrão
 
+
+
+ // --- ESTADOS DA CAMPANHA DE ESTUDO ---
+  const [activeQuest, setActiveQuest] = useState<{ question: string, studyMaterial: string, campaignId: string } | null>(null);
+  const [questAnswer, setQuestAnswer] = useState("");
+  const [isSubmittingQuest, setIsSubmittingQuest] = useState(false);
+  const [isGeneratingQuest, setIsGeneratingQuest] = useState(false);
+
+
+  // --- CONTROLE DE FREQUÊNCIA DA CAMPANHA ---
+  const [questsCompletedToday, setQuestsCompletedToday] = useState(0);
+  const maxQuestsPerDay = 3; // No futuro, isso virá da configuração do professor no banco!
+const [isTimePaused, setIsTimePaused] = useState(false); 
+  // --- O RELÓGIO ALEATÓRIO DE QUESTS ---
+  useEffect(() => {
+    // Regras de bloqueio: 
+    // Não dispara se o jogo estiver pausado, se já tiver uma quest aberta,
+    // se estiver gerando uma, ou se o aluno já bateu a meta do dia!
+    if (isTimePaused || activeQuest || isGeneratingQuest || questsCompletedToday >= maxQuestsPerDay) {
+      return;
+    }
+
+    const getRandomDelay = () => {
+      // ⚠️ MODO DE TESTE: Sorteia entre 15 e 30 segundos
+      const minSeconds = 15;
+      const maxSeconds = 30;
+      
+      // 🚀 MODO PRODUÇÃO (Descomente depois): Sorteia entre 5 e 10 minutos
+      // const minSeconds = 5 * 60;
+      // const maxSeconds = 10 * 60;
+
+      const randomSeconds = Math.floor(Math.random() * (maxSeconds - minSeconds + 1)) + minSeconds;
+      return randomSeconds * 1000; // O setTimeout usa milissegundos
+    };
+
+    const delay = getRandomDelay();
+    console.log(`⌚ IA agendou a próxima Quest para daqui a ${delay / 1000} segundos!`);
+
+    const timer = setTimeout(() => {
+      // O sino virtual toca e puxa a pergunta!
+      triggerTestQuest(); 
+    }, delay);
+
+    // Limpa o timer se o aluno pausar o jogo ou se o componente recarregar
+    return () => clearTimeout(timer);
+  }, [isTimePaused, activeQuest, isGeneratingQuest, questsCompletedToday]);
+
+
+  // 1. Função para chamar a IA e GERAR a pergunta (Modo Teste)
+  const triggerTestQuest = async () => {
+    setIsGeneratingQuest(true);
+    // No futuro, isso virá do banco de dados (da tabela StudyCampaign)
+    const mockMaterial = "O ciclo da água é o movimento contínuo da água na Terra. A evaporação ocorre quando o sol aquece a água dos rios e oceanos, transformando-a em vapor. Depois, ocorre a condensação nas nuvens e, por fim, a precipitação em forma de chuva.";
+    const mockCampaignId = "campanha_teste_123"; 
+
+    try {
+      const response = await fetch('/api/virtual-friend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'generate_quest',
+          studyMaterial: mockMaterial,
+          friendName: advisorName
+        })
+      });
+      
+      const data = await response.json();
+      if (data.success && data.question) {
+        // Abre o Modal com a pergunta gerada pela IA!
+        setActiveQuest({
+          question: data.question,
+          studyMaterial: mockMaterial,
+          campaignId: mockCampaignId
+        });
+      }
+    } catch (error) {
+      toast.error("Erro ao gerar missão de estudo.");
+    } finally {
+      setIsGeneratingQuest(false);
+    }
+  };
+
+  // 2. Função para ENVIAR a resposta para a IA corrigir
+  const submitQuestAnswer = async () => {
+    if (!activeQuest || !questAnswer.trim()) return;
+    setIsSubmittingQuest(true);
+
+    try {
+      const response = await fetch('/api/virtual-friend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'evaluate_quest',
+          studyMaterial: activeQuest.studyMaterial,
+          question: activeQuest.question,
+          message: questAnswer,
+          friendName: advisorName,
+          campaignId: activeQuest.campaignId
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.isCorrect) {
+        // ACERTOU! Mostra o feedback, dá moedas/felicidade e fecha o modal
+        toast.success(data.feedback, { duration: 6000 });
+        setQuestsCompletedToday(prev => prev + 1);
+        // Aqui você pode adicionar lógica para dar +500 moedas ao jogador
+        setActiveQuest(null);
+        setQuestAnswer("");
+      } else {
+        // ERROU! Mostra o feedback para ele tentar de novo
+        toast.error(data.feedback, { duration: 6000 });
+      }
+    } catch (error) {
+      toast.error("Erro ao avaliar a resposta.");
+    } finally {
+      setIsSubmittingQuest(false);
+    }
+  };
+
+
+
   // Busca qual amigo virtual o aluno escolheu no banco de dados
   useEffect(() => {
     async function loadAdvisor() {
@@ -87,7 +211,7 @@ export default function CityInterface({ student, buildings: initialBuildings, re
     loadAdvisor();
   }, []);
 
-  const [isTimePaused, setIsTimePaused] = useState(false); 
+  
 
   const setPointerOverUI = (isOver: boolean) => {
     if (typeof window !== 'undefined') {
@@ -397,7 +521,19 @@ export default function CityInterface({ student, buildings: initialBuildings, re
 
                     {/* Grupo de botões da direita */}
                     <div className="flex gap-2 absolute top-2 right-2 md:top-6 md:right-6">
-                        
+                        {/* 👇 BOTÃO DE TESTE DA QUEST 👇 */}
+                        <Button 
+                            onClick={triggerTestQuest}
+                            disabled={isGeneratingQuest}
+                            className="bg-purple-600 hover:bg-purple-700 text-white font-bold h-10 md:h-12 px-4 rounded-full shadow-xl border border-purple-500 transition-all"
+                        >
+                            {isGeneratingQuest ? (
+                                <><Loader2 className="animate-spin mr-2" size={16} /> Pensando...</>
+                            ) : (
+                                "Testar Quest!"
+                            )}
+                        </Button>
+                        {/* 👆 FIM DO BOTÃO DE TESTE 👆 */}
                         {/* 👇 NOVO: Botão do Conselheiro / Notificações 👇 */}
                         <div className="relative">
                             <Button 
@@ -572,6 +708,79 @@ export default function CityInterface({ student, buildings: initialBuildings, re
                 </div>
             )}
         </div>
+
+
+
+            {/* --- MODAL DA QUEST DE ESTUDO --- */}
+            {activeQuest && (
+                <div
+                    onPointerEnter={() => setPointerOverUI(true)}
+                    onPointerLeave={() => setPointerOverUI(false)}
+                className="fixed inset-0 z-[10000] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300">
+                    <div className="bg-slate-900 border border-indigo-500/50 rounded-2xl p-6 md:p-8 w-full max-w-lg shadow-2xl flex flex-col gap-6 transform transition-all">
+                        
+                        {/* Cabeçalho: Avatar e Nome */}
+                        <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 rounded-full border-2 border-indigo-500 bg-slate-800 shadow-md shrink-0 flex items-center justify-center overflow-hidden">
+                                <img 
+                                    src={`/friends/${advisorAvatar}.png`} 
+                                    alt={advisorName} 
+                                    className="w-full h-full object-contain bg-white/10" 
+                                />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                    <Sparkles className="text-yellow-400" size={20} />
+                                    Desafio do Prefeito!
+                                </h3>
+                                <p className="text-indigo-300 text-sm font-medium">{advisorName} tem uma pergunta:</p>
+                            </div>
+                        </div>
+
+                        {/* A Pergunta da IA */}
+                        <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                            <p className="text-slate-200 text-base md:text-lg leading-relaxed">
+                                "{activeQuest.question}"
+                            </p>
+                        </div>
+
+                        {/* Campo de Resposta */}
+                        <div className="flex flex-col gap-3">
+                            <Input 
+                                autoFocus
+                                value={questAnswer}
+                                onChange={(e) => setQuestAnswer(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && submitQuestAnswer()}
+                                placeholder="Digite sua resposta aqui..."
+                                className="bg-slate-950 border-slate-700 text-white h-12 text-lg focus-visible:ring-indigo-500"
+                                disabled={isSubmittingQuest}
+                            />
+                            <div className="flex justify-end gap-3 mt-2">
+                                {/* Botão Pular (Opcional, se quiser deixar ele desistir) */}
+                                <Button 
+                                    variant="ghost" 
+                                    className="text-slate-400 hover:text-white"
+                                    onClick={() => { setActiveQuest(null); setQuestAnswer("");setQuestsCompletedToday(prev => prev + 1); }}
+                                    disabled={isSubmittingQuest}
+                                >
+                                    Pular por agora
+                                </Button>
+                                
+                                <Button 
+                                    onClick={submitQuestAnswer}
+                                    disabled={isSubmittingQuest || !questAnswer.trim()}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-8"
+                                >
+                                    {isSubmittingQuest ? <Loader2 className="animate-spin" size={20} /> : "Responder"}
+                                </Button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            )}
+            {/* --- FIM DO MODAL --- */}
+
     </div>
   )
 }

@@ -1,9 +1,11 @@
+// app/api/virtual-friend/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { cookies } from 'next/headers';
 import Groq from 'groq-sdk'
 
 const prisma = new PrismaClient();
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // GET endpoint para buscar configurações do Virtual Friend do banco
 export async function GET(request: NextRequest) {
@@ -47,12 +49,26 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     
-    // Se for uma mensagem para o AI
+    // --- NOVO: ROTEAMENTO INTELIGENTE DA IA (CAMPANHAS DE ESTUDO) ---
+    const { action, studyMaterial, question, campaignId, message, studentName, friendName, pageContext } = body;
+
+    // 1. O jogo pediu para GERAR uma pergunta
+    if (action === 'generate_quest') {
+      return await handleGenerateQuest(studyMaterial, friendName || 'Conselheiro');
+    }
+
+    // 2. O jogo pediu para AVALIAR a resposta do aluno e SALVAR no banco
+    if (action === 'evaluate_quest') {
+      return await handleEvaluateQuest(studyMaterial, question, message, friendName || 'Conselheiro', sessionUsername, campaignId);
+    }
+    // ---------------------------------------------------------------
+
+    // COMPORTAMENTO ORIGINAL: Se for uma mensagem para o AI (Chat Livre)
     if (body.message && body.studentName && body.friendName) {
       return await handleAIMessage(body.message, body.studentName, body.friendName, body.pageContext);
     }
 
-    // Caso contrário, trata como configuração do amigo virtual
+    // COMPORTAMENTO ORIGINAL: Trata como configuração do amigo virtual
     const { virtualFriendName, virtualFriendAvatar } = body;
 
     // Validate input
@@ -97,6 +113,101 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// ============================================================================
+// NOVAS FUNÇÕES: GERAÇÃO E AVALIAÇÃO DE QUESTS (CAMPANHAS DE ESTUDO)
+// ============================================================================
+
+// Função A: Gera a Pergunta
+async function handleGenerateQuest(studyMaterial: string, friendName: string) {
+  try {
+    const prompt = `Você é um Conselheiro educacional de Cidade amigável chamado ${friendName}. 
+    O Prefeito (jogador) precisa passar por um Desafio de Conhecimento para a cidade prosperar.
+    
+    MATERIAL DE ESTUDO DO PROFESSOR:
+    """${studyMaterial}"""
+    
+    TAREFA: Crie APENAS UMA pergunta curta, direta e imersiva baseada neste material. 
+    Chame o jogador de "Prefeito".
+    NÃO forneça a resposta em sua fala, apenas faça a pergunta.`;
+
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [{ role: "system", content: prompt }],
+      temperature: 0.7, 
+    });
+
+    const generatedQuestion = completion.choices[0]?.message?.content || "Prefeito, precisamos testar seus conhecimentos! Qual a principal ideia do texto estudado?";
+    
+    return NextResponse.json({ question: generatedQuestion, success: true });
+  } catch (error) {
+    console.error('Error generating quest:', error);
+    return NextResponse.json({ error: 'Falha ao gerar missão.', success: false }, { status: 500 });
+  }
+}
+
+// Função B: Avalia a Resposta e Salva o Log
+async function handleEvaluateQuest(studyMaterial: string, question: string, studentAnswer: string, friendName: string, username: string, campaignId: string) {
+  try {
+    const prompt = `Você é um Conselheiro de Cidade chamado ${friendName}. Avalie a resposta do Prefeito.
+    
+    MATERIAL DE ESTUDO BASE: "${studyMaterial}"
+    PERGUNTA FEITA: "${question}"
+    RESPOSTA DO PREFEITO: "${studentAnswer}"
+    
+    REGRAS DE AVALIAÇÃO:
+    1. Seja benevolente: Ignore pequenos erros de ortografia se o conceito central estiver correto.
+    2. Retorne EXCLUSIVAMENTE um objeto JSON válido. Não use formatação markdown.
+    3. Formato obrigatório: {"isCorrect": boolean, "feedback": "Mensagem curta e imersiva"}
+    Se estiver correto, dê os parabéns no feedback. Se errar, explique rapidamente o porquê de forma gentil sem dar a resposta exata.`;
+
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [{ role: "system", content: prompt }],
+      temperature: 0.1, 
+      response_format: { type: "json_object" } 
+    });
+
+    const aiContent = completion.choices[0]?.message?.content;
+    let evaluation = { isCorrect: false, feedback: "Houve um erro de comunicação com os engenheiros." };
+    
+    if (aiContent) {
+      evaluation = JSON.parse(aiContent);
+    }
+
+    const student = await prisma.student.findUnique({ where: { username } });
+    
+    if (student) {
+      // Verifica se o campaignId não é o nosso ID falso de teste
+      const validCampaignId = campaignId === "campanha_teste_123" ? undefined : campaignId;
+
+      await prisma.questLog.create({
+        data: {
+          studentId: student.id,
+          campaignId: validCampaignId, // Agora ele passa undefined se for teste, ou o ID real se não for
+          generatedQuest: question,
+          studentAnswer: studentAnswer,
+          isCorrect: evaluation.isCorrect,
+          aiFeedback: evaluation.feedback
+        }
+      });
+    }
+
+    return NextResponse.json({ 
+      isCorrect: evaluation.isCorrect, 
+      feedback: evaluation.feedback,
+      success: true 
+    });
+
+  } catch (error) {
+    console.error('Error evaluating quest:', error);
+    return NextResponse.json({ error: 'Falha ao avaliar resposta.', success: false }, { status: 500 });
+  }
+}
+
+// ============================================================================
+// FUNÇÕES ORIGINAIS INTACTAS (NÃO MODIFICADAS)
+// ============================================================================
+
 // Função para construir o systemPrompt baseado no contexto da página
 function buildSystemPrompt(friendName: string, studentName: string, pageContext?: any): string {
   let prompt = `Você é um assistente educacional amigável chamado ${friendName}, ajudando o aluno ${studentName}. `;
@@ -113,7 +224,6 @@ function buildSystemPrompt(friendName: string, studentName: string, pageContext?
       prompt += `• Ouro: ${pageContext.student.gold}\n`;
       prompt += `• Turma: ${pageContext.student.className}\n\n`;
     }
-    
     
     // Dados específicos da página (se houver dados estruturados)
     if (pageContext.pageData) {
@@ -222,10 +332,7 @@ async function handleAIMessage(message: string, studentName: string, friendName:
     
     // Construir o systemPrompt com base no contexto da página
     const systemPrompt = buildSystemPrompt(friendName, studentName, pageContext);
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
-    // Simulação de chamada à API de IA
-    // Na prática, você substituiria isso pela chamada real ao Groq
-const completion = await groq.chat.completions.create({
+    const completion = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile",
       messages: [
         { role: "system", content: systemPrompt },

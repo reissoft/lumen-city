@@ -22,18 +22,21 @@ model School {
 }
 
 model Teacher {
-  id            String     @id @default(uuid())
-  name          String
-  email         String     @unique
-  password      String
-  isSchoolAdmin Boolean    @default(false)
-  schoolId      String
-  school        School     @relation(fields: [schoolId], references: [id])
-  activities    Activity[]
-  classes       Class[]    // Relação muitos-para-muitos com Turmas
-  sentMessages     Message[]  @relation("TeacherSentMessages")
+  id             String     @id @default(uuid())
+  name           String
+  email          String     @unique
+  password       String
+  isSchoolAdmin  Boolean    @default(false)
+  schoolId       String
+  school         School     @relation(fields: [schoolId], references: [id])
+  activities     Activity[]
+  classes        Class[]    // Relação muitos-para-muitos com Turmas
+  sentMessages   Message[]  @relation("TeacherSentMessages")
   receivedMessages Message[]  @relation("TeacherReceivedMessages")
-  notifications    Notification[]
+  notifications  Notification[]
+
+  // NOVO: Campanhas de estudo criadas por este professor
+  studyCampaigns StudyCampaign[] 
 }
 
 model Class {
@@ -43,10 +46,13 @@ model Class {
   activities Activity[]
   createdAt  DateTime   @default(now())
 
-  schoolId String
-  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  schoolId   String
+  school     School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
   teachers   Teacher[] // Relação muitos-para-muitos com Professores
+
+  // NOVO: Campanhas de estudo atribuídas a esta turma
+  studyCampaigns StudyCampaign[] 
 }
 
 model Student {
@@ -63,23 +69,26 @@ model Student {
   schoolId        String
   school          School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   
-  classId   String?   // Aluno agora pertence a UMA turma (opcional)
-  class     Class?    @relation(fields: [classId], references: [id])
+  classId         String?  // Aluno agora pertence a UMA turma (opcional)
+  class           Class?   @relation(fields: [classId], references: [id])
 
-  xp        Int      @default(0)
-  level     Int      @default(1)
-  resources StudentResources?
-  cityData  Json?
-  attempts  ActivityAttempt[]
-  createdAt DateTime @default(now())
-  sentMessages     Message[]  @relation("StudentSentMessages")
+  xp              Int      @default(0)
+  level           Int      @default(1)
+  resources       StudentResources?
+  cityData        Json?
+  attempts        ActivityAttempt[]
+  createdAt       DateTime @default(now())
+  sentMessages    Message[]  @relation("StudentSentMessages")
   receivedMessages Message[]  @relation("StudentReceivedMessages")
-  notifications    Notification[]
+  notifications   Notification[]
   
   // Virtual Friend Settings
   virtualFriendName     String?   @default("Meu Amigo")
   virtualFriendAvatar   String?   @default("bear")
   virtualFriendPosition Json?     // { x: number, y: number }
+
+  // NOVO: Histórico de interações do aluno com as missões da IA
+  questLogs       QuestLog[]
 }
 
 model StudentResources {
@@ -123,6 +132,50 @@ model ActivityAttempt {
   rewarded   Boolean  @default(false)
   createdAt  DateTime @default(now())
 }
+
+
+// --- CAMPANHAS DE ESTUDO (IA QUESTS) ---
+
+model StudyCampaign {
+  id              String     @id @default(uuid())
+  title           String
+  studyMaterial   String     @db.Text
+  
+  startDate       DateTime
+  endDate         DateTime
+  questsPerDay    Int        @default(3)
+  rewardCoins     Int        @default(500)
+  active          Boolean    @default(true)
+  createdAt       DateTime   @default(now())
+
+  // Quem criou e para quem é
+  teacherId       String
+  teacher         Teacher    @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  classes         Class[]    // Uma campanha pode ser enviada para várias turmas
+
+  // Relatórios de resposta dos alunos
+  logs            QuestLog[]
+}
+
+model QuestLog {
+  id              String     @id @default(uuid())
+  
+  // Relacionamentos
+  studentId       String
+  student         Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  campaignId      String?
+  campaign        StudyCampaign? @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  
+  // A interação real
+  generatedQuest  String     @db.Text 
+  studentAnswer   String     @db.Text 
+  isCorrect       Boolean    
+  aiFeedback      String     @db.Text 
+  
+  createdAt       DateTime   @default(now())
+}
+
 
 // --- SISTEMA DE MENSAGENS ---
 

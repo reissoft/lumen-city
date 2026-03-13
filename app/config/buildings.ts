@@ -33,6 +33,39 @@ export const CATEGORIES: Record<BuildingCategory, string> = {
 }
 
 export const BUILDING_CONFIG: Record<string, BuildingDef> = {
+  "hospital": {
+    "name": "Hospital",
+    "description": "",
+    "category": "construction",
+    "cost": 1000,
+    "url": "/models/extras/hospital.glb",
+    "icon": "__ICON_Home__",
+    "scale": 1,
+    "stats": {
+      "security": 200,
+      "pollution": 30,
+      "jobs": 50
+    },
+    "iconImage": "/models/extras/hospital.png",
+    haveLight: true,
+  },
+  "police_station": {
+    "name": "Delegacia de Polícia",
+    "description": "",
+    "category": "construction",
+    "cost": 1000,
+    "url": "/models/extras/city_police_station.glb",
+    "icon": "__ICON_Home__",
+    "scale": 0.01,
+    "stats": {
+      "security": 500,
+      "pollution": 30,
+      "jobs": 20
+    },
+    "iconImage": "/models/extras/city_police_station.png",
+    haveLight: true,
+    yOffset: 0, // Levanta um pouco para evitar clipping com o chão
+  },
   "building_b": {
     "name": "Casa",
     "description": "Uma simples casa.",

@@ -74,6 +74,34 @@ export default function CityInterface({ student, buildings: initialBuildings, re
   // Lista de campanhas ativas e um Dicionário para contar quantas vezes cada uma rodou hoje
   const [activeCampaigns, setActiveCampaigns] = useState<any[]>([]);
   const [campaignProgress, setCampaignProgress] = useState<Record<string, number>>({});
+  const [isProgressLoaded, setIsProgressLoaded] = useState(false);
+
+  // 👇 Lê o progresso salvo no localStorage assim que a cidade abre
+  useEffect(() => {
+    if (!student || !student.id) return;
+    
+    const todayStr = new Date().toISOString().split('T')[0]; // Pega a data YYYY-MM-DD
+    const storageKey = `lumen_campaigns_${student.id}`;
+    const storedData = localStorage.getItem(storageKey);
+
+    if (storedData) {
+      try {
+        const parsed = JSON.parse(storedData);
+        // Se a data salva for igual a hoje, restaura o progresso!
+        if (parsed.date === todayStr) {
+          setCampaignProgress(parsed.progress);
+          console.log("💾 Progresso de missões restaurado do LocalStorage!");
+        } else {
+          // Se for de um dia anterior, joga fora (limpa pro novo dia)
+          localStorage.removeItem(storageKey);
+        }
+      } catch (e) {
+        console.error("Erro ao ler localStorage", e);
+      }
+    }
+    
+    setIsProgressLoaded(true); // Libera a IA para começar a funcionar
+  }, [student]);
 
   useEffect(() => {
     if (questCooldown > 0) {
@@ -119,7 +147,7 @@ export default function CityInterface({ student, buildings: initialBuildings, re
   // 2. O Relógio Aleatório de Quests
   useEffect(() => {
     // Se não tem campanhas disponíveis ou se o jogo não permite, aborta
-    if (availableCampaigns.length === 0 || isTimePaused || activeQuest || isGeneratingQuest) {
+    if (!isProgressLoaded || availableCampaigns.length === 0 || isTimePaused || activeQuest || isGeneratingQuest) {
       return;
     }
 
@@ -203,13 +231,24 @@ export default function CityInterface({ student, buildings: initialBuildings, re
       
       if (data.isCorrect) {
         await rewardCampaignCoins(activeQuest.rewardCoins);
-        toast.success(`Acertou! +${activeQuest.rewardCoins} Moedas! \n${data.feedback}`, { duration: 6000 });
+        toast.success(`Acertou, voce ganhou +${activeQuest.rewardCoins} Moedas! \n${data.feedback}`, { duration: 6000 });
         
-        // Adiciona +1 apenas no contador DESTA campanha específica!
-        setCampaignProgress(prev => ({
-            ...prev,
-            [activeQuest.campaignId]: (prev[activeQuest.campaignId] || 0) + 1
-        }));
+        // 👇  Atualiza a tela E salva no LocalStorage
+        setCampaignProgress(prev => {
+            const newProgress = {
+                ...prev,
+                [activeQuest.campaignId]: (prev[activeQuest.campaignId] || 0) + 1
+            };
+            
+            // Salva fisicamente no navegador com a data de hoje
+            const todayStr = new Date().toISOString().split('T')[0];
+            localStorage.setItem(`lumen_campaigns_${student.id}`, JSON.stringify({
+                date: todayStr,
+                progress: newProgress
+            }));
+            
+            return newProgress;
+        });
         
         setActiveQuest(null);
         setQuestAnswer("");

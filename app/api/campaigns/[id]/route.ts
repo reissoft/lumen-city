@@ -1,6 +1,7 @@
 // app/api/campaigns/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
 
 const prisma = new PrismaClient();
 
@@ -32,5 +33,25 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   } catch (error) {
     console.error('Erro ao atualizar campanha:', error);
     return NextResponse.json({ error: 'Erro interno ao atualizar a campanha.' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const campaignId = params.id;
+
+    // 1. Deleta a campanha do banco de dados (o Prisma apagará os logs vinculados em cascata automaticamente)
+    await prisma.studyCampaign.delete({
+      where: { id: campaignId }
+    });
+
+    // 2. Limpa o cache para o painel do professor atualizar na mesma hora
+    revalidatePath('/teacher');
+
+    return NextResponse.json({ success: true });
+
+  } catch (error) {
+    console.error('Erro ao deletar campanha:', error);
+    return NextResponse.json({ error: 'Erro interno ao deletar a campanha.' }, { status: 500 });
   }
 }

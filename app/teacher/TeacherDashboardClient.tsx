@@ -114,6 +114,32 @@ export default function TeacherDashboardClient({
     });
   };
 
+  const handleDeleteCampaign = (campaignId: string) => {
+    toast.warning("Tem certeza que deseja deletar esta Campanha de Estudo?", {
+        action: {
+            label: "Deletar",
+            onClick: async () => {
+                try {
+                    const response = await fetch(`/api/campaigns/${campaignId}`, {
+                        method: 'DELETE',
+                    });
+                    if (response.ok) {
+                        toast.success("Campanha deletada com sucesso!");
+                        router.refresh(); // Força o painel a recarregar e sumir com o card
+                    } else {
+                        toast.error("Erro ao deletar a campanha.");
+                    }
+                } catch (error) {
+                    toast.error("Erro de comunicação com o servidor.");
+                }
+            }
+        },
+        cancel: {
+            label: "Cancelar", onClick: ()=>{}
+        }
+    });
+  };
+
   const handleTest = (activity: Activity) => {
     const hasReviewMaterials = activity.reviewMaterials && Array.isArray(activity.reviewMaterials) && activity.reviewMaterials.length > 0;
     const baseUrl = hasReviewMaterials
@@ -370,10 +396,15 @@ export default function TeacherDashboardClient({
                                   </Button>
                               </Link>
                               
-                              {/* Se quiser adicionar o botão de deletar depois, ele fica aqui! */}
-                              <Button variant="outline" size="icon" className="aspect-square bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-colors" title="Deletar">
-                                  <Trash2 size={16} />
-                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="icon" 
+                                onClick={() => handleDeleteCampaign(campaign.id)}
+                                className="aspect-square bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-colors" 
+                                title="Deletar"
+                            >
+                                <Trash2 size={16} />
+                            </Button>
                           </footer>
                       </div>
                       );

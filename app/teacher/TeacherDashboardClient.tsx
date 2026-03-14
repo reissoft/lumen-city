@@ -358,6 +358,11 @@ export default function TeacherDashboardClient({
                           </header>
 
                           <footer className="mt-auto flex gap-2 relative z-10 pt-2">
+                            <Link href={`/api/campaigns/${campaign.id}/report`}>
+                                  <Button variant="outline" size="icon" className="aspect-square bg-indigo-500/10 border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-300 transition-colors" title="Ver Relatório de Respostas">
+                                      <BarChart3 size={16} />
+                                  </Button>
+                              </Link>
                               {/* Botão de Editar aponta para uma futura página de edição */}
                               <Link href={`/api/campaigns/${campaign.id}/edit`} className="flex-1">
                                   <Button variant="secondary" className="w-full gap-2 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 transition-colors">
